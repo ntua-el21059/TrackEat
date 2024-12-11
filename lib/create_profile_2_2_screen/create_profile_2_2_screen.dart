@@ -7,10 +7,7 @@ import '../widgets.dart';
 import 'create_profile_2_2_provider.dart';
 
 class CreateProfile22Screen extends StatefulWidget {
-  const CreateProfile22Screen({Key? key})
-      : super(
-          key: key,
-        );
+  const CreateProfile22Screen({Key? key}) : super(key: key);
 
   @override
   CreateProfile22ScreenState createState() => CreateProfile22ScreenState();
@@ -85,7 +82,7 @@ class CreateProfile22ScreenState extends State<CreateProfile22Screen> {
                       style: theme.textTheme.titleSmall,
                     ),
                     SizedBox(height: 8.h),
-                    _buildWeightInput(context)
+                    _buildWeightInput(context),
                   ],
                 ),
               ),
@@ -98,6 +95,33 @@ class CreateProfile22ScreenState extends State<CreateProfile22Screen> {
       ),
     );
   }
+
+
+/// Section Widget
+Widget _buildGoalInput(BuildContext context) {
+  return Selector<CreateProfile22Provider, TextEditingController?>(
+    selector: (context, provider) => provider.goalInputController,
+    builder: (context, goalInputController, child) {
+      return CustomTextFormField(
+        controller: goalInputController,
+        hintText: "lbl_lose_weight".tr,
+        suffix: Container(
+          margin: EdgeInsets.fromLTRB(16.h, 14.h, 8.h, 14.h),
+          child: CustomImageView(
+            imagePath: ImageConstant.img,
+            height: 20.h,
+            width: 14.h,
+            fit: BoxFit.contain,
+          ),
+        ),
+        suffixConstraints: BoxConstraints(
+          maxHeight: 48.h,
+        ),
+        contentPadding: EdgeInsets.fromLTRB(16.h, 14.h, 8.h, 14.h),
+      );
+    },
+  );
+}
 
   /// Section Widget
   PreferredSizeWidget _buildAppBar(BuildContext context) {
@@ -166,26 +190,17 @@ class CreateProfile22ScreenState extends State<CreateProfile22Screen> {
   }
 
   /// Section Widget
-  Widget _buildGoalInput(BuildContext context) {
+  Widget _buildHeightInput(BuildContext context) {
     return Selector<CreateProfile22Provider, TextEditingController?>(
-      selector: (context, provider) => provider.goalInputController,
-      builder: (context, goalInputController, child) {
+      selector: (context, provider) => provider.heightInputController,
+      builder: (context, heightInputController, child) {
         return CustomTextFormField(
-          controller: goalInputController,
-          hintText: "lbl_lose_weight".tr,
-          suffix: Container(
-            margin: EdgeInsets.fromLTRB(16.h, 14.h, 8.h, 14.h),
-            child: CustomImageView(
-              imagePath: ImageConstant.img,
-              height: 20.h,
-              width: 14.h,
-              fit: BoxFit.contain,
-            ),
+          controller: heightInputController,
+          hintText: "lbl_180".tr,
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: 16.h,
+            vertical: 12.h,
           ),
-          suffixConstraints: BoxConstraints(
-            maxHeight: 48.h,
-          ),
-          contentPadding: EdgeInsets.fromLTRB(16.h, 14.h, 8.h, 14.h),
         );
       },
     );
@@ -198,7 +213,7 @@ class CreateProfile22ScreenState extends State<CreateProfile22Screen> {
       builder: (context, weightInputController, child) {
         return CustomTextFormField(
           controller: weightInputController,
-          hintText: "lbl_180".tr,
+          hintText: "lbl_80".tr,
           textInputAction: TextInputAction.done,
           contentPadding: EdgeInsets.symmetric(
             horizontal: 16.h,
@@ -222,12 +237,12 @@ class CreateProfile22ScreenState extends State<CreateProfile22Screen> {
   }
 
   /// Navigates to the previous screen.
-  void onTapArrowleftone(BuildContext context) {
+  onTapArrowleftone(BuildContext context) {
     NavigatorService.goBack();
   }
 
   /// Navigates to the calorieCalculatorScreen when the action is triggered.
-  void onTapNextButton(BuildContext context) {
+  onTapNextButton(BuildContext context) {
     NavigatorService.pushNamed(
       AppRoutes.calorieCalculatorScreen,
     );
