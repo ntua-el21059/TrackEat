@@ -15,7 +15,7 @@ class AppNavigationScreen extends StatefulWidget {
   static Widget builder(BuildContext context) {
     return ChangeNotifierProvider(
       create: (context) => AppNavigationProvider(),
-      child: const AppNavigationScreen(),
+      child: AppNavigationScreen(),
     );
   }
 }
@@ -30,16 +30,58 @@ class AppNavigationScreenState extends State<AppNavigationScreen> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-        backgroundColor: const Color(0XFFFFFFFF),
+        backgroundColor: Color(0XFFFFFFFF),
         body: SizedBox(
           width: 375.h,
           child: Column(
             children: [
-              _buildHeader(),
+              Container(
+                decoration: BoxDecoration(
+                  color: Color(0XFFFFFFFF),
+                ),
+                child: Column(
+                  children: [
+                    SizedBox(height: 10.h),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 20.h),
+                      child: Text(
+                        "App Navigation",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Color(0XFF000000),
+                          fontSize: 20.fSize,
+                          fontFamily: 'Roboto',
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 10.h),
+                    Padding(
+                      padding: EdgeInsets.only(left: 20.h),
+                      child: Text(
+                        "Check your app's UI from the below demo screens of your app.",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Color(0XFF888888),
+                          fontSize: 16.fSize,
+                          fontFamily: 'Roboto',
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 5.h),
+                    Divider(
+                      height: 1.h,
+                      thickness: 1.h,
+                      color: Color(0XFF000000),
+                    )
+                  ],
+                ),
+              ),
               Expanded(
                 child: SingleChildScrollView(
                   child: Container(
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       color: Color(0XFFFFFFFF),
                     ),
                     child: Column(
@@ -47,38 +89,38 @@ class AppNavigationScreenState extends State<AppNavigationScreen> {
                         _buildScreenTitle(
                           context,
                           screenTitle: "Create account",
-                          onTapScreenTitle: () =>
-                              _onTapScreenTitle(context, AppRoutes.createAccountScreen),
+                          onTapScreenTitle: () => onTapScreenTitle(
+                              context, AppRoutes.createAccountScreen),
                         ),
                         _buildScreenTitle(
                           context,
                           screenTitle: "Create profile (1/2)",
-                          onTapScreenTitle: () =>
-                              _onTapScreenTitle(context, AppRoutes.createProfile12Screen),
+                          onTapScreenTitle: () => onTapScreenTitle(
+                              context, AppRoutes.createProfile12Screen),
                         ),
                         _buildScreenTitle(
                           context,
                           screenTitle: "Create profile (2/2)",
-                          onTapScreenTitle: () =>
-                              _onTapScreenTitle(context, AppRoutes.createProfile22Screen),
+                          onTapScreenTitle: () => onTapScreenTitle(
+                              context, AppRoutes.createProfile22Screen),
                         ),
                         _buildScreenTitle(
                           context,
                           screenTitle: "Calorie calculator",
-                          onTapScreenTitle: () =>
-                              _onTapScreenTitle(context, AppRoutes.calorieCalculatorScreen),
+                          onTapScreenTitle: () => onTapScreenTitle(
+                              context, AppRoutes.calorieCalculatorScreen),
                         ),
                         _buildScreenTitle(
                           context,
                           screenTitle: "Welcome Screen",
-                          onTapScreenTitle: () =>
-                              _onTapScreenTitle(context, AppRoutes.welcomeScreen),
-                        ),
+                          onTapScreenTitle: () => onTapScreenTitle(
+                              context, AppRoutes.welcomeScreen),
+                        )
                       ],
                     ),
                   ),
                 ),
-              ),
+              )
             ],
           ),
         ),
@@ -86,52 +128,7 @@ class AppNavigationScreenState extends State<AppNavigationScreen> {
     );
   }
 
-  Widget _buildHeader() {
-    return Container(
-      decoration: const BoxDecoration(
-        color: Color(0XFFFFFFFF),
-      ),
-      child: Column(
-        children: [
-          SizedBox(height: 10.h),
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20.h),
-            child: const Text(
-              "App Navigation",
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Color(0XFF000000),
-                fontSize: 20,
-                fontFamily: 'Roboto',
-                fontWeight: FontWeight.w400,
-              ),
-            ),
-          ),
-          SizedBox(height: 10.h),
-          Padding(
-            padding: EdgeInsets.only(left: 20.h),
-            child: const Text(
-              "Check your app's UI from the below demo screens of your app.",
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Color(0XFF888888),
-                fontSize: 16,
-                fontFamily: 'Roboto',
-                fontWeight: FontWeight.w400,
-              ),
-            ),
-          ),
-          SizedBox(height: 5.h),
-          Divider(
-            height: 1.h,
-            thickness: 1.h,
-            color: const Color(0XFF000000),
-          ),
-        ],
-      ),
-    );
-  }
-
+  /// Common widget
   Widget _buildScreenTitle(
     BuildContext context, {
     required String screenTitle,
@@ -142,7 +139,7 @@ class AppNavigationScreenState extends State<AppNavigationScreen> {
         onTapScreenTitle?.call();
       },
       child: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: Color(0XFFFFFFFF),
         ),
         child: Column(
@@ -153,22 +150,32 @@ class AppNavigationScreenState extends State<AppNavigationScreen> {
               child: Text(
                 screenTitle,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                   color: Color(0XFF000000),
-                  fontSize: 16,
+                  fontSize: 20.fSize,
                   fontFamily: 'Roboto',
                   fontWeight: FontWeight.w400,
                 ),
               ),
             ),
+            SizedBox(height: 10.h),
             SizedBox(height: 5.h),
+            Divider(
+              height: 1.h,
+              thickness: 1.h,
+              color: Color(0XFF888888),
+            )
           ],
         ),
       ),
     );
   }
 
-  void _onTapScreenTitle(BuildContext context, String route) {
-    Navigator.pushNamed(context, route);
+  /// Common click event
+  void onTapScreenTitle(
+    BuildContext context,
+    String routeName,
+  ) {
+    Navigator.pushNamed(context, routeName);
   }
 }
