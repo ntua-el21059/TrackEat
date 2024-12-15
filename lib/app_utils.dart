@@ -116,7 +116,7 @@ typedef ResponsiveBuild = Widget Function(
 class ImageConstant {
   static String imagePath = 'assets/images';
 
-  static String imgIconEye = '$imagePath/img_icon_eye.svg';
+  static String imgIconEye = '$imagePath/img_icon_eye.png';
   static String imgArrowLeft = '$imagePath/img_arrow_left.svg';
   static String imgLogo = '$imagePath/img_logo.png';
   static String img = '$imagePath/img_.png';

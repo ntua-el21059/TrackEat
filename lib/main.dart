@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/material.dart';
+import 'package:trackeat/firebase_options.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import 'app_theme.dart';
 import 'app_utils.dart';
@@ -10,15 +14,18 @@ import 'routes/app_routes.dart';
 
 var globalMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
-void main() {
+
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  Future.wait([
+
+  await Future.wait([
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]),
-    PrefUtils().init()
-  ]).then((value) {
-    runApp(MyApp());
-  });
-} 
+    PrefUtils().init(),
+    Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform),
+  ]);
+
+  runApp(MyApp());
+}
 
 class MyApp extends StatelessWidget {
   @override
