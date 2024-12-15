@@ -1,4 +1,4 @@
-package com.example.trackeat
+package com.trackeat.app
 
 import io.flutter.embedding.android.FlutterActivity
 

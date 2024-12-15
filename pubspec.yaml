@@ -39,7 +39,7 @@ flutter:
   uses-material-design: true
 
   # Add assets here when needed
-  assets:
+  # assets:
     # Example assets (remove or replace these placeholders as needed)
     # - images/a_dot_burr.jpeg
     # - images/a_dot_ham.jpeg

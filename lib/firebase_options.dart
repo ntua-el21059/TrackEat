@@ -63,6 +63,6 @@ class DefaultFirebaseOptions {
     messagingSenderId: '764421229444',
     projectId: 'trackeat-cf212',
     storageBucket: 'trackeat-cf212.firebasestorage.app',
-    iosBundleId: 'com.example.trackeat',
+    iosBundleId: 'com.trackeat.app',
   );
 }

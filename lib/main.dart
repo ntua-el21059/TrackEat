@@ -18,7 +18,7 @@ void main() {
   ]).then((value) {
     runApp(MyApp());
   });
-}
+} 
 
 class MyApp extends StatelessWidget {
   @override
