@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "764421229444",
+    "project_id": "trackeat-cf212",
+    "storage_bucket": "trackeat-cf212.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:764421229444:android:b1539ebae942eae8d86bd1",
+        "android_client_info": {
+          "package_name": "com.trackeat.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDhVK1wrjqVbA6tB_ocmh5B6H1IsU4ui9Y"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
