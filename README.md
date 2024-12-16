@@ -1,16 +1,12 @@
-# trackeat
 
-A new Flutter project.
 
-## Getting Started
+# Welcome to TrackEat!
 
-This project is a starting point for a Flutter application.
+![TrackEat Logo](assets/images/img_logo.png "TrackEat Logo")
 
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+We make food tracking effortless!
+- 📸 Snap your meal: Instantly get nutritional information and track your daily calorie intake.
+- 🎯 Set calorie goals: Personalize your daily calorie targets and get tailored recommendations.
+- 🍽️ Smart food suggestions: Receive food ideas based on your remaining calories.
+- 🥗 Discover recipes: Explore creative meal ideas using ingredients you already have.
+- 🤝 Connect with friends: Compete for the healthiest habits, earn awards, and inspire each other.

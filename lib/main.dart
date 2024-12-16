@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:trackeat/firebase_options.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:trackeat/trackeat-ai/nutrition_analysis.dart';
-import 'package:trackeat/firestore/firestore_logger.dart';
+import 'package:trackeat/firebase/firestore_logger.dart';
 
 import 'app_theme.dart';
 import 'app_utils.dart';
@@ -17,7 +17,7 @@ import 'routes/app_routes.dart';
 
 var globalMessengerKey = GlobalKey<ScaffoldMessengerState>();
 // A global variable to store the list of available cameras
-List<CameraDescription> cameras = [];
+// List<CameraDescription> cameras = [];
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
