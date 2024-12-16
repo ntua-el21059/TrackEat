@@ -6,6 +6,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:trackeat/firebase_options.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:trackeat/trackeat-ai/nutrition_analysis.dart';
+import 'package:trackeat/firestore/firestore_logger.dart';
 
 import 'app_theme.dart';
 import 'app_utils.dart';
@@ -18,11 +20,20 @@ var globalMessengerKey = GlobalKey<ScaffoldMessengerState>();
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Future.wait([
-    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]),
-    PrefUtils().init(),
-    Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform),
-  ]);
+  try {
+    // Initialize Firebase first
+    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+    // Then run other tasks
+    await Future.wait([
+      SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]),
+      PrefUtils().init(),
+      analyzeImage('assets/images/Chicken-Alfredo-V3.jpg'),
+      logToFirestore(), // Call Firestore logging here only after Firebase is initialized
+    ]);
+  } catch (e) {
+    print('Error during initialization: $e');
+  }
 
   runApp(MyApp());
 }

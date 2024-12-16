@@ -22,6 +22,6 @@ class AppRoutes {
         calorieCalculatorScreen: CalorieCalculatorScreen.builder,
         welcomeScreen: WelcomeScreen.builder,
         appNavigationScreen: AppNavigationScreen.builder,
-        initialRoute: CreateAccountScreen.builder,
+        initialRoute: WelcomeScreen.builder,
       };
 }
