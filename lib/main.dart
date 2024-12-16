@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:trackeat/firebase_options.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -15,7 +16,8 @@ import 'create_account_screen/create_account_screen.dart';
 import 'routes/app_routes.dart';
 
 var globalMessengerKey = GlobalKey<ScaffoldMessengerState>();
-
+// A global variable to store the list of available cameras
+List<CameraDescription> cameras = [];
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -24,12 +26,15 @@ void main() async {
     // Initialize Firebase first
     await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
+    // Fetch the available cameras
+    //cameras = await availableCameras();
+
     // Then run other tasks
     await Future.wait([
       SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]),
       PrefUtils().init(),
-      analyzeImage('assets/images/Chicken-Alfredo-V3.jpg'),
-      logToFirestore(), // Call Firestore logging here only after Firebase is initialized
+      //analyzeImage('assets/images/Chicken-Alfredo-V3.jpg'),
+      //logToFirestore(), // Call Firestore logging here only after Firebase is initialized
     ]);
   } catch (e) {
     print('Error during initialization: $e');

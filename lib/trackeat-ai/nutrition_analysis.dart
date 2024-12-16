@@ -19,11 +19,13 @@ Future<void> analyzeImage(String imagePath) async {
 
     // Create the prompt
     const prompt = """
-    You are a nutrition analysis assistant. Given the image, identify the food and respond ONLY with a JSON object containing the estimated nutritional information for the serving in the picture. Do not include any text besides the JSON object.
+    You are a nutrition analysis assistant. Given the image, identify the food and respond ONLY with a structured answer containing the estimated nutritional information for the serving in the picture. 
 
-    The JSON should follow this structure:
+    The answer should follow this structure:
 
     {
+      "food": "<food_name>",
+      "serving_size": "<serving_size>",
       "calories": <integer>,
       "protein": <integer>,
       "carbs": <integer>,

@@ -15,7 +15,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  #camera: ^0.9.6+19
+  camera: any
   provider: ^6.0.5
   shared_preferences: ^2.2.0
   cached_network_image: ^3.2.3
@@ -31,6 +31,7 @@ dependencies:
   cloud_firestore: ^5.5.1
   firebase_auth: ^5.3.4
   connectivity_plus: ^6.0.2
+  permission_handler: ^11.1.0
 
 # Dev dependencies for testing and linting
 dev_dependencies:

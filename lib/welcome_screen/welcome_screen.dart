@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:camera/camera.dart';
 import '../app_theme.dart';
 import '../app_utils.dart';
 import '../routes/app_routes.dart';
 import '../widgets.dart';
 import 'welcome_provider.dart';
+import '../camera_screen/camera_screen.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({Key? key})
@@ -24,9 +27,56 @@ class WelcomeScreen extends StatefulWidget {
 }
 
 class WelcomeScreenState extends State<WelcomeScreen> {
+  late CameraDescription _cameraDescription;
+
   @override
   void initState() {
     super.initState();
+    _initializeCamera();
+  }
+
+  Future<void> _initializeCamera() async {
+  try {
+    // Request camera permission
+    var status = await Permission.camera.request();
+
+    if (status.isGranted) {
+      final cameras = await availableCameras();
+      if (cameras.isNotEmpty) {
+        _cameraDescription = cameras.first;
+      } else {
+        print("No cameras available");
+      }
+    } else if (status.isDenied || status.isPermanentlyDenied) {
+      print("Camera access permission was denied.");
+      if (status.isPermanentlyDenied) {
+        openAppSettings(); // Open settings for manual permission enabling
+      }
+    }
+  } catch (e) {
+    print("Error initializing camera: $e");
+  }
+}
+
+  Future<void> _openCamera() async {
+    if (_cameraDescription != null) {
+      final imagePath = await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => CameraScreen(camera: _cameraDescription),
+        ),
+      );
+
+      if (imagePath != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Picture saved at $imagePath')),
+        );
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Camera not available')),
+      );
+    }
   }
 
   @override
@@ -60,6 +110,7 @@ class WelcomeScreenState extends State<WelcomeScreen> {
               SizedBox(height: 84.h),
               CustomElevatedButton(
                 text: "lbl_login".tr,
+                onPressed: _openCamera, // Trigger the camera on press
               ),
               SizedBox(height: 16.h),
               Text(
