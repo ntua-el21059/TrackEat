@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../app_theme.dart';
-import '../app_utils.dart';
-import '../routes/app_routes.dart';
-import '../widgets.dart';
+import '../../theme/app_theme.dart';
+import '../../core/utils/app_utils.dart';
+import '../../routes/app_routes.dart';
+import '../../widgets/widgets.dart';
 import 'app_navigation_screen.dart';
 
 class AppNavigationModel {}

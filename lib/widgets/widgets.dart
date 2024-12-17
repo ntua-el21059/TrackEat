@@ -2,8 +2,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import '../app_theme.dart';
-import '../app_utils.dart';
+import '../theme/app_theme.dart';
+import '../core/utils/app_utils.dart';
 
 extension ImageTypeExtension on String {
   ImageType get imageType {

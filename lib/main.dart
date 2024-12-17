@@ -5,14 +5,14 @@ import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
-import 'package:trackeat/firebase_options.dart';
+import 'package:trackeat/firebase/firebase_options.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:trackeat/trackeat-ai/nutrition_analysis.dart';
 import 'package:trackeat/firebase/firestore_logger.dart';
 
-import 'app_theme.dart';
-import 'app_utils.dart';
-import 'create_account_screen/create_account_screen.dart';
+import 'theme/app_theme.dart';
+import 'core/utils/app_utils.dart';
+import 'presentation/create_account_screen/create_account_screen.dart';
 import 'routes/app_routes.dart';
 
 var globalMessengerKey = GlobalKey<ScaffoldMessengerState>();

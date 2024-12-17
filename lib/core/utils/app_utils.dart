@@ -7,7 +7,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../app_theme.dart';
+import '../../theme/app_theme.dart';
 
 final Map<String, String> enUs = {
   "lbl_email": "Email",

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import '../app_navigation_screen/app_navigation_screen.dart';
-import '../calorie_calculator_screen/calorie_calculator_screen.dart';
-import '../create_account_screen/create_account_screen.dart';
-import '../create_profile_1_2_screen/create_profile_1_2_screen.dart';
-import '../create_profile_2_2_screen/create_profile_2_2_screen.dart';
-import '../welcome_screen/welcome_screen.dart';
+import '../presentation/app_navigation_screen/app_navigation_screen.dart';
+import '../presentation/calorie_calculator_screen/calorie_calculator_screen.dart';
+import '../presentation/create_account_screen/create_account_screen.dart';
+import '../presentation/create_profile_1_2_screen/create_profile_1_2_screen.dart';
+import '../presentation/create_profile_2_2_screen/create_profile_2_2_screen.dart';
+import '../presentation/welcome_screen/welcome_screen.dart';
 
 class AppRoutes {
   static const String createAccountScreen = '/create_account_screen';
