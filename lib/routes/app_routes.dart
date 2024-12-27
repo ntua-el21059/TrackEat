@@ -1,49 +1,48 @@
 import 'package:flutter/material.dart';
-/*
-import '../presentation/accessibility_settings_screen/accessibility_settings_screen.dart';
-import '../presentation/ai_chat_camera_flash_on_screen/ai_chat_camera_flash_on_screen.dart';
-import '../presentation/ai_chat_camera_screen/ai_chat_camera_screen.dart';
-import '../presentation/ai_chat_food_logging_as_screen/ai_chat_food_logging_as_screen.dart';
-import '../presentation/ai_chat_food_logging_confirmation_screen/ai_chat_food_logging_confirmation_screen.dart';
-import '../presentation/ai_chat_food_track_successful_screen/ai_chat_food_track_successful_screen.dart';
-import '../presentation/ai_chat_info_screen/ai_chat_info_screen.dart';
-import '../presentation/ai_chat_main_screen/ai_chat_main_screen.dart';
-import '../presentation/ai_chat_photo_confirmation_screen/ai_chat_photo_confirmation_screen.dart';
-import '../presentation/ai_chat_splash_screen/ai_chat_splash_screen.dart';
-import '../presentation/app_navigation_screen/app_navigation_screen.dart';
-import '../presentation/calorie_calculator_screen/calorie_calculator_screen.dart';
-import '../presentation/challenge_award_screen/challenge_award_screen.dart';
+//import '../presentation/accessibility_settings_screen/accessibility_settings_screen.dart';
+//import '../presentation/ai_chat_camera_flash_on_screen/ai_chat_camera_flash_on_screen.dart';
+//import '../presentation/ai_chat_camera_screen/ai_chat_camera_screen.dart';
+//import '../presentation/ai_chat_food_logging_as_screen/ai_chat_food_logging_as_screen.dart';
+//import '../presentation/ai_chat_food_logging_confirmation_screen/ai_chat_food_logging_confirmation_screen.dart';
+//import '../presentation/ai_chat_food_track_successful_screen/ai_chat_food_track_successful_screen.dart';
+//import '../presentation/ai_chat_info_screen/ai_chat_info_screen.dart';
+//import '../presentation/ai_chat_main_screen/ai_chat_main_screen.dart';
+//import '../presentation/ai_chat_photo_confirmation_screen/ai_chat_photo_confirmation_screen.dart';
+//import '../presentation/ai_chat_splash_screen/ai_chat_splash_screen.dart';
+//import '../presentation/app_navigation_screen/app_navigation_screen.dart';
+//import '../presentation/calorie_calculator_screen/calorie_calculator_screen.dart';
+//import '../presentation/challenge_award_screen/challenge_award_screen.dart';
 import '../presentation/create_account_screen/create_account_screen.dart';
 import '../presentation/create_profile_1_2_screen/create_profile_1_2_screen.dart';
-import '../presentation/create_profile_2_2_screen/create_profile_2_2_screen.dart';
-import '../presentation/finalized_account_screen/finalized_account_screen.dart';
-import '../presentation/find_friends_screen/find_friends_screen.dart';
-import '../presentation/find_friends_search_screen/find_friends_search_screen.dart';
-import '../presentation/forgot_password_screen/forgot_password_screen.dart';
-import '../presentation/history_empty_breakfast_screen/history_empty_breakfast_screen.dart';
-import '../presentation/history_today_tab_screen/history_today_tab_screen.dart';
-import '../presentation/home_screen/home_screen.dart';
-import '../presentation/leaderboard_1_2_screen/leaderboard_1_2_screen.dart';
-import '../presentation/leaderboard_2_2_screen/leaderboard_2_2_screen.dart';
-import '../presentation/login_screen/login_screen.dart';
-import '../presentation/notifications_empty_notifications_screen/notifications_empty_notifications_screen.dart';
-import '../presentation/notifications_read_screen/notifications_read_screen.dart';
-import '../presentation/notifications_unread_screen/notifications_unread_screen.dart';
-import '../presentation/profile_screen/profile_screen.dart';
-import '../presentation/profile_static_calendar_open_screen/profile_static_calendar_open_screen.dart';
-import '../presentation/profile_static_height_screen/profile_static_height_screen.dart';
-import '../presentation/profile_static_keyboard_open_screen/profile_static_keyboard_open_screen.dart';
-import '../presentation/profile_static_screen/profile_static_screen.dart';
-import '../presentation/profile_static_sex_screen/profile_static_sex_screen.dart';
-import '../presentation/reset_password_screen/reset_password_screen.dart';
-import '../presentation/reward_screen_new_award_screen/reward_screen_new_award_screen.dart';
-import '../presentation/reward_screen_rings_closed_screen/reward_screen_rings_closed_screen.dart';
-import '../presentation/social_profile_message_from_profile_screen/social_profile_message_from_profile_screen.dart';
-import '../presentation/social_profile_myself_screen/social_profile_myself_screen.dart';
-import '../presentation/social_profile_others_screen/social_profile_others_screen.dart';
+//import '../presentation/create_profile_2_2_screen/create_profile_2_2_screen.dart';
+//import '../presentation/finalized_account_screen/finalized_account_screen.dart';
+//import '../presentation/find_friends_screen/find_friends_screen.dart';
+//import '../presentation/find_friends_search_screen/find_friends_search_screen.dart';
+//import '../presentation/forgot_password_screen/forgot_password_screen.dart';
+//import '../presentation/history_empty_breakfast_screen/history_empty_breakfast_screen.dart';
+//import '../presentation/history_today_tab_screen/history_today_tab_screen.dart';
+//import '../presentation/home_screen/home_screen.dart';
+//import '../presentation/leaderboard_1_2_screen/leaderboard_1_2_screen.dart';
+//import '../presentation/leaderboard_2_2_screen/leaderboard_2_2_screen.dart';
+//import '../presentation/login_screen/login_screen.dart';
+//import '../presentation/notifications_empty_notifications_screen/notifications_empty_notifications_screen.dart';
+//import '../presentation/notifications_read_screen/notifications_read_screen.dart';
+//import '../presentation/notifications_unread_screen/notifications_unread_screen.dart';
+//import '../presentation/profile_screen/profile_screen.dart';
+//import '../presentation/profile_static_calendar_open_screen/profile_static_calendar_open_screen.dart';
+//import '../presentation/profile_static_height_screen/profile_static_height_screen.dart';
+//import '../presentation/profile_static_keyboard_open_screen/profile_static_keyboard_open_screen.dart';
+//import '../presentation/profile_static_screen/profile_static_screen.dart';
+//import '../presentation/profile_static_sex_screen/profile_static_sex_screen.dart';
+//import '../presentation/reset_password_screen/reset_password_screen.dart';
+//import '../presentation/reward_screen_new_award_screen/reward_screen_new_award_screen.dart';
+//import '../presentation/reward_screen_rings_closed_screen/reward_screen_rings_closed_screen.dart';
+//import '../presentation/social_profile_message_from_profile_screen/social_profile_message_from_profile_screen.dart';
+//import '../presentation/social_profile_myself_screen/social_profile_myself_screen.dart';
+//import '../presentation/social_profile_others_screen/social_profile_others_screen.dart';
 import '../presentation/splash_screen/splash_screen.dart';
 import '../presentation/welcome_screen/welcome_screen.dart';
-*/
+
 class AppRoutes {
   static const String createAccountScreen = '/create_account_screen';
   static const String createProfile12Screen = '/create_profile_1_2_screen';
@@ -92,8 +91,8 @@ class AppRoutes {
   static const String initialRoute = '/initialRoute';
 
   static Map<String, WidgetBuilder> get routes => {
-        //createAccountScreen: CreateAccountScreen.builder,
-        //createProfile12Screen: CreateProfile12Screen.builder,
+        createAccountScreen: CreateAccountScreen.builder,
+        createProfile12Screen: CreateProfile12Screen.builder,
         //createProfile22Screen: CreateProfile22Screen.builder,
         //calorieCalculatorScreen: CalorieCalculatorScreen.builder,
         //homeScreen: HomeScreen.builder,
@@ -106,7 +105,7 @@ class AppRoutes {
         //aiChatCameraFlashOnScreen: AiChatCameraFlashOnScreen.builder,
         //aiChatPhotoConfirmationScreen: AiChatPhotoConfirmationScreen.builder,
         //splashScreen: SplashScreen.builder,
-        //welcomeScreen: WelcomeScreen.builder,
+        welcomeScreen: WelcomeScreen.builder,
         //loginScreen: LoginScreen.builder,
         //forgotPasswordScreen: ForgotPasswordScreen.builder,
         //resetPasswordScreen: ResetPasswordScreen.builder,
@@ -135,6 +134,6 @@ class AppRoutes {
         //notificationsEmptyNotificationsScreen: NotificationsEmptyNotificationsScreen.builder,
         //notificationsReadScreen: NotificationsReadScreen.builder,
         //appNavigationScreen: AppNavigationScreen.builder,
-        //initialRoute: SplashScreen.builder,
+        initialRoute: SplashScreen.builder,
       };
 }

@@ -53,6 +53,12 @@ class CustomTextStyles {
         fontSize: 19.fSize,
       );
 
+  static TextStyle get bodyLargeGray500 =>
+      theme.textTheme.bodyLarge!.copyWith(
+        color: appTheme.gray500,
+        fontSize: 16.fSize,
+      );
+
   // Body Medium
   static TextStyle get bodyMediumBlack900 =>
       theme.textTheme.bodyMedium!.copyWith(
@@ -162,5 +168,12 @@ class CustomTextStyles {
   static TextStyle get titleSmallSemiBold =>
       theme.textTheme.titleSmall!.copyWith(
         fontWeight: FontWeight.w600,
+      );
+
+  // Title Small text styles
+  static TextStyle get titleSmallBlack90015 =>
+      theme.textTheme.titleSmall!.copyWith(
+        color: appTheme.black900,
+        fontSize: 15.fSize,
       );
 }

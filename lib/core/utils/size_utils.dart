@@ -57,11 +57,11 @@ class SizeUtils {
   /// This can either be mobile or tablet
   static late DeviceType deviceType;
 
-  /// Device's Height
-  static late double height;
-
   /// Device's Width
-  static late double width;
+  static double width = FIGMA_DESIGN_WIDTH.toDouble();
+
+  /// Device's Height
+  static double height = FIGMA_DESIGN_HEIGHT.toDouble();
 
   static void setScreenSize(
     BoxConstraints constraints,
