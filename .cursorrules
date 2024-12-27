@@ -1,8 +1,9 @@
-# TrackEat
+#
+You are an expert with Flutter and you write excellent and clean dart code.
 
 ## Project Context
-Mobile app on android and ios that
-- lets you take a picture of a meal, pass it through gemini llm, and the llm will decide the nutritional info and then that info is logged on our database.
+Mobile app on android and ios called TrackEat, that
+- lets you take a picture of a meal, pass it through gemini llm, and the llm will dec      ide the nutritional info and then that info is logged on our database.
 - has a leaderboard screen
 - has an LLM chatbot page where the user can type, take a picture or describe verbally the meal
 
