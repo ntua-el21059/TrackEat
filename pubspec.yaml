@@ -15,7 +15,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  camera: any
+  camera: ^0.10.5+9
   provider: ^6.0.5
   shared_preferences: ^2.2.0
   cached_network_image: ^3.2.3
@@ -23,13 +23,13 @@ dependencies:
   flutter_localizations:
     sdk: flutter
   cupertino_icons: ^1.0.5
-  async: 2.11.0 # Match the version required by flutter_test
-  intl: ^0.19.0 # Align with flutter_localizations constraint
+  async: 2.11.0
+  intl: ^0.19.0
   google_generative_ai: ^0.4.6
   flutter_markdown: ^0.7.4+2
-  firebase_core: ^3.8.1
-  cloud_firestore: ^5.5.1
-  firebase_auth: ^5.3.4
+  firebase_core: ^2.24.2
+  cloud_firestore: ^4.14.0
+  firebase_auth: ^4.16.0
   connectivity_plus: ^6.0.2
   permission_handler: ^11.1.0
 
