@@ -33,7 +33,7 @@ class BlurEditItemWidget extends StatelessWidget {
                 SizedBox(height: 2.h),
                 Text(
                   blurEditItemModelObj.protein!,
-                  style: CustomTextStyles.bodyLargeBlack90016_1,
+                  style: CustomTextStyles.bodyLargeBlack90016,
                 )
               ],
             ),

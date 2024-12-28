@@ -28,7 +28,7 @@ class HistorytodayItemWidget extends StatelessWidget {
                 ),
                 Text(
                   historytodayItemModelObj.protein!,
-                  style: CustomTextStyles.bodyLargeBlack90016_1,
+                  style: CustomTextStyles.bodyLargeBlack90016,
                 ),
               ],
             ),

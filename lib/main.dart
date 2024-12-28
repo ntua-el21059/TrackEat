@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
-import 'package:google_sign_in/google_sign_in.dart';
 import 'core/app_export.dart';
 import 'providers/user_provider.dart';
 import 'services/firebase/auth/auth_provider.dart' as app_auth;

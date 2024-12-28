@@ -74,7 +74,9 @@ class BlurChooseActionScreenDialogState extends State<BlurChooseActionScreenDial
                   CustomOutlinedButton(
                     height: 24.h,
                     text: "Delete",
-                    buttonTextStyle: CustomTextStyles.bodyLargeRedA70001,
+                    buttonTextStyle: theme.textTheme.bodyLarge!.copyWith(
+                      color: appTheme.redA70001,
+                    ),
                   )
                 ],
               ),

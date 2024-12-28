@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../../../core/app_export.dart';
 import '../../../theme/custom_button_style.dart';
 import '../../../widgets/custom_elevated_button.dart';
-import 'models/welcome_model.dart';
 import 'provider/welcome_provider.dart';
 
 class WelcomeScreen extends StatefulWidget {

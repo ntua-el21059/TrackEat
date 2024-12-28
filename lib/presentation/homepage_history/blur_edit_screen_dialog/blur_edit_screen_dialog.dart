@@ -101,7 +101,7 @@ class BlurEditScreenDialogState extends State<BlurEditScreenDialog> {
       text: "Save and Exit",
       margin: EdgeInsets.only(right: 72.h),
       buttonStyle: CustomButtonStyles.fillPrimaryTL14,
-      buttonTextStyle: CustomTextStyles.labelLargeMedium,
+      buttonTextStyle: CustomTextStyles.labelLargeBlack900,
     );
   }
 
@@ -131,7 +131,7 @@ class BlurEditScreenDialogState extends State<BlurEditScreenDialog> {
                       padding: EdgeInsets.only(right: 10.h),
                       child: Text(
                         "Vegan bacon cheeseburger",
-                        style: CustomTextStyles.titleMediumBlack900,
+                        style: CustomTextStyles.titleMediumGray90001Bold,
                       ),
                     ),
                     SizedBox(

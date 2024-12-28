@@ -58,7 +58,7 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> {
                     alignment: Alignment.center,
                     child: Text(
                       "WED, SEPTEMBER 7".toUpperCase(),
-                      style: CustomTextStyles.labelLargeBluegray400,
+                      style: CustomTextStyles.labelLargeSFProBluegray400,
                     ),
                   ),
                   SizedBox(height: 12.h),
@@ -68,7 +68,7 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> {
                     padding: EdgeInsets.only(left: 18.h),
                     child: Text(
                       "Breakfast",
-                      style: CustomTextStyles.headlineSmallSFPro_1,
+                      style: CustomTextStyles.headlineSmallBold,
                     ),
                   ),
                   SizedBox(height: 6.h),
@@ -78,7 +78,7 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> {
                     padding: EdgeInsets.only(left: 18.h),
                     child: Text(
                       "Lunch",
-                      style: CustomTextStyles.headlineSmall_1,
+                      style: CustomTextStyles.headlineSmallBold,
                     ),
                   ),
                   SizedBox(height: 4.h),
@@ -265,7 +265,7 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> {
                       ),
                       Container(
                         width: double.maxFinite,
-                        decoration: AppDecoration.column8,
+                        decoration: AppDecoration.outlineBlue100,
                         child: Column(
                           mainAxisSize: MainAxisSize.max,
                           children: [
@@ -281,7 +281,7 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> {
                                 children: [
                                   Container(
                                     width: double.maxFinite,
-                                    decoration: AppDecoration.column9,
+                                    decoration: AppDecoration.outlineBlue100,
                                     child: Column(
                                       children: [
                                         Container(
@@ -490,4 +490,94 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> {
                 ),
                 CustomIconButton(
                   height: 30.h,
-                  width
+                  width: 30.h,
+                  padding: EdgeInsets.all(2.h),
+                  decoration: IconButtonStyleHelper.outlineBlue,
+                  child: CustomImageView(
+                    imagePath: ImageConstant.imgLinearEssentional,
+                  ),
+                )
+              ],
+            ),
+          ),
+          SizedBox(height: 20.h),
+          Container(
+            margin: EdgeInsets.only(
+              left: 16.h,
+              right: 28.h,
+            ),
+            width: double.maxFinite,
+            child: Consumer<HistoryTodayTabProvider>(
+              builder: (context, provider, child) {
+                return SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Wrap(
+                    direction: Axis.horizontal,
+                    spacing: 62.h,
+                    children: List.generate(
+                      provider
+                          .historyTodayTabModelObj.historytodayItemList.length,
+                      (index) {
+                        HistorytodayItemModel model = provider
+                            .historyTodayTabModelObj
+                            .historytodayItemList[index];
+                        return HistorytodayItemWidget(
+                          model,
+                        );
+                      },
+                    ),
+                  ),
+                );
+              },
+            ),
+          )
+        ],
+      ),
+    );
+  }
+
+  /// Section Widget
+  Widget _buildNumberandunit(BuildContext context, {
+    required String p45seventyOne,
+    required String gOne,
+  }) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          p45seventyOne,
+          style: CustomTextStyles.bodyLargeBlack900.copyWith(
+            color: appTheme.black900.withAlpha(122),
+          ),
+        ),
+        Text(
+          gOne,
+          style: CustomTextStyles.bodyLargeBlack900.copyWith(
+            color: appTheme.black900.withAlpha(122),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Section Widget
+  Widget _buildColumnveganbaco(BuildContext context, {
+    required String veganbaconOne,
+    required String weightOne,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          veganbaconOne,
+          style: CustomTextStyles.titleMediumGray90001Bold,
+        ),
+        SizedBox(height: 4.h),
+        Text(
+          weightOne,
+          style: CustomTextStyles.bodyLargeGray900,
+        ),
+      ],
+    );
+  }
+}

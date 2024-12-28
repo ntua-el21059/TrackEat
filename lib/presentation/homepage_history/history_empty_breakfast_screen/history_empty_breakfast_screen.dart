@@ -56,7 +56,7 @@ class HistoryEmptyBreakfastScreenState extends State<HistoryEmptyBreakfastScreen
                   alignment: Alignment.center,
                   child: Text(
                     "WED, SEPTEMBER 7".toUpperCase(),
-                    style: CustomTextStyles.labelLargeBluegray400,
+                    style: CustomTextStyles.labelLargeSFProBluegray400,
                   ),
                 ),
                 SizedBox(height: 12.h),
@@ -66,7 +66,7 @@ class HistoryEmptyBreakfastScreenState extends State<HistoryEmptyBreakfastScreen
                   padding: EdgeInsets.only(left: 18.h),
                   child: Text(
                     "Breakfast",
-                    style: CustomTextStyles.headlineSmall_1,
+                    style: CustomTextStyles.headlineSmallBold,
                   ),
                 ),
                 SizedBox(height: 4.h),
@@ -76,7 +76,7 @@ class HistoryEmptyBreakfastScreenState extends State<HistoryEmptyBreakfastScreen
                   padding: EdgeInsets.only(left: 18.h),
                   child: Text(
                     "Lunch",
-                    style: CustomTextStyles.headlineSmall_1,
+                    style: CustomTextStyles.headlineSmallBold,
                   ),
                 ),
                 SizedBox(height: 6.h),

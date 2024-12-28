@@ -28,7 +28,7 @@ class ListviewItemWidget extends StatelessWidget {
                 ),
                 Text(
                   listviewItemModelObj.protein!,
-                  style: CustomTextStyles.bodyLargeBlack90016_1,
+                  style: CustomTextStyles.bodyLargeBlack90016,
                 )
               ],
             ),
