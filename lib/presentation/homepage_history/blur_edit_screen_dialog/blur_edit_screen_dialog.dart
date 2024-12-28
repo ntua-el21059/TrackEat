@@ -3,7 +3,12 @@ import '../../../core/app_export.dart';
 import '../../../widgets/custom_outlined_button.dart';
 
 class BlurEditScreenDialog extends StatelessWidget {
-  const BlurEditScreenDialog({Key? key}) : super(key: key);
+  const BlurEditScreenDialog({
+    Key? key,
+    required this.mealName,
+  }) : super(key: key);
+
+  final String mealName;
 
   @override
   Widget build(BuildContext context) {
@@ -27,19 +32,18 @@ class BlurEditScreenDialog extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Expanded(
-                  child: Text(
-                    "Vegan bacon cheeseburger",
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black,
-                    ),
+                const SizedBox(width: 24),
+                Text(
+                  mealName,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black,
                   ),
                 ),
                 GestureDetector(
                   onTap: () => Navigator.pop(context),
-                  child: Icon(Icons.close, size: 20),
+                  child: Icon(Icons.close, size: 24),
                 ),
               ],
             ),
@@ -184,7 +188,7 @@ class BlurEditScreenDialog extends StatelessWidget {
     );
   }
 
-  static Widget builder(BuildContext context) {
-    return BlurEditScreenDialog();
+  static Widget builder(BuildContext context, String mealName) {
+    return BlurEditScreenDialog(mealName: mealName);
   }
 }

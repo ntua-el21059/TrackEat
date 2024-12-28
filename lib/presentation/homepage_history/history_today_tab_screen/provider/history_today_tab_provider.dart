@@ -10,9 +10,20 @@ import '../models/historytoday_item_model.dart';
 // ignore_for_file: must_be_immutable
 class HistoryTodayTabProvider extends ChangeNotifier {
   HistoryTodayTabModel historyTodayTabModelObj = HistoryTodayTabModel();
+  bool hasBreakfast = true;
+  bool hasLunch = true;
 
   @override
   void dispose() {
     super.dispose();
+  }
+
+  void deleteMeal(String mealType) {
+    if (mealType == 'breakfast') {
+      hasBreakfast = false;
+    } else if (mealType == 'lunch') {
+      hasLunch = false;
+    }
+    notifyListeners();
   }
 }

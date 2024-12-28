@@ -3,10 +3,20 @@ import '../../../core/app_export.dart';
 import '../../../theme/custom_button_style.dart';
 import '../../../widgets/custom_outlined_button.dart';
 import '../blur_edit_screen_dialog/blur_edit_screen_dialog.dart';
-import '../history_empty_breakfast_screen/history_empty_breakfast_screen.dart';
+import '../history_today_tab_screen/provider/history_today_tab_provider.dart';
+import 'package:provider/provider.dart';
 
 class BlurChooseActionScreenDialog extends StatelessWidget {
-  const BlurChooseActionScreenDialog({Key? key}) : super(key: key);
+  const BlurChooseActionScreenDialog({
+    Key? key, 
+    required this.mealType,
+    required this.onDelete,
+    required this.mealName,
+  }) : super(key: key);
+  
+  final String mealType;
+  final VoidCallback onDelete;
+  final String mealName;
 
   @override
   Widget build(BuildContext context) {
@@ -65,7 +75,7 @@ class BlurChooseActionScreenDialog extends StatelessWidget {
                 Navigator.pop(context);
                 showDialog(
                   context: context,
-                  builder: (context) => BlurEditScreenDialog(),
+                  builder: (context) => BlurEditScreenDialog.builder(context, mealName),
                 );
               },
             ),
@@ -86,15 +96,7 @@ class BlurChooseActionScreenDialog extends StatelessWidget {
                 fontSize: 16,
                 color: Colors.red,
               ),
-              onPressed: () {
-                Navigator.pop(context);
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => HistoryEmptyBreakfastScreen.builder(context),
-                  ),
-                );
-              },
+              onPressed: onDelete,
             ),
             SizedBox(height: 8.h),
           ],
@@ -103,7 +105,7 @@ class BlurChooseActionScreenDialog extends StatelessWidget {
     );
   }
 
-  static Widget builder(BuildContext context) {
-    return BlurChooseActionScreenDialog();
+  static Widget builder(BuildContext context, String mealType, VoidCallback onDelete, String mealName) {
+    return BlurChooseActionScreenDialog(mealType: mealType, onDelete: onDelete, mealName: mealName);
   }
 }

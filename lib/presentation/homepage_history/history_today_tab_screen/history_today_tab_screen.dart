@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import '../../../core/app_export.dart';
+import '../../../core/utils/date_time_utils.dart';
 import '../../../theme/app_decoration.dart';
 import '../../../theme/custom_text_style.dart';
 import '../../../widgets/app_bar/appbar_leading_image.dart';
 import '../../../widgets/app_bar/appbar_subtitle.dart';
 import '../../../widgets/app_bar/custom_app_bar.dart';
+import '../../../widgets/custom_icon_button.dart';
 import '../../../widgets/custom_image_view.dart';
 import '../blur_choose_action_screen_dialog/blur_choose_action_screen_dialog.dart';
 import 'models/history_today_tab_model.dart';
@@ -60,7 +62,7 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> {
                   Align(
                     alignment: Alignment.center,
                     child: Text(
-                      "WED, SEPTEMBER 7".toUpperCase(),
+                      DateTimeUtils.getCurrentDate().toUpperCase(),
                       style: CustomTextStyles.labelLargeSFProBluegray400,
                     ),
                   ),
@@ -75,7 +77,13 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> {
                     ),
                   ),
                   SizedBox(height: 6.h),
-                  _buildColumnlinear(context),
+                  Consumer<HistoryTodayTabProvider>(
+                    builder: (context, provider, child) {
+                      return provider.hasBreakfast 
+                        ? _buildColumnlinear(context)
+                        : _buildEmptyBreakfast(context);
+                    }
+                  ),
                   SizedBox(height: 24.h),
                   Padding(
                     padding: EdgeInsets.only(left: 18.h),
@@ -85,7 +93,13 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> {
                     ),
                   ),
                   SizedBox(height: 4.h),
-                  _buildColumnlinear1(context)
+                  Consumer<HistoryTodayTabProvider>(
+                    builder: (context, provider, child) {
+                      return provider.hasLunch 
+                        ? _buildColumnlinear1(context)
+                        : _buildEmptyLunch(context);
+                    }
+                  ),
                 ],
               ),
             ),
@@ -103,10 +117,13 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> {
       leading: AppbarLeadingImage(
         imagePath: ImageConstant.imgArrowLeftPrimary,
         margin: EdgeInsets.only(left: 8.h),
+        onTap: () {
+          Navigator.pop(context);
+        },
       ),
       title: AppbarSubtitle(
         text: "Home",
-        margin: EdgeInsets.only(left: 7.h),
+        margin: EdgeInsets.only(left: 4.h),
       ),
     );
   }
@@ -285,10 +302,19 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> {
                 ),
                 child: GestureDetector(
                   onTap: () {
+                    final provider = context.read<HistoryTodayTabProvider>();
                     showDialog(
                       context: context,
-                      builder: (BuildContext context) {
-                        return BlurChooseActionScreenDialog.builder(context);
+                      builder: (BuildContext dialogContext) {
+                        return BlurChooseActionScreenDialog.builder(
+                          dialogContext,
+                          'breakfast',
+                          () {
+                            provider.deleteMeal('breakfast');
+                            Navigator.pop(dialogContext);
+                          },
+                          'Salad',
+                        );
                       },
                     );
                   },
@@ -437,10 +463,19 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> {
                 ),
                 child: GestureDetector(
                   onTap: () {
+                    final provider = context.read<HistoryTodayTabProvider>();
                     showDialog(
                       context: context,
-                      builder: (BuildContext context) {
-                        return BlurChooseActionScreenDialog.builder(context);
+                      builder: (BuildContext dialogContext) {
+                        return BlurChooseActionScreenDialog.builder(
+                          dialogContext,
+                          'lunch',
+                          () {
+                            provider.deleteMeal('lunch');
+                            Navigator.pop(dialogContext);
+                          },
+                          'Vegan bacon cheeseburger',
+                        );
                       },
                     );
                   },
@@ -520,6 +555,74 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> {
           style: CustomTextStyles.bodyLargeGray900,
         ),
       ],
+    );
+  }
+
+  Widget _buildEmptyBreakfast(BuildContext context) {
+    return Container(
+      width: double.maxFinite,
+      margin: EdgeInsets.only(
+        left: 18.h,
+        right: 26.h,
+      ),
+      padding: EdgeInsets.all(16.h),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFB2D7FF)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            "You haven't logged your breakfast yet.",
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.black87,
+            ),
+          ),
+          SizedBox(height: 8.h),
+          CustomIconButton(
+            height: 48.h,
+            width: 48.h,
+            child: Icon(Icons.add, color: Colors.black87),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyLunch(BuildContext context) {
+    return Container(
+      width: double.maxFinite,
+      margin: EdgeInsets.only(
+        left: 18.h,
+        right: 26.h,
+      ),
+      padding: EdgeInsets.all(16.h),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFB2D7FF)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            "You haven't logged your lunch yet.",
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.black87,
+            ),
+          ),
+          SizedBox(height: 12.h),
+          CustomIconButton(
+            height: 48.h,
+            width: 48.h,
+            child: Icon(Icons.add, color: Colors.black87),
+          ),
+        ],
+      ),
     );
   }
 }
