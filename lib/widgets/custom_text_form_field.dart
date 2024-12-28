@@ -49,7 +49,7 @@ class CustomTextFormField extends StatelessWidget {
     this.readOnly = false,
     this.onTap,
     this.textInputAction = TextInputAction.next,
-    this.textInputType = TextInputType.text,
+    TextInputType? textInputType,
     this.maxLines,
     this.hintText,
     this.hintStyle,
@@ -62,7 +62,8 @@ class CustomTextFormField extends StatelessWidget {
     this.fillColor,
     this.filled = false,
     this.validator,
-  }) : super(key: key);
+  }) : textInputType = textInputType ?? TextInputType.text, 
+       super(key: key);
 
   final Alignment? alignment;
   final double? width;
@@ -127,6 +128,8 @@ class CustomTextFormField extends StatelessWidget {
           maxLines: maxLines ?? 1,
           decoration: decoration,
           validator: validator,
+          enableInteractiveSelection: true,
+          showCursor: true,
         ),
       );
 

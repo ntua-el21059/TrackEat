@@ -6,7 +6,7 @@ class ImageConstant {
   // Common images
   static String imgArrowLeftGray900 = '$imagePath/img_arrow_left_gray_900.svg';
   static String imgLogo = '$imagePath/img_logo.png';
-  static String imgIconEye = '$imagePath/img_icon_eye.svg';
+  static String imgIconEye = '$imagePath/img_icon_eye.png';
   static String img = '$imagePath/img_.png';
   static String imgBoy1 = '$imagePath/img_boy_1.png';
   static String imgNotification = '$imagePath/img_notification.png';
@@ -46,7 +46,7 @@ class ImageConstant {
   static String imgCloseGray50003 = '$imagePath/img_close_gray_500_03.svg';
   static String imgIconEyeGray500 = '$imagePath/img_icon_eye_gray_500.svg';
   static String imgCheckmark = '$imagePath/img_checkmark.svg';
-  static String imgGoogle = '$imagePath/img_google.svg';
+  static String imgGoogle = '$imagePath/Google.svg';
   static String imgImage15 = '$imagePath/img_image_15.png';
   static String imgSirianimationshaky1 =
       '$imagePath/img_sirianimationshaky_1.png';
