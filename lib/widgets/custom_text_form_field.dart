@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../core/app_export.dart';
 
 extension TextFormFieldStyleHelper on CustomTextFormField {
@@ -116,20 +117,30 @@ class CustomTextFormField extends StatelessWidget {
               FocusManager.instance.primaryFocus?.unfocus();
             }
           },
+          onTap: () {
+            onTap?.call();
+            // Request focus when tapped to show keyboard
+            FocusScope.of(context).requestFocus(focusNode);
+          },
           autofocus: autofocus!,
           style: textStyle ?? CustomTextStyles.bodyLargeGray900,
           obscureText: obscureText!,
           readOnly: readOnly!,
-          onTap: () {
-            onTap?.call();
-          },
           textInputAction: textInputAction,
           keyboardType: textInputType,
           maxLines: maxLines ?? 1,
           decoration: decoration,
           validator: validator,
-          enableInteractiveSelection: true,
+          enableInteractiveSelection: false,
           showCursor: true,
+          contextMenuBuilder: null,
+          selectionControls: null,
+          toolbarOptions: const ToolbarOptions(
+            copy: false,
+            cut: false,
+            paste: false,
+            selectAll: false,
+          ),
         ),
       );
 

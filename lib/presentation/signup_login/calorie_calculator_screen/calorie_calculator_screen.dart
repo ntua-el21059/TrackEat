@@ -5,8 +5,12 @@ import '../../../widgets/app_bar/appbar_leading_image.dart';
 import '../../../widgets/app_bar/custom_app_bar.dart';
 import '../../../widgets/custom_elevated_button.dart';
 import '../../../widgets/custom_text_form_field.dart';
+import '../../../providers/user_provider.dart';
+import '../../../services/firebase/auth/auth_provider.dart' as app_auth;
 import 'models/calorie_calculator_model.dart';
 import 'provider/calorie_calculator_provider.dart';
+import 'package:provider/provider.dart';
+import '../../../services/firebase/firestore/firestore_service.dart';
 
 class CalorieCalculatorScreen extends StatefulWidget {
   const CalorieCalculatorScreen({Key? key}) : super(key: key);
@@ -26,6 +30,17 @@ class CalorieCalculatorScreenState extends State<CalorieCalculatorScreen> {
   @override
   void initState() {
     super.initState();
+    
+    // Pre-fill data from UserProvider
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final provider = Provider.of<CalorieCalculatorProvider>(context, listen: false);
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      final user = userProvider.user;
+      
+      if (user.dailyCalories != null) {
+        provider.zipcodeController.text = user.dailyCalories!.toString();
+      }
+    });
   }
 
   @override
@@ -42,7 +57,7 @@ class CalorieCalculatorScreenState extends State<CalorieCalculatorScreen> {
           child: Column(
             children: [
               Text(
-                "Let’s complete your profile (3/3)",
+                "Let's complete your profile (3/3)",
                 style: theme.textTheme.headlineSmall,
               ),
               SizedBox(height: 60.h),
@@ -51,8 +66,10 @@ class CalorieCalculatorScreenState extends State<CalorieCalculatorScreen> {
                 maxLines: 5,
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.center,
-                style: CustomTextStyles.bodyLargeBlack90016_3.copyWith(
+                style: theme.textTheme.bodyLarge?.copyWith(
                   height: 1.38,
+                  color: Colors.black87,
+                  fontSize: 16,
                 ),
               ),
               SizedBox(height: 78.h),
@@ -73,7 +90,7 @@ class CalorieCalculatorScreenState extends State<CalorieCalculatorScreen> {
                   builder: (context, zipcodeController, child) {
                     return CustomTextFormField(
                       controller: zipcodeController,
-                      hintText: "2500",
+                      hintText: "2400",
                       hintStyle: CustomTextStyles.bodyLargeGray500,
                       textInputAction: TextInputAction.done,
                       contentPadding: EdgeInsets.symmetric(
@@ -93,6 +110,90 @@ class CalorieCalculatorScreenState extends State<CalorieCalculatorScreen> {
                 buttonStyle: CustomButtonStyles.fillPrimary,
                 buttonTextStyle: theme.textTheme.titleMedium!,
                 alignment: Alignment.centerRight,
+                onPressed: () async {
+                  final provider = Provider.of<CalorieCalculatorProvider>(context, listen: false);
+                  final userProvider = Provider.of<UserProvider>(context, listen: false);
+                  final authProvider = Provider.of<app_auth.AuthProvider>(context, listen: false);
+                  
+                  // Parse calories
+                  int? calories = int.tryParse(provider.zipcodeController.text);
+                  if (calories == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Please enter a valid calorie value')),
+                    );
+                    return;
+                  }
+                  
+                  // Save calories to UserProvider
+                  userProvider.setDailyCalories(calories);
+                  
+                  try {
+                    print('Starting user creation process...');
+                    print('User data to be saved: ${userProvider.user.toJson()}');
+                    
+                    // Create Firebase Auth user first
+                    final success = await authProvider.signUp(
+                      userProvider.user.email!,
+                      userProvider.user.password!,
+                    );
+                    
+                    if (!success) {
+                      print('Failed to create Firebase Auth user. Error: ${authProvider.lastError}');
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(authProvider.lastError ?? 'Failed to create account'),
+                          duration: Duration(seconds: 5),
+                        ),
+                      );
+                      return;
+                    }
+                    
+                    print('Successfully created Firebase Auth user');
+                    
+                    // Wait a moment for Auth to complete
+                    await Future.delayed(Duration(seconds: 1));
+                    
+                    // Test Firestore connection
+                    final firestoreService = FirestoreService();
+                    final isConnected = await firestoreService.testConnection();
+                    if (!isConnected) {
+                      print('Failed to connect to Firestore');
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Cannot connect to database. Please check your internet connection.'),
+                          duration: Duration(seconds: 5),
+                        ),
+                      );
+                      return;
+                    }
+                    print('Firestore connection test passed');
+                    
+                    // Try to save directly using FirestoreService instead of UserProvider
+                    try {
+                      await firestoreService.createUser(userProvider.user);
+                      print('Successfully saved user data to Firestore');
+                      
+                      // Navigate to finalized account screen
+                      Navigator.pushNamed(context, AppRoutes.finalizedAccountScreen);
+                    } catch (firestoreError) {
+                      print('Error saving to Firestore: $firestoreError');
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Error saving user data: ${firestoreError.toString()}'),
+                          duration: Duration(seconds: 5),
+                        ),
+                      );
+                    }
+                  } catch (e) {
+                    print('Error in account creation process: $e');
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Error creating account: ${e.toString()}'),
+                        duration: Duration(seconds: 5),
+                      ),
+                    );
+                  }
+                },
               ),
               SizedBox(height: 48.h)
             ],
@@ -102,16 +203,19 @@ class CalorieCalculatorScreenState extends State<CalorieCalculatorScreen> {
     );
   }
 
-  /// Section Widget
+  /// AppBar Widget
   PreferredSizeWidget _buildAppbar(BuildContext context) {
     return CustomAppBar(
       height: 28.h,
       leadingWidth: 31.h,
       leading: AppbarLeadingImage(
-        imagePath: ImageConstant.imgArrowLeftGray900,
-        height: 24.h,
-        width: 24.h,
+        imagePath: ImageConstant.imgArrowLeft,
+        height: 20.h,
+        width: 20.h,
         margin: EdgeInsets.only(left: 7.h),
+        onTap: () {
+          Navigator.pop(context);
+        },
       ),
     );
   }

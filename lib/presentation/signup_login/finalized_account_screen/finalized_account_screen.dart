@@ -65,6 +65,13 @@ class FinalizedAccountScreenState extends State<FinalizedAccountScreen> {
                 text: "Press to get started",
                 buttonStyle: CustomButtonStyles.fillPrimary,
                 buttonTextStyle: theme.textTheme.titleMedium!,
+                onPressed: () {
+                  Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    AppRoutes.homeScreen,
+                    (route) => false,
+                  );
+                },
               )
             ],
           ),

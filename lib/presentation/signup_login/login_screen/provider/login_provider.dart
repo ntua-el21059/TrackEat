@@ -13,13 +13,14 @@ class LoginProvider extends ChangeNotifier {
   LoginModel loginModelObj = LoginModel();
 
   bool isShowPassword = true;
-  bool keepmesignedin = false;
+  bool? keepmesignedin = false;
+  bool _isLoading = false;
 
-  @override
-  void dispose() {
-    userNameController.dispose();
-    passwordtwoController.dispose();
-    super.dispose();
+  bool get isLoading => _isLoading;
+
+  void setLoading(bool value) {
+    _isLoading = value;
+    notifyListeners();
   }
 
   void changePasswordVisibility() {
@@ -27,8 +28,15 @@ class LoginProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void changeCheckBox(bool value) {
+  void changeCheckBox(bool? value) {
     keepmesignedin = value;
     notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    userNameController.dispose();
+    passwordtwoController.dispose();
+    super.dispose();
   }
 }

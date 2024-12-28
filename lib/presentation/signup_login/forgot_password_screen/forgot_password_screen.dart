@@ -54,8 +54,9 @@ class ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.center,
-                style: CustomTextStyles.bodyLargeBlack90016_3.copyWith(
+                style: theme.textTheme.bodyLarge?.copyWith(
                   height: 1.38,
+                  color: Colors.black87,
                 ),
               ),
               Spacer(
@@ -92,6 +93,9 @@ class ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 text: "Continue",
                 buttonStyle: CustomButtonStyles.fillPrimary,
                 buttonTextStyle: theme.textTheme.titleMedium!,
+                onPressed: () {
+                  Navigator.pushNamed(context, AppRoutes.resetPasswordScreen);
+                },
               ),
               Spacer(
                 flex: 78,
@@ -103,15 +107,19 @@ class ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     );
   }
 
-  /// Section Widget
+  /// AppBar Widget
   PreferredSizeWidget _buildAppbar(BuildContext context) {
     return CustomAppBar(
+      height: 28.h,
       leadingWidth: 31.h,
       leading: AppbarLeadingImage(
-        imagePath: ImageConstant.imgArrowLeftGray900,
-        height: 24.h,
-        width: 24.h,
+        imagePath: ImageConstant.imgArrowLeft,
+        height: 20.h,
+        width: 20.h,
         margin: EdgeInsets.only(left: 7.h),
+        onTap: () {
+          Navigator.pop(context);
+        },
       ),
     );
   }

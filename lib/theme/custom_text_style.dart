@@ -187,6 +187,11 @@ class CustomTextStyles {
         fontWeight: FontWeight.w400,
       );
 
+  static TextStyle get titleLargeLimeA700 =>
+      theme.textTheme.titleLarge!.copyWith(
+        color: appTheme.limeA700,
+      );
+
   static TextStyle get titleMediumGray400 =>
       theme.textTheme.titleMedium!.copyWith(
         color: appTheme.gray400,
@@ -195,6 +200,11 @@ class CustomTextStyles {
   static TextStyle get titleMediumGray50003 =>
       theme.textTheme.titleMedium!.copyWith(
         color: appTheme.gray50003,
+      );
+
+  static TextStyle get titleMediumLimeA700 =>
+      theme.textTheme.titleMedium!.copyWith(
+        color: appTheme.limeA700,
       );
 
   static TextStyle get titleMediumLatoGray90001 =>
@@ -220,5 +230,27 @@ class CustomTextStyles {
       theme.textTheme.titleSmall!.copyWith(
         color: appTheme.black900,
         fontSize: 15.fSize,
+      );
+
+  static TextStyle get titleMediumGray90001Bold =>
+      theme.textTheme.titleMedium!.copyWith(
+        color: appTheme.gray90001,
+        fontWeight: FontWeight.w700,
+      );
+
+  static TextStyle get labelMediumRed900 =>
+      theme.textTheme.labelMedium!.copyWith(
+        color: appTheme.red900,
+      );
+
+  static TextStyle get bodyLargeBlack90016_2 =>
+      theme.textTheme.bodyLarge!.copyWith(
+        color: appTheme.black900,
+        fontSize: 16.fSize,
+      );
+
+  static TextStyle get labelMediumOnErrorContainer_1 =>
+      theme.textTheme.labelMedium!.copyWith(
+        color: theme.colorScheme.onErrorContainer,
       );
 }

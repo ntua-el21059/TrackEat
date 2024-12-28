@@ -10,16 +10,18 @@ import 'package:flutter/material.dart';
 //import '../presentation/ai_chat_photo_confirmation_screen/ai_chat_photo_confirmation_screen.dart';
 //import '../presentation/ai_chat_splash_screen/ai_chat_splash_screen.dart';
 //import '../presentation/app_navigation_screen/app_navigation_screen.dart';
-//import '../presentation/calorie_calculator_screen/calorie_calculator_screen.dart';
+import '../presentation/signup_login/calorie_calculator_screen/calorie_calculator_screen.dart';
 //import '../presentation/challenge_award_screen/challenge_award_screen.dart';
 import '../presentation/signup_login/create_account_screen/create_account_screen.dart';
 import '../presentation/signup_login/create_profile_1_2_screen/create_profile_1_2_screen.dart';
 import '../presentation/signup_login/create_profile_2_2_screen/create_profile_2_2_screen.dart';
 import '../presentation/signup_login/finalized_account_screen/finalized_account_screen.dart';
+import '../presentation/signup_login/forgot_password_screen/forgot_password_screen.dart';
 import '../presentation/signup_login/login_screen/login_screen.dart';
 import '../presentation/signup_login/reset_password_screen/reset_password_screen.dart';
 import '../presentation/signup_login/splash_screen/splash_screen.dart';
 import '../presentation/signup_login/welcome_screen/welcome_screen.dart';
+import '../presentation/homepage_history/home_screen/home_screen.dart';
 
 class AppRoutes {
   static const String createAccountScreen = '/create_account_screen';
@@ -74,9 +76,12 @@ class AppRoutes {
         createAccountScreen: CreateAccountScreen.builder,
         createProfile12Screen: CreateProfile12Screen.builder,
         createProfile22Screen: CreateProfile22Screen.builder,
+        calorieCalculatorScreen: CalorieCalculatorScreen.builder,
         loginScreen: LoginScreen.builder,
+        forgotPasswordScreen: ForgotPasswordScreen.builder,
         resetPasswordScreen: ResetPasswordScreen.builder,
         finalizedAccountScreen: FinalizedAccountScreen.builder,
+        homeScreen: HomeScreen.builder,
         initialRoute: SplashScreen.builder,
       };
 }

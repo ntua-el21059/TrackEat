@@ -5,8 +5,10 @@ import '../../../widgets/app_bar/appbar_leading_image.dart';
 import '../../../widgets/app_bar/custom_app_bar.dart';
 import '../../../widgets/custom_elevated_button.dart';
 import '../../../widgets/custom_text_form_field.dart';
+import '../../../providers/user_provider.dart';
 import 'models/create_profile_1_2_model.dart';
 import 'provider/create_profile_1_2_provider.dart';
+import 'package:provider/provider.dart';
 
 class CreateProfile12Screen extends StatefulWidget {
   const CreateProfile12Screen({Key? key}) : super(key: key);
@@ -29,6 +31,18 @@ class CreateProfile12ScreenState extends State<CreateProfile12Screen> {
   @override
   void initState() {
     super.initState();
+    
+    // Pre-fill data from UserProvider
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final provider = Provider.of<CreateProfile12Provider>(context, listen: false);
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      final user = userProvider.user;
+      
+      if (user.firstName != null) provider.firstNameController.text = user.firstName!;
+      if (user.lastName != null) provider.lastNameController.text = user.lastName!;
+      if (user.birthdate != null) provider.dateController.text = user.birthdate!;
+      if (user.gender != null) provider.gendertwoController.text = user.gender!;
+    });
   }
 
   @override
@@ -299,6 +313,28 @@ class CreateProfile12ScreenState extends State<CreateProfile12Screen> {
       buttonTextStyle: theme.textTheme.titleMedium!,
       alignment: Alignment.centerRight,
       onPressed: () {
+        final provider = Provider.of<CreateProfile12Provider>(context, listen: false);
+        final userProvider = Provider.of<UserProvider>(context, listen: false);
+        
+        // Validate required fields
+        if (provider.firstNameController.text.isEmpty ||
+            provider.lastNameController.text.isEmpty ||
+            provider.dateController.text.isEmpty ||
+            provider.gendertwoController.text.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Please fill in all required fields')),
+          );
+          return;
+        }
+        
+        // Save to UserProvider
+        userProvider.setProfile1Info(
+          firstName: provider.firstNameController.text,
+          lastName: provider.lastNameController.text,
+          birthdate: provider.dateController.text,
+          gender: provider.gendertwoController.text,
+        );
+        
         NavigatorService.pushNamed(AppRoutes.createProfile22Screen);
       },
     );

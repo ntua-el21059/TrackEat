@@ -5,8 +5,10 @@ import '../../../widgets/app_bar/appbar_leading_image.dart';
 import '../../../widgets/app_bar/custom_app_bar.dart';
 import '../../../widgets/custom_elevated_button.dart';
 import '../../../widgets/custom_text_form_field.dart';
+import '../../../providers/user_provider.dart';
 import 'models/create_profile_2_2_model.dart';
 import 'provider/create_profile_2_2_provider.dart';
+import 'package:provider/provider.dart';
 
 class CreateProfile22Screen extends StatefulWidget {
   const CreateProfile22Screen({Key? key}) : super(key: key);
@@ -26,6 +28,19 @@ class CreateProfile22ScreenState extends State<CreateProfile22Screen> {
   @override
   void initState() {
     super.initState();
+    
+    // Pre-fill data from UserProvider
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final provider = Provider.of<CreateProfile22Provider>(context, listen: false);
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      final user = userProvider.user;
+      
+      if (user.activity != null) provider.timeController.text = user.activity!;
+      if (user.diet != null) provider.inputoneController.text = user.diet!;
+      if (user.goal != null) provider.inputthreeController.text = user.goal!;
+      if (user.height != null) provider.inputfiveController.text = user.height!.toString();
+      if (user.weight != null) provider.inputsevenController.text = user.weight!.toString();
+    });
   }
 
   @override
@@ -229,6 +244,43 @@ class CreateProfile22ScreenState extends State<CreateProfile22Screen> {
       buttonStyle: CustomButtonStyles.fillPrimary,
       buttonTextStyle: theme.textTheme.titleMedium!,
       alignment: Alignment.centerRight,
+      onPressed: () {
+        final provider = Provider.of<CreateProfile22Provider>(context, listen: false);
+        final userProvider = Provider.of<UserProvider>(context, listen: false);
+        
+        // Validate required fields
+        if (provider.timeController.text.isEmpty ||
+            provider.inputthreeController.text.isEmpty ||
+            provider.inputfiveController.text.isEmpty ||
+            provider.inputsevenController.text.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Please fill in all required fields')),
+          );
+          return;
+        }
+        
+        // Parse numeric values
+        double? height = double.tryParse(provider.inputfiveController.text);
+        double? weight = double.tryParse(provider.inputsevenController.text);
+        
+        if (height == null || weight == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Please enter valid height and weight values')),
+          );
+          return;
+        }
+        
+        // Save to UserProvider
+        userProvider.setProfile2Info(
+          activity: provider.timeController.text,
+          diet: provider.inputoneController.text.isEmpty ? null : provider.inputoneController.text,
+          goal: provider.inputthreeController.text,
+          height: height,
+          weight: weight,
+        );
+        
+        Navigator.pushNamed(context, AppRoutes.calorieCalculatorScreen);
+      },
     );
   }
 }

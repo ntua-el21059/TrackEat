@@ -5,8 +5,10 @@ import '../../../../widgets/app_bar/appbar_leading_image.dart';
 import '../../../../widgets/app_bar/custom_app_bar.dart';
 import '../../../../widgets/custom_elevated_button.dart';
 import '../../../../widgets/custom_text_form_field.dart';
+import '../../../../providers/user_provider.dart';
 import 'models/create_account_model.dart';
 import 'provider/create_account_provider.dart';
+import 'package:provider/provider.dart';
 
 class CreateAccountScreen extends StatefulWidget {
   const CreateAccountScreen({Key? key}) : super(key: key);
@@ -29,6 +31,20 @@ class CreateAccountScreenState extends State<CreateAccountScreen> {
   @override
   void initState() {
     super.initState();
+    
+    // Pre-fill data from UserProvider
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final provider = Provider.of<CreateAccountProvider>(context, listen: false);
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      final user = userProvider.user;
+      
+      if (user.username != null) provider.userNameController.text = user.username!;
+      if (user.email != null) provider.emailtwoController.text = user.email!;
+      if (user.password != null) {
+        provider.passwordtwoController.text = user.password!;
+        provider.passwordthreeController.text = user.password!;
+      }
+    });
   }
 
   @override
@@ -300,6 +316,24 @@ class CreateAccountScreenState extends State<CreateAccountScreen> {
       buttonTextStyle: theme.textTheme.titleMedium!,
       alignment: Alignment.centerRight,
       onPressed: () {
+        final provider = Provider.of<CreateAccountProvider>(context, listen: false);
+        final userProvider = Provider.of<UserProvider>(context, listen: false);
+        
+        // Validate passwords match
+        if (provider.passwordtwoController.text != provider.passwordthreeController.text) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Passwords do not match')),
+          );
+          return;
+        }
+        
+        // Save to UserProvider
+        userProvider.setAccountInfo(
+          username: provider.userNameController.text,
+          email: provider.emailtwoController.text,
+          password: provider.passwordtwoController.text,
+        );
+        
         NavigatorService.pushNamed(AppRoutes.createProfile12Screen);
       },
     );

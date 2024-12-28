@@ -6,8 +6,10 @@ import '../../../widgets/app_bar/custom_app_bar.dart';
 import '../../../widgets/custom_checkbox_button.dart';
 import '../../../widgets/custom_elevated_button.dart';
 import '../../../widgets/custom_text_form_field.dart';
+import '../../../services/firebase/auth/auth_provider.dart' as auth;
 import 'models/login_model.dart';
 import 'provider/login_provider.dart';
+import 'package:provider/provider.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -82,7 +84,7 @@ class LoginScreenState extends State<LoginScreen> {
                 padding: EdgeInsets.only(left: 8.h),
                 child: GestureDetector(
                   onTap: () {
-                    NavigatorService.pushNamed(AppRoutes.resetPasswordScreen);
+                    NavigatorService.pushNamed(AppRoutes.forgotPasswordScreen);
                   },
                   child: Text(
                     "Forgot your Password ?",
@@ -96,6 +98,20 @@ class LoginScreenState extends State<LoginScreen> {
               _buildLogintwo(context),
               SizedBox(height: 16.h),
               _buildRowlineeightyfi(context),
+              SizedBox(height: 24.h),
+              CustomElevatedButton(
+                height: 48.h,
+                text: "For Testing - Skip Login",
+                buttonStyle: CustomButtonStyles.fillGray,
+                buttonTextStyle: theme.textTheme.titleMedium!,
+                onPressed: () {
+                  Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    AppRoutes.homeScreen,
+                    (route) => false,
+                  );
+                },
+              ),
               SizedBox(height: 14.h),
               _buildContinuewith(context)
             ],
@@ -207,15 +223,76 @@ class LoginScreenState extends State<LoginScreen> {
 
   /// Section Widget
   Widget _buildLogintwo(BuildContext context) {
-    return CustomElevatedButton(
-      height: 48.h,
-      text: "Login",
-      margin: EdgeInsets.only(
-        left: 12.h,
-        right: 10.h,
-      ),
-      buttonStyle: CustomButtonStyles.fillPrimary,
-      buttonTextStyle: theme.textTheme.titleMedium!,
+    return Consumer<LoginProvider>(
+      builder: (context, provider, child) {
+        return CustomElevatedButton(
+          height: 48.h,
+          text: provider.isLoading ? "Logging in..." : "Login",
+          margin: EdgeInsets.only(
+            left: 12.h,
+            right: 10.h,
+          ),
+          buttonStyle: CustomButtonStyles.fillPrimary,
+          buttonTextStyle: theme.textTheme.titleMedium!,
+          onPressed: provider.isLoading ? null : () async {
+            final authProvider = Provider.of<auth.AuthProvider>(context, listen: false);
+
+            // Validate email and password
+            final email = provider.userNameController.text.trim();
+            final password = provider.passwordtwoController.text;
+
+            if (email.isEmpty || !email.contains('@')) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Please enter a valid email address'),
+                  duration: Duration(seconds: 3),
+                ),
+              );
+              return;
+            }
+
+            if (password.isEmpty || password.length < 6) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Password must be at least 6 characters long'),
+                  duration: Duration(seconds: 3),
+                ),
+              );
+              return;
+            }
+
+            provider.setLoading(true);
+
+            try {
+              final success = await authProvider.signIn(email, password);
+
+              if (success) {
+                Navigator.pushNamedAndRemoveUntil(
+                  context,
+                  AppRoutes.homeScreen,
+                  (route) => false,
+                );
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(authProvider.lastError ?? 'Login failed'),
+                    duration: Duration(seconds: 3),
+                  ),
+                );
+              }
+            } catch (e) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Error during login: ${e.toString()}'),
+                  duration: Duration(seconds: 3),
+                ),
+              );
+            } finally {
+              provider.setLoading(false);
+            }
+          },
+        );
+      },
     );
   }
 
