@@ -2,94 +2,108 @@ import 'package:flutter/material.dart';
 import '../../../core/app_export.dart';
 import '../../../theme/custom_button_style.dart';
 import '../../../widgets/custom_outlined_button.dart';
-import 'models/blur_choose_action_screen_model.dart';
-import 'provider/blur_choose_action_screen_provider.dart';
+import '../blur_edit_screen_dialog/blur_edit_screen_dialog.dart';
+import '../history_empty_breakfast_screen/history_empty_breakfast_screen.dart';
 
-// ignore_for_file: must_be_immutable
-class BlurChooseActionScreenDialog extends StatefulWidget {
+class BlurChooseActionScreenDialog extends StatelessWidget {
   const BlurChooseActionScreenDialog({Key? key}) : super(key: key);
 
   @override
-  BlurChooseActionScreenDialogState createState() => BlurChooseActionScreenDialogState();
+  Widget build(BuildContext context) {
+    return Dialog(
+      insetPadding: EdgeInsets.symmetric(horizontal: 16.h),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16.h),
+      ),
+      backgroundColor: Colors.white,
+      child: Container(
+        padding: EdgeInsets.all(16.h),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16.h),
+          border: Border.all(color: const Color(0xFFB2D7FF)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const SizedBox(width: 24),
+                Text(
+                  "Choose Action",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black,
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: Icon(Icons.close, size: 24),
+                ),
+              ],
+            ),
+            SizedBox(height: 24.h),
+            CustomOutlinedButton(
+              height: 48.h,
+              text: "Edit",
+              buttonStyle: ButtonStyle(
+                backgroundColor: MaterialStateProperty.all(Colors.white),
+                shape: MaterialStateProperty.all(
+                  RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16.h),
+                    side: BorderSide(color: const Color(0xFFB2D7FF)),
+                  ),
+                ),
+              ),
+              buttonTextStyle: TextStyle(
+                fontSize: 16,
+                color: Colors.black87,
+              ),
+              onPressed: () {
+                Navigator.pop(context);
+                showDialog(
+                  context: context,
+                  builder: (context) => BlurEditScreenDialog(),
+                );
+              },
+            ),
+            SizedBox(height: 16.h),
+            CustomOutlinedButton(
+              height: 48.h,
+              text: "Delete",
+              buttonStyle: ButtonStyle(
+                backgroundColor: MaterialStateProperty.all(Colors.white),
+                shape: MaterialStateProperty.all(
+                  RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16.h),
+                    side: BorderSide(color: const Color(0xFFB2D7FF)),
+                  ),
+                ),
+              ),
+              buttonTextStyle: TextStyle(
+                fontSize: 16,
+                color: Colors.red,
+              ),
+              onPressed: () {
+                Navigator.pop(context);
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => HistoryEmptyBreakfastScreen.builder(context),
+                  ),
+                );
+              },
+            ),
+            SizedBox(height: 8.h),
+          ],
+        ),
+      ),
+    );
+  }
 
   static Widget builder(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (context) => BlurChooseActionScreenProvider(),
-      child: BlurChooseActionScreenDialog(),
-    );
-  }
-}
-
-class BlurChooseActionScreenDialogState extends State<BlurChooseActionScreenDialog> {
-  @override
-  void initState() {
-    super.initState();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      mainAxisSize: MainAxisSize.min,
-      children: [_buildRowEdit(context)],
-    );
-  }
-
-  /// Section Widget
-  Widget _buildRowEdit(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: 2.h,
-        vertical: 8.h,
-      ),
-      decoration: AppDecoration.outlineBlue100.copyWith(
-        borderRadius: BorderRadiusStyle.roundedBorder10,
-      ),
-      width: double.maxFinite,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: Container(
-              width: 226.h,
-              margin: EdgeInsets.only(
-                top: 18.h,
-                bottom: 12.h,
-              ),
-              child: Column(
-                children: [
-                  CustomOutlinedButton(
-                    height: 24.h,
-                    text: "Edit",
-                    buttonTextStyle: CustomTextStyles.bodyLargeGray50003,
-                  ),
-                  SizedBox(height: 12.h),
-                  Text(
-                    "or",
-                    style: CustomTextStyles.bodyLargeBluegray10001,
-                  ),
-                  SizedBox(height: 12.h),
-                  CustomOutlinedButton(
-                    height: 24.h,
-                    text: "Delete",
-                    buttonTextStyle: theme.textTheme.bodyLarge!.copyWith(
-                      color: appTheme.redA70001,
-                    ),
-                  )
-                ],
-              ),
-            ),
-          ),
-          CustomImageView(
-            imagePath: ImageConstant.imgClose,
-            height: 30.h,
-            width: 32.h,
-            margin: EdgeInsets.only(left: 20.h),
-          )
-        ],
-      ),
-    );
+    return BlurChooseActionScreenDialog();
   }
 }

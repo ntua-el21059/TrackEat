@@ -95,10 +95,10 @@ class HomeScreenState extends State<HomeScreen> {
       title: Padding(
         padding: EdgeInsets.only(left: 19.h),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             AppbarSubtitleOne(
               text: "WELCOME".toUpperCase(),
-              margin: EdgeInsets.only(right: 162.h),
             ),
             AppbarTitle(
               text: "John Appleseed",
@@ -121,134 +121,127 @@ class HomeScreenState extends State<HomeScreen> {
   Widget _buildCalories(BuildContext context) {
     return Container(
       width: double.maxFinite,
-      padding: EdgeInsets.symmetric(
-        horizontal: 6.h,
-        vertical: 22.h,
-      ),
-      decoration: AppDecoration.lightBlueLayoutPadding.copyWith(
-        borderRadius: BorderRadiusStyle.roundedBorder20,
+      padding: EdgeInsets.all(22.h),
+      decoration: BoxDecoration(
+        color: const Color(0xFFB2D7FF),
+        borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
-        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Align(
-            alignment: Alignment.centerLeft,
-            child: SizedBox(
-              height: 32.h,
-              width: 332.h,
-              child: Stack(
-                alignment: Alignment.bottomCenter,
-                children: [
-                  Align(
-                    alignment: Alignment.topLeft,
-                    child: Padding(
-                      padding: EdgeInsets.only(left: 2.h),
-                      child: Text(
-                        "1500 Kcal Remaining...  ",
-                        style: CustomTextStyles.titleMediumGray90001Bold,
-                      ),
-                    ),
-                  ),
-                  Align(
-                    alignment: Alignment.topRight,
-                    child: Padding(
-                      padding: EdgeInsets.only(right: 10.h),
-                      child: RichText(
-                        text: TextSpan(
-                          children: [
-                            TextSpan(
-                              text: " 3000 kcal",
-                              style: CustomTextStyles.labelMediumRed900,
-                            ),
-                            TextSpan(
-                              text: "  ",
-                            )
-                          ],
-                        ),
-                        textAlign: TextAlign.left,
-                      ),
-                    ),
-                  ),
-                  Container(
-                    width: double.maxFinite,
-                    decoration: AppDecoration.graysWhite.copyWith(
-                      borderRadius: BorderRadiusStyle.circleBorder4,
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          height: 8.h,
-                          width: 174.h,
-                          decoration: BoxDecoration(
-                            color: appTheme.green500,
-                            borderRadius: BorderRadius.circular(4.h),
-                          ),
-                        )
-                      ],
-                    ),
-                  )
-                ],
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "1500 Kcal Remaining...",
+                style: CustomTextStyles.titleMediumGray90001Bold,
               ),
-            ),
+              Text(
+                "3000 kcal",
+                style: TextStyle(
+                  color: const Color(0xFFFF0000),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
           ),
-          SizedBox(height: 12.h),
+          SizedBox(height: 8.h),
           Container(
             width: double.maxFinite,
-            margin: EdgeInsets.symmetric(horizontal: 14.h),
+            height: 8.h,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(4.h),
+            ),
             child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: Align(
-                    alignment: Alignment.bottomLeft,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "Protein",
-                          style: CustomTextStyles.bodyLargeBlack90016_2,
-                        ),
-                        SizedBox(
-                          width: double.maxFinite,
-                          child: _buildNumberandunit(
-                            context,
-                            p45seventyOne: "78/98",
-                            gOne: "g",
-                          ),
-                        ),
-                        SizedBox(height: 6.h),
-                        Text(
-                          "Fats",
-                          style: CustomTextStyles.bodyLargeBlack90016_2,
-                        ),
-                        SizedBox(
-                          width: double.maxFinite,
-                          child: _buildNumberandunit(
-                            context,
-                            p45seventyOne: "45/70",
-                            gOne: "g",
-                          ),
-                        ),
-                        SizedBox(height: 6.h),
-                        Text(
-                          "Carbs",
-                          style: CustomTextStyles.bodyLargeBlack90016_2,
-                        ),
-                        SizedBox(
-                          width: double.maxFinite,
-                          child: _buildNumberandunit(
-                            context,
-                            p45seventyOne: "95/110",
-                            gOne: "g",
-                          ),
-                        )
-                      ],
-                    ),
+                Container(
+                  width: MediaQuery.of(context).size.width * 0.5,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF4CD964),
+                    borderRadius: BorderRadius.circular(4.h),
                   ),
                 ),
               ],
+            ),
+          ),
+          SizedBox(height: 20.h),
+          Row(
+            children: [
+              Expanded(
+                flex: 3,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Protein",
+                      style: CustomTextStyles.bodyLargeBlack90016_2,
+                    ),
+                    Text(
+                      "78/98g",
+                      style: TextStyle(
+                        color: const Color(0xFFFA114F),
+                        fontSize: 24,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    SizedBox(height: 16.h),
+                    Text(
+                      "Fats",
+                      style: CustomTextStyles.bodyLargeBlack90016_2,
+                    ),
+                    Text(
+                      "45/70g",
+                      style: TextStyle(
+                        color: const Color(0xFFA6FF00),
+                        fontSize: 24,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    SizedBox(height: 16.h),
+                    Text(
+                      "Carbs",
+                      style: CustomTextStyles.bodyLargeBlack90016_2,
+                    ),
+                    Text(
+                      "95/110g",
+                      style: TextStyle(
+                        color: const Color(0xFF00FFF6),
+                        fontSize: 24,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Expanded(
+                flex: 2,
+                child: SizedBox(), // Space for rings
+              ),
+            ],
+          ),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton(
+              onPressed: () {
+                Navigator.pushNamed(context, AppRoutes.historyTodayTabScreen);
+              },
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    "Show History",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 17,
+                      fontWeight: FontWeight.w400,
+                      fontFamily: 'Inter',
+                    ),
+                  ),
+                  Icon(Icons.chevron_right, color: Colors.white),
+                ],
+              ),
             ),
           ),
         ],
@@ -259,19 +252,25 @@ class HomeScreenState extends State<HomeScreen> {
   Widget _buildSuggestionsone(BuildContext context) {
     return Container(
       width: double.maxFinite,
-      padding: EdgeInsets.symmetric(
-        horizontal: 6.h,
-        vertical: 22.h,
+      padding: EdgeInsets.only(
+        bottom: 22.h,
       ),
-      decoration: AppDecoration.lightBlueLayoutPadding.copyWith(
-        borderRadius: BorderRadiusStyle.roundedBorder20,
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFBAB2),
+        borderRadius: BorderRadius.circular(21),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            "Today's Suggestions",
-            style: CustomTextStyles.titleMediumGray90001Bold,
+          Padding(
+            padding: EdgeInsets.only(left: 17.h, top: 22.h),
+            child: Text(
+              "Suggestions",
+              style: CustomTextStyles.titleMediumGray90001Bold.copyWith(
+                fontSize: 22,
+              ),
+            ),
           ),
           SizedBox(height: 16.h),
           Consumer<HomeProvider>(
@@ -280,7 +279,7 @@ class HomeScreenState extends State<HomeScreen> {
                 physics: NeverScrollableScrollPhysics(),
                 shrinkWrap: true,
                 separatorBuilder: (context, index) {
-                  return SizedBox(height: 16.h);
+                  return SizedBox(height: 5.h);
                 },
                 itemCount: provider.homeInitialModelObj.cardsItemList.length,
                 itemBuilder: (context, index) {

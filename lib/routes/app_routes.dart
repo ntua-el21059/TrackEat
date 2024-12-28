@@ -22,6 +22,7 @@ import '../presentation/signup_login/reset_password_screen/reset_password_screen
 import '../presentation/signup_login/splash_screen/splash_screen.dart';
 import '../presentation/signup_login/welcome_screen/welcome_screen.dart';
 import '../presentation/homepage_history/home_screen/home_screen.dart';
+import '../presentation/homepage_history/history_today_tab_screen/history_today_tab_screen.dart';
 
 class AppRoutes {
   static const String createAccountScreen = '/create_account_screen';
@@ -82,6 +83,7 @@ class AppRoutes {
         resetPasswordScreen: ResetPasswordScreen.builder,
         finalizedAccountScreen: FinalizedAccountScreen.builder,
         homeScreen: HomeScreen.builder,
+        historyTodayTabScreen: HistoryTodayTabScreen.builder,
         initialRoute: SplashScreen.builder,
       };
 }

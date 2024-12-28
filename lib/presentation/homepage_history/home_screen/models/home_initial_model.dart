@@ -12,8 +12,8 @@ class HomeInitialModel {
     ),
     CardsItemModel(
       thumbsupOne: ImageConstant.imgTicket,
-      cutdownsweets: "Boost your greens, John ",
-      yourweekly: "Adding even a handful can give you extra energy",
+      cutdownsweets: "Boost your greens, John",
+      yourweekly: "adding even a handful can give you extra energy",
     ),
     CardsItemModel(
       thumbsupOne: ImageConstant.imgIcon,

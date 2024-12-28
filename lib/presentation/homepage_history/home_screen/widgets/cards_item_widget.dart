@@ -12,21 +12,22 @@ class CardsItemWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(right: 14.h),
+      padding: EdgeInsets.symmetric(horizontal: 17.h),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: EdgeInsets.only(top: 2.h),
-            child: CustomIconButton(
-              height: 48.h,
-              width: 48.h,
-              padding: EdgeInsets.all(8.h),
-              decoration: IconButtonStyleHelper.none,
-              alignment: Alignment.bottomCenter,
+          Container(
+            width: 48.h,
+            height: 48.h,
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E1E1E),
+              borderRadius: BorderRadius.circular(100),
+            ),
+            child: Center(
               child: CustomImageView(
                 imagePath: cardsItemModelObj.thumbsupOne!,
+                width: 32.h,
+                height: 32.h,
+                color: Colors.white,
               ),
             ),
           ),
@@ -34,15 +35,29 @@ class CardsItemWidget extends StatelessWidget {
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
                   cardsItemModelObj.cutdownsweets!,
-                  style: CustomTextStyles.bodyLargeBlack900,
+                  style: const TextStyle(
+                    color: Colors.black,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w400,
+                    fontFamily: 'Inter',
+                    letterSpacing: -0.43,
+                    height: 1,
+                  ),
                 ),
-                SizedBox(height: 6.h),
                 Text(
-                  cardsItemModelObj.yourweekly!,
-                  style: CustomTextStyles.labelMediumOnErrorContainer_1,
+                  cardsItemModelObj.yourweekly!.toUpperCase(),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w500,
+                    fontFamily: 'Inter',
+                    letterSpacing: 0.36,
+                    height: 3.3,
+                  ),
                 )
               ],
             ),

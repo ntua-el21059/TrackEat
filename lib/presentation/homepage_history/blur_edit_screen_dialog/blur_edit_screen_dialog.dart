@@ -1,207 +1,190 @@
 import 'package:flutter/material.dart';
 import '../../../core/app_export.dart';
-import '../../../theme/custom_button_style.dart';
-import '../../../widgets/custom_elevated_button.dart';
 import '../../../widgets/custom_outlined_button.dart';
-import 'models/blur_edit_item_model.dart';
-import 'models/blur_edit_screen_model.dart';
-import 'provider/blur_edit_screen_provider.dart';
-import 'widgets/blur_edit_item_widget.dart';
 
-// ignore_for_file: must_be_immutable
-class BlurEditScreenDialog extends StatefulWidget {
+class BlurEditScreenDialog extends StatelessWidget {
   const BlurEditScreenDialog({Key? key}) : super(key: key);
 
   @override
-  BlurEditScreenDialogState createState() => BlurEditScreenDialogState();
-
-  static Widget builder(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (context) => BlurEditScreenProvider(),
-      child: BlurEditScreenDialog(),
-    );
-  }
-}
-
-class BlurEditScreenDialogState extends State<BlurEditScreenDialog> {
-  @override
-  void initState() {
-    super.initState();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      mainAxisSize: MainAxisSize.min,
-      children: [_buildRowveganbacon(context)],
-    );
-  }
-
-  /// Section Widget
-  Widget _buildChangeportion(BuildContext context) {
-    return CustomOutlinedButton(
-      height: 24.h,
-      width: 226.h,
-      text: "Change portion size",
-      margin: EdgeInsets.only(right: 20.h),
-      buttonTextStyle: CustomTextStyles.bodyLargeGray50003,
-    );
-  }
-
-  /// Section Widget
-  Widget _buildEditcalories(BuildContext context) {
-    return CustomOutlinedButton(
-      height: 24.h,
-      width: 226.h,
-      text: "Edit calories",
-      margin: EdgeInsets.only(right: 20.h),
-      buttonTextStyle: CustomTextStyles.bodyLargeGray50003,
-    );
-  }
-
-  /// Section Widget
-  Widget _buildEditprotein(BuildContext context) {
-    return CustomOutlinedButton(
-      height: 24.h,
-      width: 226.h,
-      text: "Edit Protein content",
-      margin: EdgeInsets.only(right: 20.h),
-      buttonTextStyle: CustomTextStyles.bodyLargeGray50003,
-    );
-  }
-
-  /// Section Widget
-  Widget _buildEditfat(BuildContext context) {
-    return CustomOutlinedButton(
-      height: 24.h,
-      width: 226.h,
-      text: "Edit Fat content",
-      margin: EdgeInsets.only(right: 20.h),
-      buttonTextStyle: CustomTextStyles.bodyLargeGray50003,
-    );
-  }
-
-  /// Section Widget
-  Widget _buildEditcarb(BuildContext context) {
-    return CustomOutlinedButton(
-      height: 24.h,
-      width: 226.h,
-      text: "Edit Carb content",
-      margin: EdgeInsets.only(right: 20.h),
-      buttonTextStyle: CustomTextStyles.bodyLargeGray50003,
-    );
-  }
-
-  /// Section Widget
-  Widget _buildSaveandexit(BuildContext context) {
-    return CustomElevatedButton(
-      height: 30.h,
-      width: 118.h,
-      text: "Save and Exit",
-      margin: EdgeInsets.only(right: 72.h),
-      buttonStyle: CustomButtonStyles.fillPrimaryTL14,
-      buttonTextStyle: CustomTextStyles.labelLargeBlack900,
-    );
-  }
-
-  /// Section Widget
-  Widget _buildRowveganbacon(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: 2.h,
-        vertical: 8.h,
+    return Dialog(
+      insetPadding: EdgeInsets.symmetric(horizontal: 16.h),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16.h),
       ),
-      decoration: AppDecoration.outlineBlue100.copyWith(
-        borderRadius: BorderRadiusStyle.roundedBorder10,
-      ),
-      width: double.maxFinite,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Align(
-              alignment: Alignment.centerRight,
-              child: Padding(
-                padding: EdgeInsets.only(bottom: 8.h),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Padding(
-                      padding: EdgeInsets.only(right: 10.h),
-                      child: Text(
-                        "Vegan bacon cheeseburger",
-                        style: CustomTextStyles.titleMediumGray90001Bold,
-                      ),
+      backgroundColor: Colors.white,
+      child: Container(
+        padding: EdgeInsets.all(16.h),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16.h),
+          border: Border.all(color: const Color(0xFFB2D7FF)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    "Vegan bacon cheeseburger",
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
                     ),
-                    SizedBox(
-                      width: double.maxFinite,
-                      child: Row(
-                        children: [
-                          CustomImageView(
-                            imagePath: ImageConstant.imgDownload1,
-                            height: 20.h,
-                            width: 20.h,
-                          ),
-                          Text(
-                            "69 kcal -100g",
-                            style: theme.textTheme.bodySmall,
-                          )
-                        ],
-                      ),
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: Icon(Icons.close, size: 20),
+                ),
+              ],
+            ),
+            SizedBox(height: 4.h),
+            Row(
+              children: [
+                Text(
+                  "🔥",
+                  style: TextStyle(fontSize: 12),
+                ),
+                Text(
+                  " 69 kcal -100g",
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 16.h),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _buildMacroItem("69g", "Protein", Colors.green),
+                _buildMacroItem("69g", "Fats", Colors.orange),
+                _buildMacroItem("69g", "Carbs", Colors.yellow),
+              ],
+            ),
+            SizedBox(height: 16.h),
+            _buildEditButton("Change portion size"),
+            SizedBox(height: 8.h),
+            _buildEditButton("Edit calories"),
+            SizedBox(height: 8.h),
+            _buildEditButton("Edit Protein content"),
+            SizedBox(height: 8.h),
+            _buildEditButton("Edit Fat content"),
+            SizedBox(height: 8.h),
+            _buildEditButton("Edit Carb content"),
+            SizedBox(height: 16.h),
+            Center(
+              child: SizedBox(
+                width: 160.h,
+                height: 36.h,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Color(0xFF3B82F6),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16.h),
                     ),
-                    SizedBox(height: 22.h),
-                    Container(
-                      margin: EdgeInsets.only(left: 18.h),
-                      width: double.maxFinite,
-                      child: Consumer<BlurEditScreenProvider>(
-                        builder: (context, provider, child) {
-                          return SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: Wrap(
-                              direction: Axis.horizontal,
-                              spacing: 62.h,
-                              children: List.generate(
-                                provider.blurEditScreenModelObj.blurEditItemList
-                                    .length,
-                                (index) {
-                                  BlurEditItemModel model = provider
-                                      .blurEditScreenModelObj
-                                      .blurEditItemList[index];
-                                  return BlurEditItemWidget(
-                                    model,
-                                  );
-                                },
-                              ),
-                            ),
-                          );
-                        },
-                      ),
+                  ),
+                  child: Text(
+                    "Save and Exit",
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.white,
                     ),
-                    SizedBox(height: 16.h),
-                    _buildChangeportion(context),
-                    SizedBox(height: 12.h),
-                    _buildEditcalories(context),
-                    SizedBox(height: 12.h),
-                    _buildEditprotein(context),
-                    SizedBox(height: 12.h),
-                    _buildEditfat(context),
-                    SizedBox(height: 12.h),
-                    _buildEditcarb(context),
-                    SizedBox(height: 18.h),
-                    _buildSaveandexit(context)
-                  ],
+                  ),
                 ),
               ),
             ),
-          ),
-          CustomImageView(
-            imagePath: ImageConstant.imgClose,
-            height: 30.h,
-            width: 32.h,
-          )
-        ],
+          ],
+        ),
       ),
     );
+  }
+
+  Widget _buildMacroItem(String value, String label, Color color) {
+    return Row(
+      children: [
+        Container(
+          height: 80.h,
+          width: 6.h,
+          decoration: BoxDecoration(
+            color: Colors.grey[200],
+            borderRadius: BorderRadius.circular(16.h),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Container(
+                width: 6.h,
+                height: 48.h,
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(16.h),
+                ),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(width: 6.h),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: Colors.black,
+              ),
+            ),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEditButton(String text) {
+    return Container(
+      width: double.infinity,
+      height: 40.h,
+      child: OutlinedButton(
+        onPressed: () {},
+        style: OutlinedButton.styleFrom(
+          side: BorderSide(color: const Color(0xFFB2D7FF)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16.h),
+          ),
+          padding: EdgeInsets.symmetric(vertical: 8.h),
+          backgroundColor: Colors.white,
+        ),
+        child: Text(
+          text,
+          style: TextStyle(
+            fontSize: 14,
+            color: Colors.grey[400],
+          ),
+        ),
+      ),
+    );
+  }
+
+  static Widget builder(BuildContext context) {
+    return BlurEditScreenDialog();
   }
 }
