@@ -270,4 +270,21 @@ class CustomTextStyles {
   static TextStyle get labelMediumOnErrorContainer => theme.textTheme.labelMedium!.copyWith(
         color: theme.colorScheme.onErrorContainer,
       );
+
+  static TextStyle get headlineSmallOnErrorContainerBold =>
+      theme.textTheme.headlineSmall!.copyWith(
+        color: theme.colorScheme.onErrorContainer,
+        fontWeight: FontWeight.w700,
+      );
+
+  static TextStyle get titleSmallGray800 =>
+      theme.textTheme.titleSmall!.copyWith(
+        color: appTheme.gray800,
+      );
+
+  static TextStyle get bodyLargeOnErrorContainer16 =>
+      theme.textTheme.bodyLarge!.copyWith(
+        color: theme.colorScheme.onErrorContainer,
+        fontSize: 16.fSize,
+      );
 }

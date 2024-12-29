@@ -3,6 +3,7 @@ import '../../../core/app_export.dart';
 import '../models/profile_item_model.dart';
 import 'package:provider/provider.dart';
 import '../provider/profile_provider.dart';
+import '../../social_profile_myself_screen/provider/social_profile_myself_provider.dart';
 
 // ignore_for_file: must_be_immutable
 class ProfileItemWidget extends StatelessWidget {
@@ -149,6 +150,8 @@ class ProfileItemWidget extends StatelessWidget {
                           child: InkWell(
                             onTap: () {
                               provider.updateDiet(diet);
+                              Provider.of<SocialProfileMyselfProvider>(context, listen: false)
+                                  .updateDietBox(diet);
                               Navigator.pop(context);
                             },
                             child: Container(

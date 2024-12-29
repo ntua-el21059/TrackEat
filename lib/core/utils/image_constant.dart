@@ -51,15 +51,15 @@ class ImageConstant {
   static String imgSirianimationshaky1 =
       '$imagePath/img_sirianimationshaky_1.png';
   static String imgImage16 = '$imagePath/img_image_16.png';
-  static String imgVector80x84 = '$imagePath/img_vector.png';
+  static String imgVector80x84 = '$imagePath/imgVector80x84.png';
   static String imgThumbsupOnerrorcontainer =
       '$imagePath/img_thumbsup_onerrorcontainer.svg';
-  static String imgVector76x56 = '$imagePath/img_vector_76x56.png';
-  static String imgVector82x56 = '$imagePath/img_vector_82x56.png';
-  static String imgVector84x56 = '$imagePath/img_vector_84x56.png';
-  static String imgVector72x56 = '$imagePath/img_vector_72x56.png';
-  static String imgVector68x56 = '$imagePath/img_vector_68x56.png';
-  static String imgVector80x50 = '$imagePath/img_vector_80x50.png';
+  static String imgVector76x56 = '$imagePath/imgVector76x56.png';
+  static String imgVector82x56 = '$imagePath/imgVector82x56.png';
+  static String imgVector84x56 = '$imagePath/imgVector84x56.png';
+  static String imgVector72x56 = '$imagePath/imgVector72x56.png';
+  static String imgVector68x56 = '$imagePath/imgVector68x56.png';
+  static String imgVector80x50 = '$imagePath/imgVector80x50.png';
   static String imgVectorOnerrorcontainer =
       '$imagePath/img_vector_onerrorcontainer.png';
   static String imgArrowRightOnerrorcontainer =
@@ -205,4 +205,11 @@ class ImageConstant {
   static String imgProteinGoal = '$imagePath/protein_goal.svg';
   static String imgFatGoal = '$imagePath/fat.png';
   static String imgAccessibility = '$imagePath/accessibility.png';
+  static String imgAddFriend = '$imagePath/add_friend.svg';
+  static String imgAward1 = '$imagePath/award1.png';
+  static String imgAward2 = '$imagePath/award2.png';
+  static String imgAward3 = '$imagePath/award3.png';
+  static String imgAward4 = '$imagePath/award4.png';
+  static String imgAward5 = '$imagePath/award5.png';
+  static String imgAward6 = '$imagePath/award6.png';
 }

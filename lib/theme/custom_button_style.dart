@@ -23,12 +23,13 @@ class CustomButtonStyles {
       );
 
   static ButtonStyle get fillBlueGrayTL16 => ElevatedButton.styleFrom(
-        backgroundColor: appTheme.blueGray10001,
+        backgroundColor: Colors.grey[400],
+        foregroundColor: Colors.white,
+        elevation: 0,
+        padding: EdgeInsets.symmetric(vertical: 12.h),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16.h),
         ),
-        elevation: 0,
-        padding: EdgeInsets.zero,
       );
 
   static ButtonStyle get fillCyan => ElevatedButton.styleFrom(

@@ -83,25 +83,30 @@ class ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
           Expanded(
-            child: Align(
-              alignment: Alignment.bottomCenter,
-              child: Padding(
-                padding: EdgeInsets.only(bottom: 8.h),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Text(
-                      "PREVIEW PROFILE".toUpperCase(),
-                      style: theme.textTheme.labelLarge?.copyWith(
-                        color: const Color(0xFF8E8E93),
+            child: GestureDetector(
+              onTap: () {
+                Navigator.pushNamed(context, AppRoutes.socialProfileMyselfScreen);
+              },
+              child: Align(
+                alignment: Alignment.bottomCenter,
+                child: Padding(
+                  padding: EdgeInsets.only(bottom: 8.h),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Text(
+                        "PREVIEW PROFILE".toUpperCase(),
+                        style: theme.textTheme.labelLarge?.copyWith(
+                          color: const Color(0xFF8E8E93),
+                        ),
                       ),
-                    ),
-                    CustomImageView(
-                      imagePath: ImageConstant.imgArrowRightBlueGray400,
-                      height: 10.h,
-                      width: 8.h,
-                    )
-                  ],
+                      CustomImageView(
+                        imagePath: ImageConstant.imgArrowRightBlueGray400,
+                        height: 10.h,
+                        width: 8.h,
+                      )
+                    ],
+                  ),
                 ),
               ),
             ),
