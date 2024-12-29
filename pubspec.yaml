@@ -35,6 +35,7 @@ dependencies:
   permission_handler: ^11.1.0
   flutter_switch: ^0.3.2
   image_picker: ^1.0.7
+  activity_ring: ^0.3.0
 
 # Dev dependencies for testing and linting
 dev_dependencies:

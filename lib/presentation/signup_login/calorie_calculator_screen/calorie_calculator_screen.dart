@@ -39,12 +39,30 @@ class CalorieCalculatorScreenState extends State<CalorieCalculatorScreen> {
       
       if (user.dailyCalories != null) {
         provider.zipcodeController.text = user.dailyCalories!.toString();
+      } else {
+        // Calculate calories based on user data
+        final weight = user.weight ?? 70.0; // default weight if not set
+        final height = user.height ?? 170.0; // default height if not set
+        final age = user.age ?? 25; // default age if not set
+        final gender = user.gender?.toLowerCase() ?? 'male'; // default gender if not set
+        
+        provider.calculateDailyCalories(weight, height, age, gender);
       }
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final user = userProvider.user;
+    final weight = user.weight ?? 70.0;
+    final height = user.height ?? 170.0;
+    final age = user.age ?? 25;
+    final gender = user.gender?.toLowerCase() ?? 'male';
+    
+    final calculatedCalories = Provider.of<CalorieCalculatorProvider>(context, listen: false)
+        .calculateDailyCalories(weight, height, age, gender);
+
     return Scaffold(
       backgroundColor: theme.colorScheme.onErrorContainer,
       resizeToAvoidBottomInset: false,
@@ -62,7 +80,7 @@ class CalorieCalculatorScreenState extends State<CalorieCalculatorScreen> {
               ),
               SizedBox(height: 60.h),
               Text(
-                "Our calorie calculator made a personalized\nestimation for your calorie consumption\nat 2400 kcal daily.\nWould you like to set it as your daily goal\nor input your own calorie choice?",
+                "Our calorie calculator made a personalized\nestimation for your calorie consumption\nat $calculatedCalories kcal daily.\nWould you like to set it as your daily goal\nor input your own calorie choice?",
                 maxLines: 5,
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.center,

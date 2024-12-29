@@ -305,37 +305,35 @@ class CreateProfile12ScreenState extends State<CreateProfile12Screen> {
 
   /// Next Button
   Widget _buildNext(BuildContext context) {
-    return CustomElevatedButton(
-      height: 48.h,
-      width: 114.h,
-      text: "Next",
-      buttonStyle: CustomButtonStyles.fillPrimary,
-      buttonTextStyle: theme.textTheme.titleMedium!,
-      alignment: Alignment.centerRight,
-      onPressed: () {
-        final provider = Provider.of<CreateProfile12Provider>(context, listen: false);
-        final userProvider = Provider.of<UserProvider>(context, listen: false);
-        
-        // Validate required fields
-        if (provider.firstNameController.text.isEmpty ||
-            provider.lastNameController.text.isEmpty ||
-            provider.dateController.text.isEmpty ||
-            provider.gendertwoController.text.isEmpty) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Please fill in all required fields')),
-          );
-          return;
-        }
-        
-        // Save to UserProvider
-        userProvider.setProfile1Info(
-          firstName: provider.firstNameController.text,
-          lastName: provider.lastNameController.text,
-          birthdate: provider.dateController.text,
-          gender: provider.gendertwoController.text,
+    return Consumer<CreateProfile12Provider>(
+      builder: (context, provider, child) {
+        bool isFormValid = provider.firstNameController.text.isNotEmpty &&
+            provider.lastNameController.text.isNotEmpty &&
+            provider.dateController.text.isNotEmpty &&
+            provider.gendertwoController.text.isNotEmpty;
+
+        return CustomElevatedButton(
+          height: 48.h,
+          width: 114.h,
+          text: "Next",
+          buttonStyle: isFormValid 
+              ? CustomButtonStyles.fillPrimary
+              : CustomButtonStyles.fillGray,
+          buttonTextStyle: theme.textTheme.titleMedium!,
+          alignment: Alignment.centerRight,
+          onPressed: isFormValid ? () {
+            // Save to UserProvider
+            final userProvider = Provider.of<UserProvider>(context, listen: false);
+            userProvider.setProfile1Info(
+              firstName: provider.firstNameController.text,
+              lastName: provider.lastNameController.text,
+              birthdate: provider.dateController.text,
+              gender: provider.gendertwoController.text,
+            );
+            
+            NavigatorService.pushNamed(AppRoutes.createProfile22Screen);
+          } : null,
         );
-        
-        NavigatorService.pushNamed(AppRoutes.createProfile22Screen);
       },
     );
   }
