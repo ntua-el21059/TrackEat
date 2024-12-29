@@ -328,12 +328,17 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> {
         actions: [
           Padding(
             padding: EdgeInsets.only(right: 16.h, top: 7.h),
-            child: CustomImageView(
-              imagePath: ImageConstant.imgAccessibility,
-              height: 24.h,
-              width: 24.h,
-              color: theme.colorScheme.primary,
-              fit: BoxFit.contain,
+            child: GestureDetector(
+              onTap: () {
+                Navigator.pushNamed(context, AppRoutes.accessibilitySettingsScreen);
+              },
+              child: CustomImageView(
+                imagePath: ImageConstant.imgAccessibility,
+                height: 24.h,
+                width: 24.h,
+                color: theme.colorScheme.primary,
+                fit: BoxFit.contain,
+              ),
             ),
           ),
         ],

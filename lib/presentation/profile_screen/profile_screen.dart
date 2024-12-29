@@ -219,7 +219,12 @@ class ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildProfileItem(ProfileItemModel model) {
+  Widget _buildProfileItem(
+    String title,
+    String value,
+    String imagePath,
+    {EdgeInsets? iconPadding, double? iconWidth, double? iconHeight, Alignment? alignment}
+  ) {
     return Container(
       // ... other widget properties
       child: Row(
@@ -227,7 +232,7 @@ class ProfileScreenState extends State<ProfileScreen> {
           // ... left side widgets
           Text(
             // Add space for kg units, remove space for others
-            model.value?.replaceAll('kg', ' kg')  // First add space before all 'kg'
+            value?.replaceAll('kg', ' kg')  // First add space before all 'kg'
                 .replaceAll(' g', 'g')            // Remove space before 'g'
                 .replaceAll(' kcal', 'kcal') ?? '',  // Remove space before 'kcal'
             style: theme.textTheme.titleLarge?.copyWith(

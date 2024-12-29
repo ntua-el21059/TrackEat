@@ -25,6 +25,7 @@ import '../presentation/homepage_history/home_screen/home_screen.dart';
 import '../presentation/homepage_history/history_today_tab_screen/history_today_tab_screen.dart';
 import '../presentation/profile_screen/profile_screen.dart';
 import '../presentation/profile_static_screen/profile_static_screen.dart';
+import '../presentation/accessibility_settings_screen/accessibility_settings_screen.dart';
 
 class AppRoutes {
   static const String createAccountScreen = '/create_account_screen';
@@ -89,5 +90,6 @@ class AppRoutes {
         initialRoute: SplashScreen.builder,
         profileScreen: (context) => ProfileScreen(),
         profileStaticScreen: (context) => const ProfileStaticScreen(),
+        accessibilitySettingsScreen: (context) => AccessibilitySettingsScreen.builder(context),
       };
 }
