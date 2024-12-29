@@ -23,6 +23,8 @@ import '../presentation/signup_login/splash_screen/splash_screen.dart';
 import '../presentation/signup_login/welcome_screen/welcome_screen.dart';
 import '../presentation/homepage_history/home_screen/home_screen.dart';
 import '../presentation/homepage_history/history_today_tab_screen/history_today_tab_screen.dart';
+import '../presentation/profile_screen/profile_screen.dart';
+import '../presentation/profile_static_screen/profile_static_screen.dart';
 
 class AppRoutes {
   static const String createAccountScreen = '/create_account_screen';
@@ -71,7 +73,7 @@ class AppRoutes {
   static const String appNavigationScreen = '/app_navigation_screen';
   static const String initialRoute = '/initialRoute';
 
-  static Map<String, WidgetBuilder> get routes => {
+  static Map<String, WidgetBuilder> routes = {
         splashScreen: SplashScreen.builder,
         welcomeScreen: WelcomeScreen.builder,
         createAccountScreen: CreateAccountScreen.builder,
@@ -85,5 +87,7 @@ class AppRoutes {
         homeScreen: HomeScreen.builder,
         historyTodayTabScreen: HistoryTodayTabScreen.builder,
         initialRoute: SplashScreen.builder,
+        profileScreen: (context) => ProfileScreen(),
+        profileStaticScreen: (context) => const ProfileStaticScreen(),
       };
 }

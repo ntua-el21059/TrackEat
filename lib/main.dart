@@ -6,6 +6,9 @@ import 'core/app_export.dart';
 import 'providers/user_provider.dart';
 import 'services/firebase/auth/auth_provider.dart' as app_auth;
 import 'services/firebase/firebase_options.dart';
+import 'package:provider/provider.dart';
+import 'presentation/profile_screen/provider/profile_provider.dart';
+import 'presentation/profile_static_screen/provider/profile_static_provider.dart';
 
 var globalMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
@@ -22,7 +25,16 @@ void main() async {
     PrefUtils().init()
   ]);
   
-  runApp(MyApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ProfileProvider()),
+        ChangeNotifierProvider(create: (_) => ProfileStaticProvider()),
+        // Add other providers here if needed
+      ],
+      child: MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {

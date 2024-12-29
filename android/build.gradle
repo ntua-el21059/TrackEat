@@ -5,7 +5,7 @@ buildscript {
     }
     dependencies {
         // Ensure this matches the Gradle plugin version compatible with your Flutter and Android setup
-        classpath 'com.android.tools.build:gradle:8.0.2'
+        classpath 'com.android.tools.build:gradle:8.2.1'
     }
 }
 

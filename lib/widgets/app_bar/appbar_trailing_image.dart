@@ -5,30 +5,28 @@ class AppbarTrailingImage extends StatelessWidget {
   AppbarTrailingImage({
     Key? key,
     this.imagePath,
+    this.margin,
     this.height,
     this.width,
     this.onTap,
-    this.margin,
   }) : super(key: key);
 
-  final double? height;
-  final double? width;
-  final String? imagePath;
-  final Function? onTap;
-  final EdgeInsetsGeometry? margin;
+  String? imagePath;
+  EdgeInsetsGeometry? margin;
+  double? height;
+  double? width;
+  VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: margin ?? EdgeInsets.zero,
-      child: InkWell(
-        onTap: () {
-          onTap?.call();
-        },
+    return GestureDetector(
+      onTap: onTap,
+      child: Padding(
+        padding: margin ?? EdgeInsets.zero,
         child: CustomImageView(
-          imagePath: imagePath!,
-          height: height ?? 22.h,
-          width: width ?? 16.h,
+          imagePath: imagePath,
+          height: height,
+          width: width,
           fit: BoxFit.contain,
         ),
       ),

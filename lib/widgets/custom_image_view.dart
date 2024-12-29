@@ -20,8 +20,22 @@ extension ImageTypeExtension on String {
 enum ImageType { svg, png, network, file, unknown }
 
 class CustomImageView extends StatelessWidget {
-  CustomImageView({
+  final String? imagePath;
+  final bool isFile;
+  final double? height;
+  final double? width;
+  final Color? color;
+  final BoxFit? fit;
+  final String placeHolder;
+  final Alignment? alignment;
+  final VoidCallback? onTap;
+  final EdgeInsetsGeometry? margin;
+  final BorderRadius? radius;
+  final BoxBorder? border;
+
+  const CustomImageView({
     this.imagePath,
+    this.isFile = false,
     this.height,
     this.width,
     this.color,
@@ -34,121 +48,45 @@ class CustomImageView extends StatelessWidget {
     this.placeHolder = 'assets/images/image_not_found.png',
   });
 
-  /// [imagePath] is required parameter for showing image
-  final String? imagePath;
-  final double? height;
-  final double? width;
-  final Color? color;
-  final BoxFit? fit;
-  final String placeHolder;
-  final Alignment? alignment;
-  final VoidCallback? onTap;
-  final EdgeInsetsGeometry? margin;
-  final BorderRadius? radius;
-  final BoxBorder? border;
-
   @override
   Widget build(BuildContext context) {
-    return alignment != null
-        ? Align(alignment: alignment!, child: _buildWidget())
-        : _buildWidget();
-  }
+    if (imagePath == null) return SizedBox();
 
-  Widget _buildWidget() {
-    return Padding(
-      padding: margin ?? EdgeInsets.zero,
-      child: InkWell(
-        onTap: onTap,
-        child: _buildCircleImage(),
-      ),
-    );
-  }
-
-  /// Build the image with border radius
-  Widget _buildCircleImage() {
-    if (radius != null) {
-      return ClipRRect(
-        borderRadius: radius ?? BorderRadius.zero,
-        child: _buildImageWithBorder(),
-      );
-    } else {
-      return _buildImageWithBorder();
-    }
-  }
-
-  /// Build the image with border and border radius style
-  Widget _buildImageWithBorder() {
-    if (border != null) {
-      return Container(
-        decoration: BoxDecoration(
-          border: border,
-          borderRadius: radius,
-        ),
-        child: _buildImageView(),
-      );
-    } else {
-      return _buildImageView();
-    }
-  }
-
-  Widget _buildImageView() {
-    if (imagePath != null) {
-      switch (imagePath!.imageType) {
-        case ImageType.svg:
-          return Container(
-            height: height,
-            width: width,
-            child: SvgPicture.asset(
-              imagePath!,
+    return isFile
+        ? ClipRRect(
+            borderRadius: radius ?? BorderRadius.zero,
+            child: Image.file(
+              File(imagePath!),
               height: height,
               width: width,
               fit: fit ?? BoxFit.contain,
-              colorFilter: color != null
-                  ? ColorFilter.mode(color ?? Colors.transparent, BlendMode.srcIn)
-                  : null,
+              alignment: alignment ?? Alignment.center,
             ),
-          );
-        case ImageType.file:
-          return Image.file(
-            File(imagePath!),
-            height: height,
-            width: width,
-            fit: fit ?? BoxFit.cover,
-            color: color,
-          );
-        case ImageType.network:
-          return CachedNetworkImage(
-            height: height,
-            width: width,
-            fit: fit,
-            imageUrl: imagePath!,
-            color: color,
-            placeholder: (context, url) => Container(
-              height: 30,
-              width: 30,
-              child: LinearProgressIndicator(
-                color: Colors.grey.shade200,
-                backgroundColor: Colors.grey.shade100,
-              ),
-            ),
-            errorWidget: (context, url, error) => Image.asset(
-              placeHolder,
-              height: height,
-              width: width,
-              fit: fit ?? BoxFit.cover,
-            ),
-          );
-        case ImageType.png:
-        default:
-          return Image.asset(
+          )
+        : _buildDefaultImage();
+  }
+
+  Widget _buildDefaultImage() {
+    if (imagePath == null) return SizedBox();
+    
+    return imagePath!.endsWith('.svg')
+        ? SvgPicture.asset(
             imagePath!,
             height: height,
             width: width,
-            fit: fit ?? BoxFit.cover,
+            fit: fit ?? BoxFit.contain,
+            alignment: alignment ?? Alignment.center,
+            colorFilter: color != null
+                ? ColorFilter.mode(color!, BlendMode.srcIn)
+                : null,
+          )
+        : Image.asset(
+            imagePath!,
+            height: height,
+            width: width,
+            fit: fit ?? BoxFit.contain,
+            alignment: alignment ?? Alignment.center,
             color: color,
           );
-      }
-    }
-    return SizedBox();
   }
 }

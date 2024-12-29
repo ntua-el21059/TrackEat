@@ -34,6 +34,7 @@ dependencies:
   connectivity_plus: ^6.0.2
   permission_handler: ^11.1.0
   flutter_switch: ^0.3.2
+  image_picker: ^1.0.7
 
 # Dev dependencies for testing and linting
 dev_dependencies:
@@ -48,9 +49,23 @@ flutter:
   # Add assets here when needed
   assets:
     - assets/images/
+    # Remove the specific PNG files since we're using SVGs from the images folder
+    # - assets/images/arrow_left_primary.png
+    # - assets/images/arrow_right_bluegray_400.png
+    # - assets/images/arrow_right.png
+    # - assets/images/television.png
     # Example assets (remove or replace these placeholders as needed)
     # - images/a_dot_burr.jpeg
     # - images/a_dot_ham.jpeg
+    - assets/images/weekly_goal.svg
+    - assets/images/goal_weight.svg
+    - assets/images/calories_goal.svg
+    - assets/images/current_weight.svg
+    - assets/images/diet.svg
+    - assets/images/carbs_goal.svg
+    - assets/images/protein_goal.svg
+    - assets/images/fat.png
+    - assets/images/accessibility.png
 
   # Custom fonts configuration (add fonts if needed)
   # fonts:

@@ -253,4 +253,8 @@ class CustomTextStyles {
       theme.textTheme.labelMedium!.copyWith(
         color: theme.colorScheme.onErrorContainer,
       );
+
+  static TextStyle get titleLargeSemiBold => theme.textTheme.titleLarge!.copyWith(
+        fontWeight: FontWeight.w600,
+      );
 }
