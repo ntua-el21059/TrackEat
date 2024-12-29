@@ -323,7 +323,10 @@ class SocialProfileMyselfScreenState extends State<SocialProfileMyselfScreen> {
               (index) {
                 GridvectorOneItemModel model =
                     provider.socialProfileMyselfModelObj.gridvectorOneItemList[index];
-                return GridvectorOneItemWidget(model);
+                return GridvectorOneItemWidget(
+                  model,
+                  index: index,
+                );
               },
             ),
           );

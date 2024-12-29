@@ -51,23 +51,6 @@ flutter:
   # Add assets here when needed
   assets:
     - assets/images/
-    - assets/images/weekly_goal.svg
-    - assets/images/goal_weight.svg
-    - assets/images/calories_goal.svg
-    - assets/images/current_weight.svg
-    - assets/images/diet.svg
-    - assets/images/carbs_goal.svg
-    - assets/images/protein_goal.svg
-    - assets/images/fat.png
-    - assets/images/accessibility.png
-    - assets/images/imgVector80x84.png
-    - assets/images/imgArrowLeftPrimary.svg
-    - assets/images/award1.svg
-    - assets/images/award2.svg
-    - assets/images/award3.svg
-    - assets/images/award4.svg
-    - assets/images/award5.svg
-    - assets/images/award6.svg
 
   # Custom fonts configuration (add fonts if needed)
   # fonts:

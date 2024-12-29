@@ -79,7 +79,7 @@ class ImageConstant {
   static String imgWaterDropletSilhouette =
       '$imagePath/img_water_droplet_silhouette.svg';
   static String imgAccessibilityFill = '$imagePath/img_accessibility_fill.svg';
-  static String imgXButton = '$imagePath/img_x_button.svg';
+  static String imgXButton = '$imagePath/x_button.svg';
   static String imgUserBlue100 = '$imagePath/img_user_blue_100.svg';
   static String imgSettingsBlue100 = '$imagePath/img_settings_blue_100.svg';
   static String imgThumbsUpLightBlue600 =
@@ -212,4 +212,10 @@ class ImageConstant {
   static String imgAward4 = '$imagePath/award4.png';
   static String imgAward5 = '$imagePath/award5.png';
   static String imgAward6 = '$imagePath/award6.png';
+  static String imgGoldenLadle = '$imagePath/golden_ladle.png';
+  static String imgSweetEscape = '$imagePath/sweet_escape.png';
+  static String imgGoldenApple = '$imagePath/golden_apple.png';
+  static String imgHalfMileThrough = '$imagePath/half_mile_through.png';
+  static String imgCarnivoreChallenge = '$imagePath/carnivore_challenge.png';
+  static String imgAvocadoExcellence = '$imagePath/avocado_excellence.png';
 }
