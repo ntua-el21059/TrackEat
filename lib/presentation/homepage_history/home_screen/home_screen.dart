@@ -10,6 +10,7 @@ import 'models/home_model.dart';
 import 'provider/home_provider.dart';
 import 'widgets/cards_item_widget.dart';
 import 'package:activity_ring/activity_ring.dart';
+import '../../../presentation/profile_screen/profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -132,7 +133,7 @@ class HomeScreenState extends State<HomeScreen> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => const ProfileScreen(),
+                builder: (context) => ProfileScreen(),
               ),
             );
           },
