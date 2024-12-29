@@ -236,50 +236,48 @@ class CreateProfile22ScreenState extends State<CreateProfile22Screen> {
   }
 
   Widget _buildNext(BuildContext context) {
-    return CustomElevatedButton(
-      height: 48.h,
-      width: 114.h,
-      text: "Next",
-      margin: EdgeInsets.only(right: 8.h),
-      buttonStyle: CustomButtonStyles.fillPrimary,
-      buttonTextStyle: theme.textTheme.titleMedium!,
-      alignment: Alignment.centerRight,
-      onPressed: () {
-        final provider = Provider.of<CreateProfile22Provider>(context, listen: false);
-        final userProvider = Provider.of<UserProvider>(context, listen: false);
-        
-        // Validate required fields
-        if (provider.timeController.text.isEmpty ||
-            provider.inputthreeController.text.isEmpty ||
-            provider.inputfiveController.text.isEmpty ||
-            provider.inputsevenController.text.isEmpty) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Please fill in all required fields')),
-          );
-          return;
+    return Consumer<CreateProfile22Provider>(
+      builder: (context, provider, child) {
+        bool isFormValid = provider.timeController.text.isNotEmpty &&
+            provider.inputthreeController.text.isNotEmpty &&
+            provider.inputfiveController.text.isNotEmpty &&
+            provider.inputsevenController.text.isNotEmpty;
+
+        // Additional validation for numeric fields
+        if (isFormValid) {
+          double? height = double.tryParse(provider.inputfiveController.text);
+          double? weight = double.tryParse(provider.inputsevenController.text);
+          isFormValid = height != null && weight != null;
         }
-        
-        // Parse numeric values
-        double? height = double.tryParse(provider.inputfiveController.text);
-        double? weight = double.tryParse(provider.inputsevenController.text);
-        
-        if (height == null || weight == null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Please enter valid height and weight values')),
-          );
-          return;
-        }
-        
-        // Save to UserProvider
-        userProvider.setProfile2Info(
-          activity: provider.timeController.text,
-          diet: provider.inputoneController.text.isEmpty ? null : provider.inputoneController.text,
-          goal: provider.inputthreeController.text,
-          height: height,
-          weight: weight,
+
+        return CustomElevatedButton(
+          height: 48.h,
+          width: 114.h,
+          text: "Next",
+          margin: EdgeInsets.only(right: 8.h),
+          buttonStyle: isFormValid 
+              ? CustomButtonStyles.fillPrimary
+              : CustomButtonStyles.fillGray,
+          buttonTextStyle: theme.textTheme.titleMedium!,
+          alignment: Alignment.centerRight,
+          onPressed: isFormValid ? () {
+            // Parse numeric values
+            double height = double.parse(provider.inputfiveController.text);
+            double weight = double.parse(provider.inputsevenController.text);
+            
+            // Save to UserProvider
+            final userProvider = Provider.of<UserProvider>(context, listen: false);
+            userProvider.setProfile2Info(
+              activity: provider.timeController.text,
+              diet: provider.inputoneController.text.isEmpty ? null : provider.inputoneController.text,
+              goal: provider.inputthreeController.text,
+              height: height,
+              weight: weight,
+            );
+            
+            Navigator.pushNamed(context, AppRoutes.calorieCalculatorScreen);
+          } : null,
         );
-        
-        Navigator.pushNamed(context, AppRoutes.calorieCalculatorScreen);
       },
     );
   }

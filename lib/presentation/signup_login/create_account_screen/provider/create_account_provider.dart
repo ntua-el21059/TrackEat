@@ -17,13 +17,15 @@ class CreateAccountProvider extends ChangeNotifier {
   bool isShowPassword = true;
   bool isShowPassword1 = true;
 
-  @override
-  void dispose() {
-    super.dispose();
-    userNameController.dispose();
-    emailtwoController.dispose();
-    passwordtwoController.dispose();
-    passwordthreeController.dispose();
+  CreateAccountProvider() {
+    userNameController.addListener(_textChanged);
+    emailtwoController.addListener(_textChanged);
+    passwordtwoController.addListener(_textChanged);
+    passwordthreeController.addListener(_textChanged);
+  }
+
+  void _textChanged() {
+    notifyListeners();
   }
 
   void changePasswordVisibility() {
@@ -34,5 +36,18 @@ class CreateAccountProvider extends ChangeNotifier {
   void changePasswordVisibility1() {
     isShowPassword1 = !isShowPassword1;
     notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    userNameController.removeListener(_textChanged);
+    emailtwoController.removeListener(_textChanged);
+    passwordtwoController.removeListener(_textChanged);
+    passwordthreeController.removeListener(_textChanged);
+    userNameController.dispose();
+    emailtwoController.dispose();
+    passwordtwoController.dispose();
+    passwordthreeController.dispose();
+    super.dispose();
   }
 }

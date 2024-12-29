@@ -306,35 +306,44 @@ class CreateAccountScreenState extends State<CreateAccountScreen> {
     );
   }
 
-  /// Section Widget
+  /// Next Button
   Widget _buildNext(BuildContext context) {
-    return CustomElevatedButton(
-      height: 48.h,
-      width: 114.h,
-      text: "Next",
-      buttonStyle: CustomButtonStyles.fillPrimary,
-      buttonTextStyle: theme.textTheme.titleMedium!,
-      alignment: Alignment.centerRight,
-      onPressed: () {
-        final provider = Provider.of<CreateAccountProvider>(context, listen: false);
-        final userProvider = Provider.of<UserProvider>(context, listen: false);
-        
-        // Validate passwords match
-        if (provider.passwordtwoController.text != provider.passwordthreeController.text) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Passwords do not match')),
-          );
-          return;
-        }
-        
-        // Save to UserProvider
-        userProvider.setAccountInfo(
-          username: provider.userNameController.text,
-          email: provider.emailtwoController.text,
-          password: provider.passwordtwoController.text,
+    return Consumer<CreateAccountProvider>(
+      builder: (context, provider, child) {
+        bool isFormValid = provider.userNameController.text.isNotEmpty &&
+            provider.emailtwoController.text.isNotEmpty &&
+            provider.passwordtwoController.text.isNotEmpty &&
+            provider.passwordthreeController.text.isNotEmpty;
+
+        return CustomElevatedButton(
+          height: 48.h,
+          width: 114.h,
+          text: "Next",
+          buttonStyle: isFormValid 
+              ? CustomButtonStyles.fillPrimary
+              : CustomButtonStyles.fillGray,
+          buttonTextStyle: theme.textTheme.titleMedium!,
+          alignment: Alignment.centerRight,
+          onPressed: isFormValid ? () {
+            // Validate passwords match
+            if (provider.passwordtwoController.text != provider.passwordthreeController.text) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Passwords do not match')),
+              );
+              return;
+            }
+            
+            // Save to UserProvider
+            final userProvider = Provider.of<UserProvider>(context, listen: false);
+            userProvider.setAccountInfo(
+              username: provider.userNameController.text,
+              email: provider.emailtwoController.text,
+              password: provider.passwordtwoController.text,
+            );
+            
+            NavigatorService.pushNamed(AppRoutes.createProfile12Screen);
+          } : null,
         );
-        
-        NavigatorService.pushNamed(AppRoutes.createProfile12Screen);
       },
     );
   }

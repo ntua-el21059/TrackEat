@@ -9,6 +9,7 @@ import 'models/cards_item_model.dart';
 import 'models/home_model.dart';
 import 'provider/home_provider.dart';
 import 'widgets/cards_item_widget.dart';
+import 'package:activity_ring/activity_ring.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -25,6 +26,21 @@ class HomeScreen extends StatefulWidget {
 }
 
 class HomeScreenState extends State<HomeScreen> {
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    // Simulate loading delay
+    Future.delayed(Duration(milliseconds: 500), () {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -215,9 +231,35 @@ class HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
               ),
-              const Expanded(
+              Expanded(
                 flex: 2,
-                child: SizedBox(), // Space for rings
+                child: Ring(
+                  percent: _isLoading ? 0 : 78 / 98 * 100,
+                  color: RingColorScheme(
+                    ringColor: Color(0xFFFA114F),
+                    backgroundColor: Colors.grey.withOpacity(0.2),
+                  ),
+                  radius: 60,
+                  width: 15,
+                  child: Ring(
+                    percent: _isLoading ? 0 : 45 / 70 * 100,
+                    color: RingColorScheme(
+                      ringColor: Color(0xFFA6FF00),
+                      backgroundColor: Colors.grey.withOpacity(0.2),
+                    ),
+                    radius: 45,
+                    width: 15,
+                    child: Ring(
+                      percent: _isLoading ? 0 : 95 / 110 * 100,
+                      color: RingColorScheme(
+                        ringColor: Color(0xFF00FFF6),
+                        backgroundColor: Colors.grey.withOpacity(0.2),
+                      ),
+                      radius: 30,
+                      width: 15,
+                    ),
+                  ),
+                ),
               ),
             ],
           ),

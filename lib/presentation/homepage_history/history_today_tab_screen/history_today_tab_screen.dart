@@ -13,6 +13,7 @@ import 'models/history_today_tab_model.dart';
 import 'models/historytoday_item_model.dart';
 import 'provider/history_today_tab_provider.dart';
 import 'widgets/historytoday_item_widget.dart';
+import 'package:activity_ring/activity_ring.dart';
 
 class HistoryTodayTabScreen extends StatefulWidget {
   const HistoryTodayTabScreen({Key? key}) : super(key: key);
@@ -29,9 +30,19 @@ class HistoryTodayTabScreen extends StatefulWidget {
 }
 
 class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> {
+  bool _isLoading = true;
+
   @override
   void initState() {
     super.initState();
+    // Simulate loading delay
+    Future.delayed(Duration(milliseconds: 500), () {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    });
   }
 
   @override
@@ -229,9 +240,35 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> {
                   ],
                 ),
               ),
-              const Expanded(
+              Expanded(
                 flex: 2,
-                child: SizedBox(), // Space for rings
+                child: Ring(
+                  percent: _isLoading ? 0 : 78 / 98 * 100,
+                  color: RingColorScheme(
+                    ringColor: Color(0xFFFA114F),
+                    backgroundColor: Colors.grey.withOpacity(0.2),
+                  ),
+                  radius: 60,
+                  width: 15,
+                  child: Ring(
+                    percent: _isLoading ? 0 : 45 / 70 * 100,
+                    color: RingColorScheme(
+                      ringColor: Color(0xFFA6FF00),
+                      backgroundColor: Colors.grey.withOpacity(0.2),
+                    ),
+                    radius: 45,
+                    width: 15,
+                    child: Ring(
+                      percent: _isLoading ? 0 : 95 / 110 * 100,
+                      color: RingColorScheme(
+                        ringColor: Color(0xFF00FFF6),
+                        backgroundColor: Colors.grey.withOpacity(0.2),
+                      ),
+                      radius: 30,
+                      width: 15,
+                    ),
+                  ),
+                ),
               ),
             ],
           ),
@@ -297,7 +334,7 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> {
                 width: 24,
                 height: 24,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFB2D7FF).withOpacity(0.3),
+                  color: Color.fromRGBO(178, 215, 255, 0.3),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: GestureDetector(
@@ -458,7 +495,7 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> {
                 width: 24,
                 height: 24,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFB2D7FF).withOpacity(0.3),
+                  color: Color.fromRGBO(178, 215, 255, 0.3),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: GestureDetector(

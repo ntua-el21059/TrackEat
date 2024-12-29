@@ -14,12 +14,27 @@ class CreateProfile12Provider extends ChangeNotifier {
   TextEditingController gendertwoController = TextEditingController();
   CreateProfile12Model createProfile12ModelObj = CreateProfile12Model();
 
+  CreateProfile12Provider() {
+    firstNameController.addListener(_textChanged);
+    lastNameController.addListener(_textChanged);
+    dateController.addListener(_textChanged);
+    gendertwoController.addListener(_textChanged);
+  }
+
+  void _textChanged() {
+    notifyListeners();
+  }
+
   @override
   void dispose() {
-    super.dispose();
+    firstNameController.removeListener(_textChanged);
+    lastNameController.removeListener(_textChanged);
+    dateController.removeListener(_textChanged);
+    gendertwoController.removeListener(_textChanged);
     firstNameController.dispose();
     lastNameController.dispose();
     dateController.dispose();
     gendertwoController.dispose();
+    super.dispose();
   }
 }

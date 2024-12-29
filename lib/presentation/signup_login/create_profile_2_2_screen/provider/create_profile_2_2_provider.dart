@@ -16,8 +16,25 @@ class CreateProfile22Provider extends ChangeNotifier {
 
   CreateProfile22Model createProfile22ModelObj = CreateProfile22Model();
 
+  CreateProfile22Provider() {
+    timeController.addListener(_textChanged);
+    inputoneController.addListener(_textChanged);
+    inputthreeController.addListener(_textChanged);
+    inputfiveController.addListener(_textChanged);
+    inputsevenController.addListener(_textChanged);
+  }
+
+  void _textChanged() {
+    notifyListeners();
+  }
+
   @override
   void dispose() {
+    timeController.removeListener(_textChanged);
+    inputoneController.removeListener(_textChanged);
+    inputthreeController.removeListener(_textChanged);
+    inputfiveController.removeListener(_textChanged);
+    inputsevenController.removeListener(_textChanged);
     timeController.dispose();
     inputoneController.dispose();
     inputthreeController.dispose();
