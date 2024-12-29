@@ -3,7 +3,11 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../core/app_export.dart';
 import '../core/theme/theme_constants.dart';
 
-enum BottomBarEnum { Home, Leaderboard }
+enum BottomBarEnum {
+  Home,
+  Leaderboard,
+  AI,
+}
 
 class CustomBottomBar extends StatefulWidget {
   const CustomBottomBar({Key? key, this.onChanged}) : super(key: key);
@@ -75,10 +79,11 @@ class CustomBottomBarState extends State<CustomBottomBar> {
                 setState(() {
                   selectedIndex = 1;
                 });
-                widget.onChanged?.call(BottomBarEnum.Home);
+                widget.onChanged?.call(BottomBarEnum.AI);
+                Navigator.pushNamed(context, AppRoutes.aiChatSplashScreen);
               },
               child: SvgPicture.asset(
-                'assets/images/AI logo.svg',
+                'assets/images/ai_logo.svg',
                 width: 65,
                 height: 65,
                 fit: BoxFit.contain,

@@ -166,6 +166,11 @@ class CustomTextStyles {
         fontWeight: FontWeight.w700,
       );
 
+  static TextStyle get headlineLargeLight => theme.textTheme.headlineLarge!.copyWith(
+        fontWeight: FontWeight.w300,
+        color: Colors.white,
+      );
+
   // Label text styles
   static TextStyle get labelLargeBlack900 =>
       theme.textTheme.labelLarge!.copyWith(
@@ -256,5 +261,13 @@ class CustomTextStyles {
 
   static TextStyle get titleLargeSemiBold => theme.textTheme.titleLarge!.copyWith(
         fontWeight: FontWeight.w600,
+      );
+
+  static TextStyle get labelLargeSemiBold => theme.textTheme.labelLarge!.copyWith(
+        fontWeight: FontWeight.w600,
+      );
+
+  static TextStyle get labelMediumOnErrorContainer => theme.textTheme.labelMedium!.copyWith(
+        color: theme.colorScheme.onErrorContainer,
       );
 }

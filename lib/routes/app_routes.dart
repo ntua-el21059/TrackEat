@@ -26,6 +26,8 @@ import '../presentation/homepage_history/history_today_tab_screen/history_today_
 import '../presentation/profile_screen/profile_screen.dart';
 import '../presentation/profile_static_screen/profile_static_screen.dart';
 import '../presentation/accessibility_settings_screen/accessibility_settings_screen.dart';
+import '../presentation/ai_chat/ai_chat_splash_screen/ai_chat_splash_screen.dart';
+import '../presentation/ai_chat/ai_chat_main_page/ai_chat_main_page_screen.dart';
 
 class AppRoutes {
   static const String createAccountScreen = '/create_account_screen';
@@ -87,6 +89,8 @@ class AppRoutes {
         finalizedAccountScreen: FinalizedAccountScreen.builder,
         homeScreen: HomeScreen.builder,
         historyTodayTabScreen: HistoryTodayTabScreen.builder,
+        aiChatSplashScreen: AiChatSplashScreen.builder,
+        aiChatMainScreen: AiChatMainScreen.builder,
         initialRoute: SplashScreen.builder,
         profileScreen: (context) => ProfileScreen(),
         profileStaticScreen: (context) => const ProfileStaticScreen(),

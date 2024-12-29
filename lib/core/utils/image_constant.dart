@@ -26,7 +26,7 @@ class ImageConstant {
       '$imagePath/img_linear_essentional_cyan_900.svg';
   static String imgPlusCircle = '$imagePath/img_plus_circle.svg';
   static String imgClose = '$imagePath/img_close.svg';
-  static String imgVector = '$imagePath/img_vector.png';
+  static String imgVector = '$imagePath/ai_logo.svg';
   static String imgSirianimationshaky = '$imagePath/img_sirianimationshaky.png';
   static String imgInfo = '$imagePath/img_info.svg';
   static String imgSiriGraph = '$imagePath/img_siri_graph.png';
