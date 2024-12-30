@@ -27,12 +27,12 @@ class ImageConstant {
   static String imgPlusCircle = '$imagePath/img_plus_circle.svg';
   static String imgClose = '$imagePath/img_close.svg';
   static String imgVector = '$imagePath/ai_logo.svg';
-  static String imgSirianimationshaky = '$imagePath/img_sirianimationshaky.png';
+  static String imgSirianimationshaky = '$imagePath/img_sirianimationshaky.svg';
   static String imgInfo = '$imagePath/img_info.svg';
-  static String imgSiriGraph = '$imagePath/img_siri_graph.png';
-  static String imgSpeakingIcon = '$imagePath/img_speaking_icon.png';
-  static String imgCameraIcon = '$imagePath/img_camera_icon.png';
-  static String imgArrowIcon = '$imagePath/img_arrow_icon.png';
+  static String imgSiriGraph = '$imagePath/img_siri_graph.svg';
+  static String imgSpeakingIcon = '$imagePath/img_speaking_icon.svg';
+  static String imgCameraIcon = '$imagePath/img_camera_icon.svg';
+  static String imgArrowIcon = '$imagePath/img_arrow_icon.svg';
   static String imgSirianimationshaky852x392 =
       '$imagePath/img_sirianimationshaky_852x392.png';
   static String imgCloseOnerrorcontainer =

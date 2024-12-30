@@ -10,25 +10,31 @@ enum BottomBarEnum {
 }
 
 class CustomBottomBar extends StatefulWidget {
-  const CustomBottomBar({Key? key, this.onChanged}) : super(key: key);
+  const CustomBottomBar({
+    Key? key,
+    this.onChanged,
+    this.backgroundColor,
+  }) : super(key: key);
 
   final Function(BottomBarEnum)? onChanged;
+  final Color? backgroundColor;
 
   @override
   CustomBottomBarState createState() => CustomBottomBarState();
 }
 
 class CustomBottomBarState extends State<CustomBottomBar> {
-  int selectedIndex = 0;
-
   @override
   Widget build(BuildContext context) {
+    final String currentRoute = ModalRoute.of(context)?.settings.name ?? '';
+    
     return Stack(
       clipBehavior: Clip.none,
       children: [
         Container(
           width: double.infinity,
           decoration: BoxDecoration(
+            color: widget.backgroundColor ?? Colors.white,
             border: Border(
               top: BorderSide(
                 color: ThemeConstants.borderColor,
@@ -37,7 +43,6 @@ class CustomBottomBarState extends State<CustomBottomBar> {
             ),
           ),
           child: Container(
-            color: Colors.white,
             padding: const EdgeInsets.only(top: 5, bottom: 15),
             constraints: BoxConstraints(maxWidth: ThemeConstants.maxWidth),
             child: Row(
@@ -51,7 +56,7 @@ class CustomBottomBarState extends State<CustomBottomBar> {
                     width: 35,
                     aspectRatio: 1.3,
                     type: BottomBarEnum.Home,
-                    index: 0,
+                    isSelected: currentRoute == AppRoutes.homeScreen,
                   ),
                 ),
                 const Spacer(),
@@ -62,7 +67,7 @@ class CustomBottomBarState extends State<CustomBottomBar> {
                     width: 28,
                     aspectRatio: 0.92,
                     type: BottomBarEnum.Leaderboard,
-                    index: 2,
+                    isSelected: currentRoute == '/leaderboard',
                   ),
                 ),
               ],
@@ -76,9 +81,6 @@ class CustomBottomBarState extends State<CustomBottomBar> {
           child: Center(
             child: GestureDetector(
               onTap: () {
-                setState(() {
-                  selectedIndex = 1;
-                });
                 widget.onChanged?.call(BottomBarEnum.AI);
                 Navigator.pushNamed(context, AppRoutes.aiChatSplashScreen);
               },
@@ -101,15 +103,12 @@ class CustomBottomBarState extends State<CustomBottomBar> {
     required double width,
     required double aspectRatio,
     required BottomBarEnum type,
-    required int index,
+    required bool isSelected,
   }) {
-    final bool isSelected = selectedIndex == index;
+    final Color selectedColor = const Color(0xFF007AFF);
     
     return GestureDetector(
       onTap: () {
-        setState(() {
-          selectedIndex = index;
-        });
         widget.onChanged?.call(type);
       },
       child: Column(
@@ -122,7 +121,7 @@ class CustomBottomBarState extends State<CustomBottomBar> {
             height: width / aspectRatio,
             fit: BoxFit.contain,
             colorFilter: ColorFilter.mode(
-              isSelected ? appTheme.gray50001 : const Color(0xFF999999),
+              isSelected ? selectedColor : const Color(0xFF999999),
               BlendMode.srcIn,
             ),
           ),
@@ -130,7 +129,7 @@ class CustomBottomBarState extends State<CustomBottomBar> {
           Text(
             label,
             style: TextStyle(
-              color: ThemeConstants.textColor,
+              color: isSelected ? selectedColor : ThemeConstants.textColor,
               fontSize: 12,
               fontFamily: ThemeConstants.fontFamily,
               fontWeight: ThemeConstants.fontWeight,
