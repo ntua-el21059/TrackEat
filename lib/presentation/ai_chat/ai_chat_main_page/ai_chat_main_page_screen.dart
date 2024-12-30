@@ -1,6 +1,8 @@
+import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/app_export.dart';
 import '../../../../widgets/custom_bottom_bar.dart';
+import '../../../services/camera_logic/camera_screen.dart';
 import 'models/ai_chat_main_page_model.dart';
 import 'provider/ai_chat_main_page_provider.dart';
 import 'dart:io';
@@ -48,6 +50,30 @@ class AiChatMainScreenState extends State<AiChatMainScreen> {
   void dispose() {
     _scrollController.dispose();
     super.dispose();
+  }
+
+  Future<void> _openCamera() async {
+    // Get the list of available cameras
+    final cameras = await availableCameras();
+    
+    // Use the first available camera (usually the back camera)
+    final firstCamera = cameras.first;
+
+    // Navigate to the camera screen
+    final imagePath = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CameraScreen(camera: firstCamera),
+      ),
+    );
+
+    // If an image was captured, handle it
+    if (imagePath != null) {
+      final provider = Provider.of<AiChatMainProvider>(context, listen: false);
+      
+      // Set the selected image in the provider
+      provider.selectedImage = XFile(imagePath);
+    }
   }
 
   @override
@@ -116,6 +142,66 @@ class AiChatMainScreenState extends State<AiChatMainScreen> {
                         final message = provider.messages[index];
                         final isUser = message['role'] == 'user';
                         
+                        // Check if the message contains an image path
+                        final bool hasImagePath = message['content']?.contains('📸') ?? false;
+                        
+                        // If it's a user message with an image
+                        if (isUser && hasImagePath) {
+                          return Align(
+                            alignment: Alignment.centerRight,
+                            child: Container(
+                              margin: EdgeInsets.symmetric(vertical: 4.h),
+                              width: SizeUtils.width * 0.7, // 70% of screen width
+                              height: SizeUtils.height * 0.4, // 40% of screen height
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(16.h),
+                                image: DecorationImage(
+                                  image: FileImage(File(message['content']!.split('\n').last.trim())),
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            ),
+                          );
+                        }
+                        
+                        // For nutrition info messages
+                        if (!isUser && message['content']?.contains('🍽️ Nutrition Information:') == true) {
+                          return Align(
+                            alignment: Alignment.centerLeft,
+                            child: Container(
+                              margin: EdgeInsets.symmetric(vertical: 4.h),
+                              padding: EdgeInsets.all(12.h),
+                              width: SizeUtils.width * 0.7, // 70% of screen width
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(16.h),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '🍽️ Nutrition Information',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16.h,
+                                    ),
+                                  ),
+                                  SizedBox(height: 8.h),
+                                  ...message['content']!
+                                      .split('\n')
+                                      .skip(1)
+                                      .map((line) => Text(
+                                            line,
+                                            style: TextStyle(fontSize: 14.h),
+                                          ))
+                                      .toList(),
+                                ],
+                              ),
+                            ),
+                          );
+                        }
+                        
+                        // Default message rendering
                         return Align(
                           alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
                           child: Container(
@@ -180,6 +266,7 @@ class AiChatMainScreenState extends State<AiChatMainScreen> {
               child: _buildActionButton(
                 "SnapEat",
                 ImageConstant.imgCameraIcon,
+                onTap: _openCamera,
               ),
             ),
           ],
@@ -338,35 +425,38 @@ class AiChatMainScreenState extends State<AiChatMainScreen> {
     );
   }
 
-  Widget _buildActionButton(String text, String iconPath) {
-    return Container(
-      height: 44.h,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [appTheme.lightBlue300, theme.colorScheme.primary],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
+  Widget _buildActionButton(String text, String iconPath, {VoidCallback? onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 44.h,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [appTheme.lightBlue300, theme.colorScheme.primary],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+          borderRadius: BorderRadius.circular(22.h),
         ),
-        borderRadius: BorderRadius.circular(22.h),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            text,
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 14.h,
-              fontWeight: FontWeight.w500,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              text,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 14.h,
+                fontWeight: FontWeight.w500,
+              ),
             ),
-          ),
-          SizedBox(width: 8.h),
-          CustomImageView(
-            imagePath: iconPath,
-            height: 24.h,
-            width: 24.h,
-          ),
-        ],
+            SizedBox(width: 8.h),
+            CustomImageView(
+              imagePath: iconPath,
+              height: 24.h,
+              width: 24.h,
+            ),
+          ],
+        ),
       ),
     );
   }

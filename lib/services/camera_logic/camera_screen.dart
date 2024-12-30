@@ -13,17 +13,30 @@ class CameraScreen extends StatefulWidget {
 class _CameraScreenState extends State<CameraScreen> {
   late CameraController _controller;
   late Future<void> _initializeControllerFuture;
+  bool _isCameraInitialized = false;
 
   @override
   void initState() {
     super.initState();
-    // Initialize the camera controller
+    _initializeCamera();
+  }
+
+  void _initializeCamera() async {
     _controller = CameraController(
       widget.camera,
       ResolutionPreset.high,
+      imageFormatGroup: ImageFormatGroup.jpeg,
     );
 
-    _initializeControllerFuture = _controller.initialize();
+    _initializeControllerFuture = _controller.initialize().then((_) {
+      if (mounted) {
+        setState(() {
+          _isCameraInitialized = true;
+        });
+      }
+    }).catchError((error) {
+      print('Camera initialization error: $error');
+    });
   }
 
   @override
@@ -32,35 +45,59 @@ class _CameraScreenState extends State<CameraScreen> {
     super.dispose();
   }
 
+  Future<void> _takePicture() async {
+    try {
+      await _initializeControllerFuture;
+      
+      final image = await _controller.takePicture();
+      
+      // Navigate back with the captured image path
+      Navigator.pop(context, image.path);
+    } catch (e) {
+      print('Error taking picture: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to capture image: $e')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Camera')),
-      body: FutureBuilder<void>(
-        future: _initializeControllerFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.done) {
-            return CameraPreview(_controller);
-          } else {
-            return const Center(child: CircularProgressIndicator());
-          }
-        },
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          try {
-            await _initializeControllerFuture;
-
-            // Capture the image
-            final image = await _controller.takePicture();
-
-            // Navigate back with the captured image path
-            Navigator.pop(context, image.path);
-          } catch (e) {
-            print('Error taking picture: $e');
-          }
-        },
-        child: const Icon(Icons.camera),
+      backgroundColor: Colors.black,
+      body: Stack(
+        children: [
+          // Full screen camera preview
+          _isCameraInitialized
+              ? SizedBox(
+                  width: double.infinity,
+                  height: double.infinity,
+                  child: CameraPreview(_controller),
+                )
+              : const Center(child: CircularProgressIndicator()),
+          
+          // Capture button
+          Positioned(
+            bottom: 50,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: ElevatedButton(
+                onPressed: _isCameraInitialized ? _takePicture : null,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  shape: const CircleBorder(),
+                  padding: const EdgeInsets.all(20),
+                ),
+                child: const Icon(
+                  Icons.camera_alt,
+                  color: Colors.black,
+                  size: 40,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

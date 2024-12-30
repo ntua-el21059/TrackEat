@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:image_picker/image_picker.dart';
+import 'dart:convert';
 import '../../../../core/app_export.dart';
 import '../models/ai_chat_main_page_model.dart';
 
@@ -63,15 +65,27 @@ class AiChatMainProvider extends ChangeNotifier {
       notifyListeners();
 
       String userMessage = message;
+      Map<String, dynamic>? nutritionData;
+
+      // If an image is selected, analyze it first
       if (selectedImage != null) {
-        userMessage = '📸 Image attached: ${selectedImage!.path.split('/').last}\n$message';
+        nutritionData = await _analyzeImage(selectedImage!.path);
+        
+        // Prepare the user message with only the image path
+        messages.add({
+          'role': 'user',
+          'content': '📸 Image\n${selectedImage!.path}',
+        });
       }
 
-      // Add user message to the list
-      messages.add({
-        'role': 'user',
-        'content': userMessage,
-      });
+      // Add user text message if not empty
+      if (message.trim().isNotEmpty) {
+        messages.add({
+          'role': 'user',
+          'content': message,
+        });
+      }
+
       notifyListeners();
       
       // Delay slightly to ensure UI updates before scrolling
@@ -79,8 +93,16 @@ class AiChatMainProvider extends ChangeNotifier {
         onMessageAdded?.call();
       });
 
+      // Prepare the content for sending to Gemini
+      final content = selectedImage != null
+          ? Content.multi([
+              TextPart(message),
+              DataPart('image/jpeg', await selectedImage!.readAsBytes()),
+            ])
+          : Content.text(message);
+
       // Send message to Gemini
-      final response = await _chat.sendMessage(Content.text(userMessage));
+      final response = await _chat.sendMessage(content);
       final responseText = response.text;
 
       if (responseText != null) {
@@ -89,6 +111,21 @@ class AiChatMainProvider extends ChangeNotifier {
           'role': 'assistant',
           'content': responseText.trim(),
         });
+        
+        // If nutrition data was extracted, add it as a separate message
+        if (nutritionData != null) {
+          messages.add({
+            'role': 'assistant',
+            'content': '🍽️ Nutrition Information:\n'
+                      'Food: ${nutritionData['food']}\n'
+                      'Serving Size: ${nutritionData['serving_size']}\n'
+                      'Calories: ${nutritionData['calories']}\n'
+                      'Protein: ${nutritionData['protein']}g\n'
+                      'Carbs: ${nutritionData['carbs']}g\n'
+                      'Fat: ${nutritionData['fat']}g',
+          });
+        }
+
         notifyListeners();
         
         // Delay slightly to ensure UI updates before scrolling
@@ -113,6 +150,66 @@ class AiChatMainProvider extends ChangeNotifier {
       isLoading = false;
       notifyListeners();
     }
+  }
+
+  Future<Map<String, dynamic>?> _analyzeImage(String imagePath) async {
+    try {
+      // Initialize the Generative Model
+      final generativeModel = GenerativeModel(
+        model: modelName,
+        apiKey: apiKey,
+      );
+
+      // Load the image as bytes
+      Uint8List imageBytes = await XFile(imagePath).readAsBytes();
+
+      // Create the prompt
+      const prompt = """
+      You are a nutrition analysis assistant. Given the image, identify the food and respond ONLY with a structured answer containing the estimated nutritional information for the serving in the picture. 
+
+      The answer should follow this structure:
+
+      {
+        "food": "<food_name>",
+        "serving_size": "<serving_size>",
+        "calories": <integer>,
+        "protein": <integer>,
+        "carbs": <integer>,
+        "fat": <integer>
+      }
+
+      If unsure, make your best guess.
+      """;
+
+      // Prepare the content for the request
+      final content = [
+        Content.multi([
+          TextPart(prompt),
+          DataPart('image/jpeg', imageBytes),
+        ])
+      ];
+
+      // Send the request to the model
+      final response = await generativeModel.generateContent(content);
+
+      // Extract and clean the response text
+      String? responseText = response.text;
+      if (responseText != null) {
+        responseText = responseText
+            .replaceAll('```json', '')
+            .replaceAll('```', '')
+            .trim();
+        print('Cleaned Response: $responseText');
+
+        // Parse the cleaned JSON
+        final nutritionData = jsonDecode(responseText);
+        print('Nutrition Data: $nutritionData');
+        return nutritionData;
+      }
+    } catch (e) {
+      print('Error analyzing image: $e');
+    }
+    return null;
   }
 
   @override
