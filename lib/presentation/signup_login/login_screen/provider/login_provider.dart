@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../../core/app_export.dart';
 import '../models/login_model.dart';
 
 /// A provider class for the LoginScreen.
@@ -14,14 +13,7 @@ class LoginProvider extends ChangeNotifier {
 
   bool isShowPassword = true;
   bool? keepmesignedin = false;
-  bool _isLoading = false;
-
-  bool get isLoading => _isLoading;
-
-  void setLoading(bool value) {
-    _isLoading = value;
-    notifyListeners();
-  }
+  bool isLoading = false;
 
   void changePasswordVisibility() {
     isShowPassword = !isShowPassword;
@@ -30,6 +22,11 @@ class LoginProvider extends ChangeNotifier {
 
   void changeCheckBox(bool? value) {
     keepmesignedin = value;
+    notifyListeners();
+  }
+
+  void setLoading(bool value) {
+    isLoading = value;
     notifyListeners();
   }
 

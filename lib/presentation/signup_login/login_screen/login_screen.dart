@@ -145,13 +145,13 @@ class LoginScreenState extends State<LoginScreen> {
         left: 8.h,
         right: 16.h,
       ),
-      child: Selector<LoginProvider, TextEditingController?>(
-        selector: (context, provider) => provider.userNameController,
-        builder: (context, userNameController, child) {
+      child: Consumer<LoginProvider>(
+        builder: (context, provider, child) {
           return CustomTextFormField(
-            controller: userNameController,
+            controller: provider.userNameController,
             hintText: "hello@example.com",
             hintStyle: CustomTextStyles.bodyLargeGray50003,
+            textInputType: TextInputType.emailAddress,
             contentPadding: EdgeInsets.fromLTRB(16.h, 12.h, 10.h, 12.h),
             borderDecoration: TextFormFieldStyleHelper.outlineBlueGrayTL8,
           );
