@@ -22,16 +22,17 @@ void main() async {
   
   // Set status bar to be visible and transparent
   SystemChrome.setEnabledSystemUIMode(
-    SystemUiMode.edgeToEdge,  // Changed to edgeToEdge
+    SystemUiMode.manual,
+    overlays: [SystemUiOverlay.top, SystemUiOverlay.bottom],
   );
   
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
     statusBarIconBrightness: Brightness.dark,
     statusBarBrightness: Brightness.light,
-    systemNavigationBarColor: Colors.transparent,  // Added for bottom navigation bar
-    systemNavigationBarDividerColor: Colors.transparent,  // Added for bottom navigation bar
-    systemNavigationBarIconBrightness: Brightness.dark,  // Added for bottom navigation bar
+    systemNavigationBarColor: Colors.transparent,
+    systemNavigationBarDividerColor: Colors.transparent,
+    systemNavigationBarIconBrightness: Brightness.dark,
   ));
   
   await Future.wait([
@@ -86,13 +87,35 @@ class MyApp extends StatelessWidget {
             child: MaterialApp(
               title: 'trackeat',
               debugShowCheckedModeBanner: false,
-              theme: theme,
+              theme: ThemeData(
+                appBarTheme: AppBarTheme(
+                  systemOverlayStyle: SystemUiOverlayStyle.dark.copyWith(
+                    statusBarColor: Colors.transparent,
+                    systemNavigationBarColor: Colors.transparent,
+                    systemNavigationBarDividerColor: Colors.transparent,
+                  ),
+                ),
+                // ... other theme data
+              ),
               builder: (context, child) {
+                // Ensure system overlays are visible
+                SystemChrome.setEnabledSystemUIMode(
+                  SystemUiMode.manual,
+                  overlays: [SystemUiOverlay.top, SystemUiOverlay.bottom],
+                );
+                
                 return MediaQuery(
                   data: MediaQuery.of(context).copyWith(
                     textScaler: TextScaler.linear(themeProvider.textScaleFactor),
                   ),
-                  child: child!,
+                  child: AnnotatedRegion<SystemUiOverlayStyle>(
+                    value: SystemUiOverlayStyle.dark.copyWith(
+                      statusBarColor: Colors.transparent,
+                      systemNavigationBarColor: Colors.transparent,
+                      systemNavigationBarDividerColor: Colors.transparent,
+                    ),
+                    child: child!,
+                  ),
                 );
               },
               navigatorKey: NavigatorService.navigatorKey,

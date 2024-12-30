@@ -321,6 +321,9 @@ class ProfileItemWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     bool isActivityLevel = profileItemModelObj.title == "Activity Level";
+    bool isWeeklyGoal = profileItemModelObj.title == "Weekly Goal";
+    bool isGoalWeight = profileItemModelObj.title == "Goal Weight";
+    bool isCaloriesGoal = profileItemModelObj.title == "Calories Goal";
     bool isDiet = profileItemModelObj.title == "Diet";
     bool isNumericField = [
       "Weekly Goal",
@@ -331,6 +334,9 @@ class ProfileItemWidget extends StatelessWidget {
       "Protein Goal",
       "Fat Goal"
     ].contains(profileItemModelObj.title);
+
+    // Calculate fixed position for icons
+    final double iconPosition = _getTextWidth(context, "Activity Level") + 4.h;
 
     return Column(
       children: [
@@ -357,18 +363,32 @@ class ProfileItemWidget extends StatelessWidget {
                         color: Colors.white,
                       ),
                     ),
-                    // Icon - positioned at fixed distance from left
-                    Positioned(
-                      left: 135.h,  // Fixed position for all icons
-                      top: 0,
-                      child: CustomImageView(
-                        imagePath: profileItemModelObj.icon,
-                        height: 25.h,
-                        width: 25.h,
-                        color: Colors.white,
-                        fit: BoxFit.contain,
+                    // Icon - positioned at same horizontal position for specific items
+                    if (isActivityLevel || isWeeklyGoal || isGoalWeight || isCaloriesGoal)
+                      Positioned(
+                        left: iconPosition,
+                        top: 0,
+                        child: CustomImageView(
+                          imagePath: profileItemModelObj.icon,
+                          height: isCaloriesGoal ? 28.h : 25.h,  // Bigger size for calories icon
+                          width: isCaloriesGoal ? 28.h : 25.h,   // Bigger size for calories icon
+                          color: Colors.white,
+                          fit: BoxFit.contain,
+                        ),
                       ),
-                    ),
+                    // For other icons, keep original positioning
+                    if (!isActivityLevel && !isWeeklyGoal && !isGoalWeight && !isCaloriesGoal)
+                      Positioned(
+                        left: 135.h,
+                        top: 0,
+                        child: CustomImageView(
+                          imagePath: profileItemModelObj.icon,
+                          height: 25.h,
+                          width: 25.h,
+                          color: Colors.white,
+                          fit: BoxFit.contain,
+                        ),
+                      ),
                   ],
                 ),
               ),
@@ -410,5 +430,21 @@ class ProfileItemWidget extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  // Add this helper method to calculate text width
+  double _getTextWidth(BuildContext context, String text) {
+    final TextPainter textPainter = TextPainter(
+      text: TextSpan(
+        text: text,
+        style: theme.textTheme.titleLarge?.copyWith(
+          color: Colors.white,
+        ),
+      ),
+      maxLines: 1,
+      textDirection: TextDirection.ltr,
+    )..layout(minWidth: 0, maxWidth: double.infinity);
+    
+    return textPainter.width;
   }
 }
