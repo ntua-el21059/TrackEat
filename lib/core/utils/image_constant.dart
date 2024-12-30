@@ -203,7 +203,7 @@ class ImageConstant {
   static String imgDiet = '$imagePath/diet.svg';
   static String imgCarbsGoal = '$imagePath/carbs_goal.svg';
   static String imgProteinGoal = '$imagePath/protein_goal.svg';
-  static String imgFatGoal = '$imagePath/fat.png';
+  static String imgFatGoal = '$imagePath/fat_goal.svg';
   static String imgAccessibility = '$imagePath/accessibility.png';
   static String imgAddFriend = '$imagePath/add_friend.svg';
   static String imgAward1 = '$imagePath/award1.png';
@@ -218,4 +218,5 @@ class ImageConstant {
   static String imgHalfMileThrough = '$imagePath/half_mile_through.png';
   static String imgCarnivoreChallenge = '$imagePath/carnivore_challenge.png';
   static String imgAvocadoExcellence = '$imagePath/avocado_excellence.png';
+  static String imgActivityLevel = '$imagePath/activity_level2.svg';
 }

@@ -73,9 +73,12 @@ class WelcomeScreenState extends State<WelcomeScreen> {
                 onTap: () {
                   NavigatorService.pushNamed(AppRoutes.createAccountScreen);
                 },
-                child: Text(
-                  "Create an account",
-                  style: CustomTextStyles.bodyLarge18,
+                child: Padding(
+                  padding: EdgeInsets.only(left: 12.9.h),
+                  child: Text(
+                    "Create an account",
+                    style: CustomTextStyles.bodyLarge18,
+                  ),
                 ),
               ),
             ],

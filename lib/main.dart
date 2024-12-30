@@ -10,11 +10,15 @@ import 'services/firebase/firebase_options.dart';
 import 'presentation/profile_screen/provider/profile_provider.dart';
 import 'presentation/profile_static_screen/provider/profile_static_provider.dart';
 import 'theme/theme_provider.dart' as app_theme;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'providers/profile_picture_provider.dart';
+import 'providers/user_info_provider.dart';
 
 var globalMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  final SharedPreferences prefs = await SharedPreferences.getInstance();
   
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
@@ -48,6 +52,12 @@ void main() async {
         ),
         ChangeNotifierProvider(create: (_) => ProfileProvider()),
         ChangeNotifierProvider(create: (_) => ProfileStaticProvider()),
+        ChangeNotifierProvider(
+          create: (_) => ProfilePictureProvider(prefs),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => UserInfoProvider(prefs),
+        ),
       ],
       child: MyApp(),
     ),

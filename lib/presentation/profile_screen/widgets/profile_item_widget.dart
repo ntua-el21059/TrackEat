@@ -4,6 +4,7 @@ import '../models/profile_item_model.dart';
 import 'package:provider/provider.dart';
 import '../provider/profile_provider.dart';
 import '../../social_profile_myself_screen/provider/social_profile_myself_provider.dart';
+import '../../../providers/user_info_provider.dart';
 
 // ignore_for_file: must_be_immutable
 class ProfileItemWidget extends StatelessWidget {
@@ -324,6 +325,7 @@ class ProfileItemWidget extends StatelessWidget {
     bool isWeeklyGoal = profileItemModelObj.title == "Weekly Goal";
     bool isGoalWeight = profileItemModelObj.title == "Goal Weight";
     bool isCaloriesGoal = profileItemModelObj.title == "Calories Goal";
+    bool isCurWeight = profileItemModelObj.title == "Cur. Weight";
     bool isDiet = profileItemModelObj.title == "Diet";
     bool isNumericField = [
       "Weekly Goal",
@@ -336,7 +338,14 @@ class ProfileItemWidget extends StatelessWidget {
     ].contains(profileItemModelObj.title);
 
     // Calculate fixed position for icons
-    final double iconPosition = _getTextWidth(context, "Activity Level") + 4.h;
+    final double basePosition = _getTextWidth(context, "Activity Level") + 5.h;
+    final double activityLevelPosition = basePosition + 5.h;
+    final double weeklyGoalPosition = basePosition + 1.h;
+    final double goalWeightAdjustedPosition = basePosition + 1.h;
+    final double caloriesAdjustedPosition = basePosition + 3.h;
+    final double fatGoalPosition = 127.h;
+    final double dietPosition = 140.h;
+    final double carbsGoalPosition = 138.h;
 
     return Column(
       children: [
@@ -353,7 +362,7 @@ class ProfileItemWidget extends StatelessWidget {
             children: [
               // Left side with text and icon
               SizedBox(
-                width: 160.h,  // Fixed width for text + icon area
+                width: 180.h,  // Increased from 160.h to 180.h to prevent icon cutoff
                 child: Stack(
                   children: [
                     // Text
@@ -363,28 +372,72 @@ class ProfileItemWidget extends StatelessWidget {
                         color: Colors.white,
                       ),
                     ),
-                    // Icon - positioned at same horizontal position for specific items
-                    if (isActivityLevel || isWeeklyGoal || isGoalWeight || isCaloriesGoal)
+                    // Icon positioning
+                    if (isActivityLevel || isWeeklyGoal)
                       Positioned(
-                        left: iconPosition,
+                        left: isActivityLevel ? activityLevelPosition : weeklyGoalPosition,
+                        top: isWeeklyGoal ? 2.h : 0,
+                        child: CustomImageView(
+                          imagePath: isActivityLevel 
+                              ? ImageConstant.imgActivityLevel
+                              : profileItemModelObj.icon,
+                          height: isWeeklyGoal ? 23.h : 25.h,
+                          width: isWeeklyGoal ? 23.h : 25.h,
+                          color: Colors.white,
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                    if (isCaloriesGoal)
+                      Positioned(
+                        left: caloriesAdjustedPosition,
                         top: 0,
                         child: CustomImageView(
                           imagePath: profileItemModelObj.icon,
-                          height: isCaloriesGoal ? 28.h : 25.h,  // Bigger size for calories icon
-                          width: isCaloriesGoal ? 28.h : 25.h,   // Bigger size for calories icon
+                          height: 26.h,
+                          width: 26.h,
+                          color: Colors.white,
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                    if (isGoalWeight)
+                      Positioned(
+                        left: goalWeightAdjustedPosition,
+                        top: 2.h,
+                        child: CustomImageView(
+                          imagePath: profileItemModelObj.icon,
+                          height: 22.h,
+                          width: 22.h,
+                          color: Colors.white,
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                    if (isCurWeight)
+                      Positioned(
+                        left: 137.h,
+                        top: 3.h,
+                        child: CustomImageView(
+                          imagePath: profileItemModelObj.icon,
+                          height: 22.h,
+                          width: 22.h,
                           color: Colors.white,
                           fit: BoxFit.contain,
                         ),
                       ),
                     // For other icons, keep original positioning
-                    if (!isActivityLevel && !isWeeklyGoal && !isGoalWeight && !isCaloriesGoal)
+                    if (!isActivityLevel && !isWeeklyGoal && !isGoalWeight && !isCaloriesGoal && !isCurWeight)
                       Positioned(
-                        left: 135.h,
+                        left: profileItemModelObj.title == "Fat Goal" 
+                            ? fatGoalPosition 
+                            : profileItemModelObj.title == "Diet" 
+                                ? dietPosition 
+                                : profileItemModelObj.title == "Carbs Goal"
+                                    ? carbsGoalPosition
+                                    : 135.h,
                         top: 0,
                         child: CustomImageView(
                           imagePath: profileItemModelObj.icon,
-                          height: 25.h,
-                          width: 25.h,
+                          height: profileItemModelObj.title == "Fat Goal" ? 27.h : 25.h,
+                          width: profileItemModelObj.title == "Fat Goal" ? 27.h : 25.h,
                           color: Colors.white,
                           fit: BoxFit.contain,
                         ),

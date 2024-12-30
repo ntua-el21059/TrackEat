@@ -11,6 +11,10 @@ import 'provider/home_provider.dart';
 import 'widgets/cards_item_widget.dart';
 import 'package:activity_ring/activity_ring.dart';
 import '../../../presentation/profile_screen/profile_screen.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:provider/provider.dart';
+import '../../../providers/profile_picture_provider.dart';
+import '../../../providers/user_info_provider.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -109,6 +113,7 @@ class HomeScreenState extends State<HomeScreen> {
   /// Section Widget
   PreferredSizeWidget _buildAppbar(BuildContext context) {
     return CustomAppBar(
+      height: 60.h,
       title: Padding(
         padding: EdgeInsets.only(left: 19.h),
         child: Column(
@@ -117,26 +122,42 @@ class HomeScreenState extends State<HomeScreen> {
             AppbarSubtitleOne(
               text: "WELCOME".toUpperCase(),
             ),
-            AppbarTitle(
-              text: "John Appleseed",
-            )
+            Consumer<UserInfoProvider>(
+              builder: (context, userInfo, _) {
+                return AppbarTitle(
+                  text: userInfo.fullName,
+                );
+              },
+            ),
           ],
         ),
       ),
       actions: [
-        AppbarTrailingImage(
-          imagePath: ImageConstant.imgBoy1,
-          height: 42.h,
-          width: 42.h,
-          margin: EdgeInsets.only(right: 16.h),
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => ProfileScreen(),
-              ),
-            );
-          },
+        Padding(
+          padding: EdgeInsets.only(
+            left: 16.h,
+            right: 16.h,
+            bottom: 8.h,
+          ),
+          child: GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => ProfileScreen()),
+              );
+            },
+            child: Consumer<ProfilePictureProvider>(
+              builder: (context, profilePicProvider, _) {
+                return CustomImageView(
+                  imagePath: profilePicProvider.profileImagePath,
+                  isFile: !profilePicProvider.profileImagePath.startsWith('assets/'),
+                  height: 40.h,
+                  width: 40.h,
+                  radius: BorderRadius.circular(20.h),
+                );
+              },
+            ),
+          ),
         ),
       ],
     );
@@ -358,6 +379,32 @@ class HomeScreenState extends State<HomeScreen> {
               break;
           }
         },
+      ),
+    );
+  }
+
+  Widget _buildProfileSection(BuildContext context) {
+    return Container(
+      width: double.maxFinite,
+      padding: EdgeInsets.all(22.h),
+      decoration: BoxDecoration(
+        color: const Color(0xFFB2D7FF),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        children: [
+          Consumer<ProfilePictureProvider>(
+            builder: (context, profilePicProvider, _) {
+              return CustomImageView(
+                imagePath: profilePicProvider.profileImagePath,
+                isFile: !profilePicProvider.profileImagePath.startsWith('assets/'),
+                height: 40.h,
+                width: 40.h,
+                radius: BorderRadius.circular(20.h),
+              );
+            },
+          ),
+        ],
       ),
     );
   }

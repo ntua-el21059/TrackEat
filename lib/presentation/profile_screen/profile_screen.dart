@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../core/app_export.dart';
 import '../../widgets/app_bar/appbar_leading_image.dart';
 import '../../widgets/app_bar/appbar_subtitle.dart';
@@ -8,6 +9,9 @@ import 'models/profile_item_model.dart';
 import 'models/profile_model.dart';
 import 'provider/profile_provider.dart';
 import 'widgets/profile_item_widget.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../providers/profile_picture_provider.dart';
+import '../../providers/user_info_provider.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({Key? key}) : super(key: key);
@@ -141,15 +145,14 @@ class ProfileScreenState extends State<ProfileScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Consumer<ProfileProvider>(
-            builder: (context, provider, child) {
+          Consumer<ProfilePictureProvider>(
+            builder: (context, profilePicProvider, _) {
               return CustomImageView(
-                imagePath: provider.profileImagePath,
+                imagePath: profilePicProvider.profileImagePath,
+                isFile: !profilePicProvider.profileImagePath.startsWith('assets/'),
                 height: 72.h,
                 width: 72.h,
                 radius: BorderRadius.circular(36.h),
-                alignment: Alignment.center,
-                isFile: !provider.profileImagePath.startsWith('assets/'),
               );
             },
           ),
@@ -159,7 +162,7 @@ class ProfileScreenState extends State<ProfileScreen> {
                 Navigator.pushNamed(context, AppRoutes.profileStaticScreen);
               },
               child: Container(
-                margin: EdgeInsets.only(top: 4.h),
+                margin: EdgeInsets.only(top: 4.h, left: 16.h),
                 padding: EdgeInsets.symmetric(horizontal: 12.h),
                 child: Row(
                   children: [
@@ -167,17 +170,23 @@ class ProfileScreenState extends State<ProfileScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            "John Appleseed",
-                            style: theme.textTheme.titleLarge,
+                          Consumer<UserInfoProvider>(
+                            builder: (context, userInfo, _) {
+                              return Text(
+                                userInfo.fullName,
+                                style: theme.textTheme.titleLarge?.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              );
+                            },
                           ),
-                          SizedBox(height: 2.h),
                           Text(
-                            "@jappleseed",
-                            style: theme.textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.w600,
+                            "@${context.watch<UserInfoProvider>().username}",
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              color: Colors.white.withOpacity(0.7),
                             ),
-                          )
+                          ),
                         ],
                       ),
                     ),
@@ -190,12 +199,13 @@ class ProfileScreenState extends State<ProfileScreen> {
                         right: 2.h,
                         bottom: 10.h,
                       ),
-                    )
+                      color: Colors.white,
+                    ),
                   ],
                 ),
               ),
             ),
-          )
+          ),
         ],
       ),
     );
@@ -259,5 +269,14 @@ class ProfileScreenState extends State<ProfileScreen> {
         ],
       ),
     );
+  }
+
+  void _pickImage() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+    
+    if (image != null) {
+      context.read<ProfilePictureProvider>().updateProfilePicture(image.path);
+    }
   }
 }

@@ -598,11 +598,11 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> {
   Widget _buildEmptyBreakfast(BuildContext context) {
     return Container(
       width: double.maxFinite,
-      margin: EdgeInsets.only(
-        left: 18.h,
-        right: 26.h,
+      margin: EdgeInsets.symmetric(horizontal: 24.h),
+      padding: EdgeInsets.symmetric(
+        horizontal: 16.h,
+        vertical: 20.h,
       ),
-      padding: EdgeInsets.all(16.h),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -610,6 +610,7 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> {
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
             "You haven't logged your breakfast yet.",
@@ -617,12 +618,26 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> {
               fontSize: 16,
               color: Colors.black87,
             ),
+            textAlign: TextAlign.center,
           ),
           SizedBox(height: 8.h),
-          CustomIconButton(
-            height: 48.h,
-            width: 48.h,
-            child: Icon(Icons.add, color: Colors.black87),
+          Container(
+            width: 40.h,
+            height: 40.h,
+            decoration: BoxDecoration(
+              color: const Color(0xFFB2D7FF),
+              shape: BoxShape.circle,
+            ),
+            child: IconButton(
+              icon: Icon(
+                Icons.add,
+                color: Colors.white,
+                size: 20.h,
+              ),
+              onPressed: () {
+                // Your existing onPressed logic
+              },
+            ),
           ),
         ],
       ),
@@ -632,11 +647,11 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> {
   Widget _buildEmptyLunch(BuildContext context) {
     return Container(
       width: double.maxFinite,
-      margin: EdgeInsets.only(
-        left: 18.h,
-        right: 26.h,
+      margin: EdgeInsets.symmetric(horizontal: 24.h),
+      padding: EdgeInsets.symmetric(
+        horizontal: 16.h,
+        vertical: 20.h,
       ),
-      padding: EdgeInsets.all(16.h),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -644,6 +659,7 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> {
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
             "You haven't logged your lunch yet.",
@@ -651,12 +667,26 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> {
               fontSize: 16,
               color: Colors.black87,
             ),
+            textAlign: TextAlign.center,
           ),
           SizedBox(height: 12.h),
-          CustomIconButton(
-            height: 48.h,
-            width: 48.h,
-            child: Icon(Icons.add, color: Colors.black87),
+          Container(
+            width: 40.h,
+            height: 40.h,
+            decoration: BoxDecoration(
+              color: const Color(0xFFB2D7FF),
+              shape: BoxShape.circle,
+            ),
+            child: IconButton(
+              icon: Icon(
+                Icons.add,
+                color: Colors.white,
+                size: 20.h,
+              ),
+              onPressed: () {
+                // Your existing onPressed logic
+              },
+            ),
           ),
         ],
       ),

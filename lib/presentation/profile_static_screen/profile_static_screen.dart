@@ -9,6 +9,8 @@ import '../profile_screen/provider/profile_provider.dart';
 import 'provider/profile_static_provider.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
+import '../../../providers/profile_picture_provider.dart';
+import '../../../providers/user_info_provider.dart';
 
 class ProfileStaticScreen extends StatefulWidget {
   const ProfileStaticScreen({Key? key}) : super(key: key);
@@ -78,11 +80,22 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> {
                   SizedBox(width: 16.h),
                   TextButton(
                     onPressed: () {
-                      if (_textController.text.isNotEmpty) {
-                        Provider.of<ProfileStaticProvider>(context, listen: false)
-                            .updateValue(title.toLowerCase(), _textController.text);
-                        Navigator.pop(context);
+                      if (title == "Name") {
+                        context.read<UserInfoProvider>().updateName(
+                          _textController.text, 
+                          context.read<UserInfoProvider>().lastName
+                        );
+                      } else if (title == "Surname") {
+                        context.read<UserInfoProvider>().updateName(
+                          context.read<UserInfoProvider>().firstName, 
+                          _textController.text
+                        );
+                      } else if (title == "Username") {
+                        context.read<UserInfoProvider>().updateUsername(_textController.text);
                       }
+                      Provider.of<ProfileStaticProvider>(context, listen: false)
+                          .updateValue(title, _textController.text);
+                      Navigator.pop(context);
                     },
                     child: Text(
                       'Save',
@@ -289,21 +302,13 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> {
     );
   }
 
-  Future<void> _pickImage() async {
-    try {
-      final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-      if (image != null) {
-        setState(() {
-          _selectedImage = File(image.path);
-        });
-        // Update both providers
-        Provider.of<ProfileStaticProvider>(context, listen: false)
-            .updateProfileImage(image.path);
-        Provider.of<ProfileProvider>(context, listen: false)
-            .updateProfileImage(image.path);
-      }
-    } catch (e) {
-      print('Error picking image: $e');
+  void _pickImage() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+    
+    if (image != null) {
+      // Update the profile picture using the provider
+      context.read<ProfilePictureProvider>().updateProfilePicture(image.path);
     }
   }
 
@@ -364,7 +369,32 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> {
                   ),
                   child: Column(
                     children: [
-                      _buildProfileImage(),
+                      Consumer<ProfilePictureProvider>(
+                        builder: (context, profilePicProvider, _) {
+                          return Column(
+                            children: [
+                              CustomImageView(
+                                imagePath: profilePicProvider.profileImagePath,
+                                isFile: !profilePicProvider.profileImagePath.startsWith('assets/'),
+                                height: 72.h,
+                                width: 72.h,
+                                radius: BorderRadius.circular(36.h),
+                              ),
+                              SizedBox(height: 8.h),
+                              GestureDetector(
+                                onTap: _pickImage,
+                                child: Text(
+                                  "Edit",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16.h,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
                       SizedBox(height: 16.h),
                       // Profile Details
                       _buildProfileItem("Name", Provider.of<ProfileStaticProvider>(context, listen: false).getValue("Name")),
@@ -483,31 +513,6 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> {
           ],
         );
       },
-    );
-  }
-
-  Widget _buildProfileImage() {
-    return Column(
-      children: [
-        CircleAvatar(
-          radius: 50.h,
-          backgroundImage: _selectedImage != null
-              ? FileImage(_selectedImage!) as ImageProvider
-              : AssetImage(ImageConstant.imgBoy1),
-          backgroundColor: Colors.white,
-        ),
-        SizedBox(height: 8.h),
-        GestureDetector(
-          onTap: _pickImage,
-          child: Text(
-            "Edit",
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 16.h,
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

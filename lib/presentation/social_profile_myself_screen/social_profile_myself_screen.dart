@@ -15,6 +15,8 @@ import 'models/social_profile_myself_model.dart';
 import 'provider/social_profile_myself_provider.dart';
 import 'widgets/gridvector_one_item_widget.dart';
 import 'widgets/listvegan_item_widget.dart';
+import '../../providers/profile_picture_provider.dart';
+import '../../providers/user_info_provider.dart';
 
 class SocialProfileMyselfScreen extends StatefulWidget {
   const SocialProfileMyselfScreen({Key? key}) : super(key: key);
@@ -140,26 +142,35 @@ class SocialProfileMyselfScreenState extends State<SocialProfileMyselfScreen> {
         children: [
           Row(
             children: [
-              CustomImageView(
-                imagePath: ImageConstant.imgVector80x84,
-                height: 80.h,
-                width: 84.h,
-                radius: BorderRadius.circular(40.h),
+              Consumer<ProfilePictureProvider>(
+                builder: (context, profilePicProvider, _) {
+                  return CustomImageView(
+                    imagePath: profilePicProvider.profileImagePath,
+                    isFile: !profilePicProvider.profileImagePath.startsWith('assets/'),
+                    height: 80.h,
+                    width: 80.h,
+                    radius: BorderRadius.circular(40.h),
+                  );
+                },
               ),
               SizedBox(width: 12.h),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      "John Appleseed",
-                      style: theme.textTheme.headlineMedium?.copyWith(
-                        color: Colors.black,
-                        fontWeight: FontWeight.w600,
-                      ),
+                    Consumer<UserInfoProvider>(
+                      builder: (context, userInfo, _) {
+                        return Text(
+                          userInfo.fullName,
+                          style: theme.textTheme.headlineMedium?.copyWith(
+                            color: Colors.black,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        );
+                      },
                     ),
                     Text(
-                      "@jappleseed",
+                      "@${context.watch<UserInfoProvider>().username}",
                       style: theme.textTheme.titleMedium?.copyWith(
                         color: Colors.grey[600],
                       ),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/profile_static_model.dart';
+import '../../../providers/profile_picture_provider.dart';
 
 class ProfileStaticProvider extends ChangeNotifier {
   ProfileStaticModel _profileStaticModelObj = ProfileStaticModel();
@@ -25,6 +27,12 @@ class ProfileStaticProvider extends ChangeNotifier {
 
   void updateProfileImage(String imagePath) {
     _values['profileimage'] = imagePath;
+    notifyListeners();
+  }
+
+  void updateProfilePicture(BuildContext context, String imagePath) {
+    Provider.of<ProfilePictureProvider>(context, listen: false)
+        .updateProfilePicture(imagePath);
     notifyListeners();
   }
 

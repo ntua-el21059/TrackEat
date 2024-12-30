@@ -52,6 +52,8 @@ flutter:
   # Add assets here when needed
   assets:
     - assets/images/
+    - assets/images/fat_goal.svg
+    - assets/images/activity_level2.svg
 
   # Custom fonts configuration (add fonts if needed)
   # fonts:
