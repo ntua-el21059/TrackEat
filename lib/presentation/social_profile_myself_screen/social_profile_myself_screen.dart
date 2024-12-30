@@ -73,7 +73,7 @@ class SocialProfileMyselfScreenState extends State<SocialProfileMyselfScreen> {
           child: Padding(
             padding: EdgeInsets.only(
               left: 8.h,
-              top: 18.h,
+              top: 8.h,
               right: 8.h,
               bottom: MediaQuery.of(context).padding.bottom + 18.h,
             ),
@@ -81,11 +81,11 @@ class SocialProfileMyselfScreenState extends State<SocialProfileMyselfScreen> {
               mainAxisSize: MainAxisSize.max,
               children: [
                 _buildRowvectorone(context),
-                SizedBox(height: 24.h),
+                SizedBox(height: 6.h),
                 _buildWeightgoal(context),
-                SizedBox(height: 24.h),
+                SizedBox(height: 22.h),
                 _buildListvegan(context),
-                SizedBox(height: 18.h),
+                SizedBox(height: 15.h),
                 Align(
                   alignment: Alignment.centerLeft,
                   child: Padding(
@@ -122,7 +122,9 @@ class SocialProfileMyselfScreenState extends State<SocialProfileMyselfScreen> {
       actions: [
         AppbarSubtitleTwo(
           text: "PROFILE PREVIEW".toUpperCase(),
-          margin: EdgeInsets.only(right: 20.h),
+          margin: EdgeInsets.only(
+            right: 20.h,
+          ),
         )
       ],
     );
@@ -163,7 +165,7 @@ class SocialProfileMyselfScreenState extends State<SocialProfileMyselfScreen> {
                         return Text(
                           userInfo.fullName,
                           style: theme.textTheme.headlineMedium?.copyWith(
-                            color: Colors.black,
+                            color: const Color(0xFF37474F),
                             fontWeight: FontWeight.w600,
                           ),
                         );
@@ -172,7 +174,7 @@ class SocialProfileMyselfScreenState extends State<SocialProfileMyselfScreen> {
                     Text(
                       "@${context.watch<UserInfoProvider>().username}",
                       style: theme.textTheme.titleMedium?.copyWith(
-                        color: Colors.grey[600],
+                        color: const Color(0xFF37474F),
                       ),
                     ),
                   ],
