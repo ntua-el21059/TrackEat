@@ -32,7 +32,7 @@ Future<void> analyzeImage(String imagePath) async {
       "fat": <integer>
     }
 
-    If unsure, make your best guess.
+    If unsure, make your best guess. If the picture contains multiple items, include all of them in the JSON object.
     """;
 
     // Prepare the content for the request

@@ -38,6 +38,7 @@ dependencies:
   image_picker: ^1.0.7
   activity_ring: ^0.3.0
   responsive_grid_list: ^1.4.0
+  speech_to_text: ^6.6.0
 
 # Dev dependencies for testing and linting
 dev_dependencies:

@@ -598,11 +598,11 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> {
   Widget _buildEmptyBreakfast(BuildContext context) {
     return Container(
       width: double.maxFinite,
-      margin: EdgeInsets.symmetric(horizontal: 24.h),
-      padding: EdgeInsets.symmetric(
-        horizontal: 16.h,
-        vertical: 20.h,
+      margin: EdgeInsets.only(
+        left: 18.h,
+        right: 26.h,
       ),
+      padding: EdgeInsets.all(8.h),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -612,6 +612,7 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> {
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
+          SizedBox(height: 8.h),
           Text(
             "You haven't logged your breakfast yet.",
             style: TextStyle(
@@ -639,6 +640,7 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> {
               },
             ),
           ),
+          SizedBox(height: 8.h),
         ],
       ),
     );
@@ -647,11 +649,11 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> {
   Widget _buildEmptyLunch(BuildContext context) {
     return Container(
       width: double.maxFinite,
-      margin: EdgeInsets.symmetric(horizontal: 24.h),
-      padding: EdgeInsets.symmetric(
-        horizontal: 16.h,
-        vertical: 20.h,
+      margin: EdgeInsets.only(
+        left: 18.h,
+        right: 26.h,
       ),
+      padding: EdgeInsets.all(8.h),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -661,6 +663,7 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> {
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
+          SizedBox(height: 8.h),
           Text(
             "You haven't logged your lunch yet.",
             style: TextStyle(
@@ -669,7 +672,7 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> {
             ),
             textAlign: TextAlign.center,
           ),
-          SizedBox(height: 12.h),
+          SizedBox(height: 8.h),
           Container(
             width: 40.h,
             height: 40.h,
@@ -688,6 +691,7 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> {
               },
             ),
           ),
+          SizedBox(height: 8.h),
         ],
       ),
     );

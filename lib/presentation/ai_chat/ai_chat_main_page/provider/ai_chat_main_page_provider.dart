@@ -27,6 +27,8 @@ class AiChatMainProvider extends ChangeNotifier {
   AiChatMainModel aiChatMainModelObj = AiChatMainModel();
   final ImagePicker _imagePicker = ImagePicker();
   XFile? selectedImage;
+  bool showTrackDialog = false;
+  Map<String, dynamic>? lastNutritionData;
   
   final GenerativeModel _model = GenerativeModel(
     model: modelName,
@@ -62,154 +64,124 @@ class AiChatMainProvider extends ChangeNotifier {
 
     try {
       isLoading = true;
+      showTrackDialog = false;
+      lastNutritionData = null;
       notifyListeners();
 
-      String userMessage = message;
-      Map<String, dynamic>? nutritionData;
-
-      // If an image is selected, analyze it first
+      // If an image is selected
       if (selectedImage != null) {
-        nutritionData = await _analyzeImage(selectedImage!.path);
-        
-        // Prepare the user message with only the image path
+        // Add user's image message
         messages.add({
           'role': 'user',
           'content': '📸 Image\n${selectedImage!.path}',
         });
-      }
+        notifyListeners();
 
-      // Add user text message if not empty
-      if (message.trim().isNotEmpty) {
+        // Prepare image analysis prompt
+        const imagePrompt = """You are a nutrition analysis assistant. Look at this food image and respond ONLY with a valid JSON object in exactly this format, with no additional text or markdown:
+{
+  "food": "name of the food",
+  "serving_size": "detected serving size",
+  "calories": 123,
+  "protein": 12,
+  "carbs": 34,
+  "fat": 56
+}
+Important: Respond with ONLY the JSON object, no other text.""";
+
+        // Send image to Gemini
+        final content = Content.multi([
+          TextPart(imagePrompt),
+          DataPart('image/jpeg', await selectedImage!.readAsBytes()),
+        ]);
+
+        final response = await _model.generateContent([content]);
+        final responseText = response.text;
+        print('Raw LLM Response: $responseText');
+
+        if (responseText != null) {
+          try {
+            // Clean and parse JSON response
+            String cleanedResponse = responseText
+                .replaceAll('```json', '')
+                .replaceAll('```', '')
+                .trim();
+            print('Cleaned Response: $cleanedResponse');
+            
+            Map<String, dynamic> nutritionData = jsonDecode(cleanedResponse);
+            print('Parsed Nutrition Data: $nutritionData');
+            lastNutritionData = nutritionData;
+            
+            String formattedResponse = 'Food: ${nutritionData['food'].toString().split(' ').map((word) => word.substring(0, 1).toUpperCase() + word.substring(1)).join(' ')}\n' +
+                '🍽️ Serving Size: ${nutritionData['serving_size']}\n' +
+                '🔥 Calories: ${nutritionData['calories']}\n' +
+                '💪 Protein: ${nutritionData['protein']}g\n' +
+                '🌾 Carbs: ${nutritionData['carbs']}g\n' +
+                '🥑 Fat: ${nutritionData['fat']}g';
+            
+            print('Formatted Response: $formattedResponse');
+
+            // Add the formatted response to messages
+            messages.add({
+              'role': 'assistant',
+              'content': formattedResponse,
+            });
+            
+            // Show track dialog after response
+            showTrackDialog = true;
+            
+            print('Added message to chat: ${messages.last}');
+          } catch (e) {
+            print('Error parsing nutrition data: $e');
+            messages.add({
+              'role': 'assistant',
+              'content': 'Sorry, I had trouble analyzing the nutritional information. Please try again.',
+            });
+          }
+        }
+      } else {
+        // Handle regular text message
         messages.add({
           'role': 'user',
           'content': message,
         });
+
+        final response = await _chat.sendMessage(Content.text(message));
+        if (response.text != null) {
+          messages.add({
+            'role': 'assistant',
+            'content': response.text!.trim(),
+          });
+        }
       }
 
       notifyListeners();
-      
-      // Delay slightly to ensure UI updates before scrolling
       Future.delayed(const Duration(milliseconds: 100), () {
         onMessageAdded?.call();
       });
 
-      // Prepare the content for sending to Gemini
-      final content = selectedImage != null
-          ? Content.multi([
-              TextPart(message),
-              DataPart('image/jpeg', await selectedImage!.readAsBytes()),
-            ])
-          : Content.text(message);
-
-      // Send message to Gemini
-      final response = await _chat.sendMessage(content);
-      final responseText = response.text;
-
-      if (responseText != null) {
-        // Add AI response to the list
-        messages.add({
-          'role': 'assistant',
-          'content': responseText.trim(),
-        });
-        
-        // If nutrition data was extracted, add it as a separate message
-        if (nutritionData != null) {
-          messages.add({
-            'role': 'assistant',
-            'content': '🍽️ Nutrition Information:\n'
-                      'Food: ${nutritionData['food']}\n'
-                      'Serving Size: ${nutritionData['serving_size']}\n'
-                      'Calories: ${nutritionData['calories']}\n'
-                      'Protein: ${nutritionData['protein']}g\n'
-                      'Carbs: ${nutritionData['carbs']}g\n'
-                      'Fat: ${nutritionData['fat']}g',
-          });
-        }
-
-        notifyListeners();
-        
-        // Delay slightly to ensure UI updates before scrolling
-        Future.delayed(const Duration(milliseconds: 100), () {
-          onMessageAdded?.call();
-        });
-      }
-
       messageController.clear();
-      removeImage(); // Clear the selected image after sending
-    } catch (e) {
+      removeImage();
+    } catch (e, stackTrace) {
       print('Error sending message: $e');
+      print('Stacktrace: $stackTrace');
       messages.add({
         'role': 'assistant',
         'content': 'Sorry, I encountered an error. Please try again.',
       });
       notifyListeners();
-      Future.delayed(const Duration(milliseconds: 100), () {
-        onMessageAdded?.call();
-      });
     } finally {
       isLoading = false;
       notifyListeners();
     }
   }
 
-  Future<Map<String, dynamic>?> _analyzeImage(String imagePath) async {
-    try {
-      // Initialize the Generative Model
-      final generativeModel = GenerativeModel(
-        model: modelName,
-        apiKey: apiKey,
-      );
-
-      // Load the image as bytes
-      Uint8List imageBytes = await XFile(imagePath).readAsBytes();
-
-      // Create the prompt
-      const prompt = """
-      You are a nutrition analysis assistant. Given the image, identify the food and respond ONLY with a structured answer containing the estimated nutritional information for the serving in the picture. 
-
-      The answer should follow this structure:
-
-      {
-        "food": "<food_name>",
-        "serving_size": "<serving_size>",
-        "calories": <integer>,
-        "protein": <integer>,
-        "carbs": <integer>,
-        "fat": <integer>
-      }
-
-      If unsure, make your best guess.
-      """;
-
-      // Prepare the content for the request
-      final content = [
-        Content.multi([
-          TextPart(prompt),
-          DataPart('image/jpeg', imageBytes),
-        ])
-      ];
-
-      // Send the request to the model
-      final response = await generativeModel.generateContent(content);
-
-      // Extract and clean the response text
-      String? responseText = response.text;
-      if (responseText != null) {
-        responseText = responseText
-            .replaceAll('```json', '')
-            .replaceAll('```', '')
-            .trim();
-        print('Cleaned Response: $responseText');
-
-        // Parse the cleaned JSON
-        final nutritionData = jsonDecode(responseText);
-        print('Nutrition Data: $nutritionData');
-        return nutritionData;
-      }
-    } catch (e) {
-      print('Error analyzing image: $e');
+  void trackNutrition() {
+    if (lastNutritionData != null) {
+      // TODO: Implement tracking logic
+      showTrackDialog = false;
+      notifyListeners();
     }
-    return null;
   }
 
   @override

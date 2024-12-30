@@ -45,5 +45,11 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>This app needs access to camera to take photos of your meals.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>This app needs access to microphone to record your voice for meal descriptions.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>This app needs access to speech recognition to convert your voice to text for meal descriptions.</string>
 </dict>
 </plist>
