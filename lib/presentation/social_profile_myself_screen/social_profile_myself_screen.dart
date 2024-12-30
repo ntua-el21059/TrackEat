@@ -124,6 +124,7 @@ class SocialProfileMyselfScreenState extends State<SocialProfileMyselfScreen> {
           text: "PROFILE PREVIEW".toUpperCase(),
           margin: EdgeInsets.only(
             right: 20.h,
+            bottom: 3.h,
           ),
         )
       ],

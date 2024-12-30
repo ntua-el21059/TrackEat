@@ -78,7 +78,7 @@ class ImageConstant {
   static String imgImage171 = '$imagePath/img_image_17_1.svg';
   static String imgWaterDropletSilhouette =
       '$imagePath/img_water_droplet_silhouette.svg';
-  static String imgAccessibilityFill = '$imagePath/img_accessibility_fill.svg';
+  static String imgAccessibilityFill = 'assets/images/accessibility.fill.svg';
   static String imgXButton = '$imagePath/x_button.svg';
   static String imgUserBlue100 = '$imagePath/img_user_blue_100.svg';
   static String imgSettingsBlue100 = '$imagePath/img_settings_blue_100.svg';

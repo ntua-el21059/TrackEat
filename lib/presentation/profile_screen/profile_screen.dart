@@ -84,47 +84,36 @@ class ProfileScreenState extends State<ProfileScreen> {
       width: double.maxFinite,
       margin: EdgeInsets.symmetric(horizontal: 16.h),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.baseline,
+        textBaseline: TextBaseline.alphabetic,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          Text(
+            "Profile",
+            style: theme.textTheme.displaySmall,
+          ),
+          GestureDetector(
+            onTap: () {
+              Navigator.pushNamed(context, AppRoutes.socialProfileMyselfScreen);
+            },
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  "Profile",
-                  style: theme.textTheme.displaySmall,
+                  "PREVIEW PROFILE".toUpperCase(),
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: const Color(0xFF8E8E93),
+                  ),
+                ),
+                CustomImageView(
+                  imagePath: ImageConstant.imgArrowRightBlueGray400,
+                  height: 10.h,
+                  width: 8.h,
+                  margin: EdgeInsets.only(left: 4.h),
                 )
               ],
             ),
           ),
-          Expanded(
-            child: GestureDetector(
-              onTap: () {
-                Navigator.pushNamed(context, AppRoutes.socialProfileMyselfScreen);
-              },
-              child: Align(
-                alignment: Alignment.bottomCenter,
-                child: Padding(
-                  padding: EdgeInsets.only(bottom: 8.h),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      Text(
-                        "PREVIEW PROFILE".toUpperCase(),
-                        style: theme.textTheme.labelLarge?.copyWith(
-                          color: const Color(0xFF8E8E93),
-                        ),
-                      ),
-                      CustomImageView(
-                        imagePath: ImageConstant.imgArrowRightBlueGray400,
-                        height: 10.h,
-                        width: 8.h,
-                      )
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          )
         ],
       ),
     );
@@ -184,7 +173,7 @@ class ProfileScreenState extends State<ProfileScreen> {
                           Text(
                             "@${context.watch<UserInfoProvider>().username}",
                             style: theme.textTheme.titleMedium?.copyWith(
-                              color: Colors.white.withOpacity(0.7),
+                              color: Colors.white,
                             ),
                           ),
                         ],
@@ -197,7 +186,8 @@ class ProfileScreenState extends State<ProfileScreen> {
                       alignment: Alignment.bottomCenter,
                       margin: EdgeInsets.only(
                         right: 2.h,
-                        bottom: 10.h,
+                        bottom: 0,
+                        top: 2.h,
                       ),
                       color: Colors.white,
                     ),
