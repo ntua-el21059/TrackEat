@@ -41,7 +41,6 @@ class UserModel {
 
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
       'username': username,
       'email': email,
       'firstName': firstName,
@@ -53,14 +52,12 @@ class UserModel {
       'goal': goal,
       'weight': weight,
       'height': height,
-      'age': age,
       'dailyCalories': dailyCalories,
     };
   }
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
-      id: json['id'],
       username: json['username'],
       email: json['email'],
       firstName: json['firstName'],
@@ -72,7 +69,6 @@ class UserModel {
       goal: json['goal'],
       weight: json['weight']?.toDouble(),
       height: json['height']?.toDouble(),
-      age: json['age'],
       dailyCalories: json['dailyCalories'],
     );
   }
