@@ -154,13 +154,17 @@ class HomeScreenState extends State<HomeScreen> {
                 "${_calculateRemainingCalories()} Kcal Remaining...",
                 style: CustomTextStyles.titleMediumGray90001Bold,
               ),
-              Text(
-                "${_calculateDailyCalories()} kcal",
-                style: TextStyle(
-                  color: const Color(0xFFFF0000),
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
+              Consumer<HomeProvider>(
+                builder: (context, homeProvider, _) {
+                  return Text(
+                    "${homeProvider.dailyCalories} kcal",
+                    style: TextStyle(
+                      color: const Color(0xFFFF0000),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  );
+                },
               ),
             ],
           ),
@@ -277,8 +281,8 @@ class HomeScreenState extends State<HomeScreen> {
   }
 
   int _calculateDailyCalories() {
-    final userProvider = Provider.of<UserProvider>(context, listen: false);
-    return userProvider.user.dailyCalories ?? 2000;
+    final homeProvider = Provider.of<HomeProvider>(context, listen: false);
+    return homeProvider.dailyCalories;
   }
 
   double _calculateConsumedPercentage() {

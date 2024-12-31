@@ -236,43 +236,25 @@ class LoginScreenState extends State<LoginScreen> {
           buttonTextStyle: theme.textTheme.titleMedium!,
           onPressed: provider.isLoading ? null : () async {
             final authProvider = Provider.of<auth.AuthProvider>(context, listen: false);
-
-            // Validate email and password
             final email = provider.userNameController.text.trim();
             final password = provider.passwordtwoController.text;
-
-            if (email.isEmpty || !email.contains('@')) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Please enter a valid email address'),
-                  duration: Duration(seconds: 3),
-                ),
-              );
-              return;
-            }
-
-            if (password.isEmpty || password.length < 6) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Password must be at least 6 characters long'),
-                  duration: Duration(seconds: 3),
-                ),
-              );
-              return;
-            }
 
             provider.setLoading(true);
 
             try {
-              final success = await authProvider.signIn(email, password);
+              final success = await authProvider.signIn(context, email, password);
 
-              if (success) {
-                Navigator.pushNamedAndRemoveUntil(
-                  context,
-                  AppRoutes.homeScreen,
-                  (route) => false,
-                );
-              } else {
+              if (success && context.mounted) {
+                await Future.delayed(Duration(milliseconds: 100));
+                
+                if (context.mounted) {
+                  await Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    AppRoutes.homeScreen,
+                    (route) => false,
+                  );
+                }
+              } else if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(authProvider.lastError ?? 'Login failed'),
@@ -280,15 +262,10 @@ class LoginScreenState extends State<LoginScreen> {
                   ),
                 );
               }
-            } catch (e) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Error during login: ${e.toString()}'),
-                  duration: Duration(seconds: 3),
-                ),
-              );
             } finally {
-              provider.setLoading(false);
+              if (mounted) {
+                provider.setLoading(false);
+              }
             }
           },
         );

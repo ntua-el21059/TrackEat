@@ -3,16 +3,30 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../firestore/firestore_service.dart';
 import '../../../models/user_model.dart';
 import 'auth_service.dart';
+import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:provider/provider.dart';
+import '../../../providers/user_info_provider.dart';
 
 class AuthProvider with ChangeNotifier {
   final AuthService _authService = AuthService();
   final FirestoreService _firestoreService = FirestoreService();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  
   User? _user;
   String? _lastError;
+  UserModel? _userData;
 
   User? get user => _user;
   String? get lastError => _lastError;
   bool get isAuthenticated => _user != null;
+  UserModel? get userData => _userData;
+
+  set userData(UserModel? value) {
+    _userData = value;
+    notifyListeners();
+  }
 
   AuthProvider() {
     _user = _authService.currentUser;
@@ -22,16 +36,48 @@ class AuthProvider with ChangeNotifier {
     });
   }
 
-  Future<bool> signIn(String email, String password) async {
+  Future<bool> signIn(BuildContext context, String email, String password) async {
     try {
       final result = await _authService.signIn(email, password);
       _user = result.user;
-      _lastError = null;
-      notifyListeners();
-      return true;
-    } on FirebaseAuthException catch (e) {
-      _lastError = _getReadableError(e);
-      notifyListeners();
+
+      if (_user != null) {
+        // Get user document from Firestore using email
+        final userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(email)
+            .get();
+
+        if (userDoc.exists) {
+          final userData = userDoc.data()!;
+          
+          // Get all user data from Firestore document
+          final firstName = userData['firstName'] ?? '';
+          final lastName = userData['lastName'] ?? '';
+          final username = userData['username'] ?? '';
+          final birthdate = userData['birthdate'] ?? '';
+          final gender = userData['gender'] ?? '';
+          final height = userData['height']?.toString() ?? '';
+
+          if (context.mounted) {
+            final userInfoProvider = Provider.of<UserInfoProvider>(context, listen: false);
+            
+            // Update all values in the provider
+            await userInfoProvider.updateName(firstName.toString(), lastName.toString());
+            await userInfoProvider.updateUsername(username.toString());
+            await userInfoProvider.updateBirthdate(birthdate.toString());
+            await userInfoProvider.updateGender(gender.toString());
+            await userInfoProvider.updateHeight(height);
+            
+            // Force UI update
+            userInfoProvider.notifyListeners();
+          }
+        }
+
+        _lastError = null;
+        notifyListeners();
+        return true;
+      }
       return false;
     } catch (e) {
       _lastError = e.toString();
@@ -45,10 +91,9 @@ class AuthProvider with ChangeNotifier {
       final result = await _authService.signUp(email, password);
       _user = result.user;
       
-      // Create initial user document in Firestore
       final userModel = UserModel(
         email: email,
-        username: email.split('@')[0], // Default username from email
+        username: email.split('@')[0],
       );
       
       await _firestoreService.createUser(userModel);
@@ -67,11 +112,15 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  Future<void> signOut() async {
+  Future<void> signOut(BuildContext context) async {
     try {
       await _authService.signOut();
       _user = null;
       _lastError = null;
+      
+      final userInfoProvider = Provider.of<UserInfoProvider>(context, listen: false);
+      await userInfoProvider.clearUserInfo();
+      
       notifyListeners();
     } catch (e) {
       _lastError = e.toString();
@@ -109,6 +158,44 @@ class AuthProvider with ChangeNotifier {
         return 'The password provided is too weak.';
       default:
         return e.message ?? 'An unknown error occurred.';
+    }
+  }
+
+  Future<void> fetchUserData() async {
+    try {
+      final userDoc = await _firestore
+          .collection('users')
+          .doc(_auth.currentUser?.email)
+          .get();
+
+      if (userDoc.exists) {
+        _userData = UserModel.fromJson(userDoc.data()!);
+        
+        if (_userData?.diet == null) {
+          await updateUserDiet('Balanced');
+          _userData = _userData?.copyWith(diet: 'Balanced');
+        }
+        
+        notifyListeners();
+      }
+    } catch (e) {
+      print('Error fetching user data: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> updateUserDiet(String newDiet) async {
+    try {
+      await _firestore
+          .collection('users')
+          .doc(_auth.currentUser?.email)
+          .update({'diet': newDiet});
+      
+      _userData = _userData?.copyWith(diet: newDiet);
+      notifyListeners();
+    } catch (e) {
+      print('Error updating diet: $e');
+      rethrow;
     }
   }
 } 
