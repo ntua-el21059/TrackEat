@@ -147,12 +147,14 @@ class SocialProfileMyselfScreenState extends State<SocialProfileMyselfScreen> {
             children: [
               Consumer<ProfilePictureProvider>(
                 builder: (context, profilePicProvider, _) {
-                  return CustomImageView(
-                    imagePath: profilePicProvider.profileImagePath,
-                    isFile: !profilePicProvider.profileImagePath.startsWith('assets/'),
-                    height: 80.h,
-                    width: 80.h,
-                    radius: BorderRadius.circular(40.h),
+                  return ClipOval(
+                    child: CustomImageView(
+                      imagePath: profilePicProvider.profileImagePath,
+                      isFile: !profilePicProvider.profileImagePath.startsWith('assets/'),
+                      height: 80.h,
+                      width: 80.h,
+                      radius: BorderRadius.circular(40.h),
+                    ),
                   );
                 },
               ),

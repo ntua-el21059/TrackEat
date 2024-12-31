@@ -475,32 +475,8 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> {
     // Fetch fresh data when screen loads
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (mounted) {
-        final currentUser = FirebaseAuth.instance.currentUser;
-        if (currentUser?.email != null) {
-          try {
-            // Get fresh data from Firestore
-            final doc = await FirebaseFirestore.instance
-                .collection('users')
-                .doc(currentUser?.email)
-                .get();
-
-            if (doc.exists && mounted) {
-              final userData = doc.data()!;
-              final userInfoProvider = Provider.of<UserInfoProvider>(context, listen: false);
-              
-              // Update provider with fresh Firestore values
-              await userInfoProvider.updateName(
-                userData['firstName']?.toString() ?? '',
-                userData['lastName']?.toString() ?? ''
-              );
-              
-              // Force UI update
-              setState(() {});
-            }
-          } catch (e) {
-            print("Error fetching user data: $e");
-          }
-        }
+        final userInfoProvider = Provider.of<UserInfoProvider>(context, listen: false);
+        await userInfoProvider.fetchCurrentUser();
       }
     });
     _setupFirestoreListener();
@@ -605,12 +581,14 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> {
                           builder: (context, profilePicProvider, _) {
                             return Column(
                               children: [
-                                CustomImageView(
-                                  imagePath: profilePicProvider.profileImagePath,
-                                  isFile: !profilePicProvider.profileImagePath.startsWith('assets/'),
-                                  height: 72.h,
-                                  width: 72.h,
-                                  radius: BorderRadius.circular(36.h),
+                                ClipOval(
+                                  child: CustomImageView(
+                                    imagePath: profilePicProvider.profileImagePath,
+                                    isFile: !profilePicProvider.profileImagePath.startsWith('assets/'),
+                                    height: 72.h,
+                                    width: 72.h,
+                                    radius: BorderRadius.circular(36.h),
+                                  ),
                                 ),
                                 SizedBox(height: 8.h),
                                 GestureDetector(

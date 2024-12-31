@@ -25,9 +25,23 @@ class FirestoreService {
       final userData = user.toJson();
       print('Converted user data to JSON: $userData');
 
-      // Set the document data
-      await docRef.set(userData);
-      print('Successfully saved user data to Firestore');
+      // Check if document exists
+      final docSnapshot = await docRef.get();
+      if (docSnapshot.exists) {
+        // Update only the non-null fields
+        final Map<String, dynamic> updateData = {};
+        userData.forEach((key, value) {
+          if (value != null) {
+            updateData[key] = value;
+          }
+        });
+        await docRef.update(updateData);
+        print('Successfully updated user data in Firestore');
+      } else {
+        // Set the document data for new users
+        await docRef.set(userData);
+        print('Successfully created new user in Firestore');
+      }
     } on FirebaseException catch (e) {
       print('Firestore Error Code: ${e.code}');
       print('Firestore Error Message: ${e.message}');

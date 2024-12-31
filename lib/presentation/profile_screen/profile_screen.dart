@@ -41,7 +41,12 @@ class ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
     super.initState();
-    _fetchInitialUserData();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (mounted) {
+        final userInfoProvider = Provider.of<UserInfoProvider>(context, listen: false);
+        await userInfoProvider.fetchCurrentUser();
+      }
+    });
     _setupFirestoreListener();
     _fetchUserDiet();
   }
@@ -261,12 +266,14 @@ class ProfileScreenState extends State<ProfileScreen> {
             margin: EdgeInsets.only(left: 8.h),
             child: Consumer<ProfilePictureProvider>(
               builder: (context, profilePicProvider, _) {
-                return CustomImageView(
-                  imagePath: profilePicProvider.profileImagePath,
-                  isFile: !profilePicProvider.profileImagePath.startsWith('assets/'),
-                  height: 72.h,
-                  width: 72.h,
-                  radius: BorderRadius.circular(36.h),
+                return ClipOval(
+                  child: CustomImageView(
+                    imagePath: profilePicProvider.profileImagePath,
+                    isFile: !profilePicProvider.profileImagePath.startsWith('assets/'),
+                    height: 72.h,
+                    width: 72.h,
+                    radius: BorderRadius.circular(36.h),
+                  ),
                 );
               },
             ),

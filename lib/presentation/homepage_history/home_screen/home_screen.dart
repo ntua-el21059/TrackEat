@@ -47,28 +47,13 @@ class HomeScreenState extends State<HomeScreen> {
       }
     });
     
-    // Setup Firestore listener
-    final currentUser = FirebaseAuth.instance.currentUser;
-    if (currentUser?.email != null) {
-      FirebaseFirestore.instance
-          .collection('users')
-          .doc(currentUser!.email)
-          .snapshots()
-          .listen((snapshot) async {
-        if (snapshot.exists && mounted) {
-          final userData = snapshot.data()!;
-          final userModel = UserModel(
-            firstName: userData['firstName'] as String? ?? '',
-            lastName: userData['lastName'] as String? ?? '',
-            username: userData['username'] as String? ?? '',
-            email: currentUser.email,
-          );
-          
-          final userInfoProvider = Provider.of<UserInfoProvider>(context, listen: false);
-          await userInfoProvider.setUser(userModel);
-        }
-      });
-    }
+    // Fetch current user data
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (mounted) {
+        final userInfoProvider = Provider.of<UserInfoProvider>(context, listen: false);
+        await userInfoProvider.fetchCurrentUser();
+      }
+    });
   }
 
   @override

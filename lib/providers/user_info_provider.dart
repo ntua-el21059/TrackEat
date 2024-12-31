@@ -22,45 +22,101 @@ class UserInfoProvider extends ChangeNotifier {
 
   // Set user data
   Future<void> setUser(UserModel user) async {
-    _user = user;
-    _birthdate = user.birthdate ?? _birthdate;
-    _gender = user.gender ?? _gender;
-    _height = user.height ?? _height;
-    _dailyCalories = user.dailyCalories ?? _dailyCalories;
+    if (_user?.email != null) {
+      // If we already have a user, get the current data from Firestore
+      final currentUser = await _firestoreService.getUser(_user!.email!);
+      if (currentUser != null) {
+        // Preserve all existing values and only update non-null values from the new user
+        _user = currentUser.copyWith(
+          firstName: user.firstName ?? currentUser.firstName,
+          lastName: user.lastName ?? currentUser.lastName,
+          username: user.username ?? currentUser.username,
+          birthdate: user.birthdate ?? currentUser.birthdate,
+          gender: user.gender ?? currentUser.gender,
+          height: user.height ?? currentUser.height,
+          dailyCalories: user.dailyCalories ?? currentUser.dailyCalories,
+          activity: user.activity ?? currentUser.activity,
+          diet: user.diet ?? currentUser.diet,
+          goal: user.goal ?? currentUser.goal,
+          weight: user.weight ?? currentUser.weight,
+        );
+      } else {
+        _user = user;
+      }
+    } else {
+      _user = user;
+    }
+    
+    // Update local state
+    _birthdate = _user?.birthdate ?? _birthdate;
+    _gender = _user?.gender ?? _gender;
+    _height = _user?.height ?? _height;
+    _dailyCalories = _user?.dailyCalories ?? _dailyCalories;
+    
     notifyListeners();
+  }
+
+  // Fetch current user data
+  Future<void> fetchCurrentUser() async {
+    if (_user?.email != null) {
+      final currentUser = await _firestoreService.getUser(_user!.email!);
+      if (currentUser != null) {
+        await setUser(currentUser);
+      }
+    }
   }
 
   // Update methods
   Future<void> updateBirthdate(String date) async {
     _birthdate = date;
     if (_user != null) {
-      _user = _user!.copyWith(birthdate: date);
-      await _firestoreService.createUser(_user!);
+      // Get current user data from Firestore
+      final currentUser = await _firestoreService.getUser(_user!.email!);
+      if (currentUser != null) {
+        // Create new user model with updated birthdate but preserve all other fields
+        _user = currentUser.copyWith(birthdate: date);
+        await _firestoreService.createUser(_user!);
+      }
     }
     notifyListeners();
   }
 
   Future<void> updateName(String firstName, String lastName) async {
     if (_user != null) {
-      _user = _user!.copyWith(firstName: firstName, lastName: lastName);
-      await _firestoreService.createUser(_user!);
-      notifyListeners();
+      // Get current user data from Firestore
+      final currentUser = await _firestoreService.getUser(_user!.email!);
+      if (currentUser != null) {
+        // Create new user model with updated name but preserve all other fields
+        _user = currentUser.copyWith(firstName: firstName, lastName: lastName);
+        await _firestoreService.createUser(_user!);
+        notifyListeners();
+      }
     }
   }
 
   Future<void> updateUsername(String username) async {
     if (_user != null) {
-      _user = _user!.copyWith(username: username);
-      await _firestoreService.createUser(_user!);
-      notifyListeners();
+      // Get current user data from Firestore
+      final currentUser = await _firestoreService.getUser(_user!.email!);
+      if (currentUser != null) {
+        // Create new user model with updated username but preserve all other fields
+        _user = currentUser.copyWith(username: username);
+        await _firestoreService.createUser(_user!);
+        notifyListeners();
+      }
     }
   }
 
   Future<void> updateDailyCalories(String calories) async {
     _dailyCalories = int.tryParse(calories) ?? 0;
     if (_user != null) {
-      _user = _user!.copyWith(dailyCalories: _dailyCalories);
-      await _firestoreService.createUser(_user!);
+      // Get current user data from Firestore
+      final currentUser = await _firestoreService.getUser(_user!.email!);
+      if (currentUser != null) {
+        // Create new user model with updated calories but preserve all other fields
+        _user = currentUser.copyWith(dailyCalories: _dailyCalories);
+        await _firestoreService.createUser(_user!);
+      }
     }
     notifyListeners();
   }
@@ -68,8 +124,13 @@ class UserInfoProvider extends ChangeNotifier {
   Future<void> updateGender(String newGender) async {
     _gender = newGender;
     if (_user != null) {
-      _user = _user!.copyWith(gender: newGender);
-      await _firestoreService.createUser(_user!);
+      // Get current user data from Firestore
+      final currentUser = await _firestoreService.getUser(_user!.email!);
+      if (currentUser != null) {
+        // Create new user model with updated gender but preserve all other fields
+        _user = currentUser.copyWith(gender: newGender);
+        await _firestoreService.createUser(_user!);
+      }
     }
     notifyListeners();
   }
@@ -77,8 +138,13 @@ class UserInfoProvider extends ChangeNotifier {
   Future<void> updateHeight(String newHeight) async {
     _height = double.tryParse(newHeight) ?? 0;
     if (_user != null) {
-      _user = _user!.copyWith(height: _height);
-      await _firestoreService.createUser(_user!);
+      // Get current user data from Firestore
+      final currentUser = await _firestoreService.getUser(_user!.email!);
+      if (currentUser != null) {
+        // Create new user model with updated height but preserve all other fields
+        _user = currentUser.copyWith(height: _height);
+        await _firestoreService.createUser(_user!);
+      }
     }
     notifyListeners();
   }
