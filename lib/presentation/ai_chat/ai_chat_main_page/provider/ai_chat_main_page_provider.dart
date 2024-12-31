@@ -244,7 +244,7 @@ Important: Respond with ONLY the JSON object, no other text.""";
       // Create a new meal object
       final meal = Meal(
         id: '', // Will be set by Firestore
-        userId: _auth.currentUser!.uid,
+        userEmail: _auth.currentUser!.email!,
         name: lastNutritionData!['food'],
         mealType: mealType.toLowerCase(),
         calories: lastNutritionData!['calories'],

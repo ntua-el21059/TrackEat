@@ -399,7 +399,7 @@ class AiChatMainScreenState extends State<AiChatMainScreen> {
                 children: [
                   Expanded(
                     child: _buildActionButton(
-                      "Speak to TrackEat - AI",
+                      "Speak to TrackEat",
                       ImageConstant.imgSpeakingIcon,
                       onTap: _listen,
                     ),

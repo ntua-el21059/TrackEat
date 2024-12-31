@@ -98,20 +98,11 @@ class PhotoPreviewScreen extends StatelessWidget {
               Align(
                 alignment: Alignment.bottomCenter,
                 child: Container(
-                  padding: EdgeInsets.only(bottom: 48.h),
+                  height: MediaQuery.of(context).size.height * 0.35,
+                  padding: EdgeInsets.only(bottom: 64.h),
                   child: Column(
-                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(
-                        'SNAPEAT',
-                        style: TextStyle(
-                          color: Color(0xFFFFD700),
-                          fontSize: 20.h,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.5,
-                        ),
-                      ),
-                      SizedBox(height: 24.h),
+                      Spacer(),
                       GestureDetector(
                         onTap: () => Navigator.pop(context, imagePath),
                         child: Container(

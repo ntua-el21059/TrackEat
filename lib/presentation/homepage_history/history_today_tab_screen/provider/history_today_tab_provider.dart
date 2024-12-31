@@ -45,9 +45,9 @@ class HistoryTodayTabProvider extends ChangeNotifier {
   }
 
   void _initializeMeals() {
-    final userId = _auth.currentUser?.uid;
-    if (userId != null) {
-      _mealService.getMealsByUserAndDate(userId, selectedDate).listen((meals) {
+    final userEmail = _auth.currentUser?.email;
+    if (userEmail != null) {
+      _mealService.getMealsByUserAndDate(userEmail, selectedDate).listen((meals) {
         _meals = meals;
         _isLoading = false;
         notifyListeners();
@@ -129,17 +129,17 @@ class HistoryTodayTabProvider extends ChangeNotifier {
   }
 
   Future<int> getTotalCalories() async {
-    final userId = _auth.currentUser?.uid;
-    if (userId != null) {
-      return await _mealService.getTotalCaloriesForDate(userId, selectedDate);
+    final userEmail = _auth.currentUser?.email;
+    if (userEmail != null) {
+      return await _mealService.getTotalCaloriesForDate(userEmail, selectedDate);
     }
     return 0;
   }
 
   Future<Map<String, double>> getTotalMacros() async {
-    final userId = _auth.currentUser?.uid;
-    if (userId != null) {
-      return await _mealService.getTotalMacrosForDate(userId, selectedDate);
+    final userEmail = _auth.currentUser?.email;
+    if (userEmail != null) {
+      return await _mealService.getTotalMacrosForDate(userEmail, selectedDate);
     }
     return {
       'protein': 0.0,

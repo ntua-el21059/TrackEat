@@ -1,5 +1,5 @@
 name: trackeat
-description: "A new Flutter project for managing account creation and other features."
+description: "A mobile app that helps users track their meals using AI, manage nutrition, and connect with others."
 
 # Prevent accidental publishing to pub.dev
 publish_to: 'none'
@@ -9,62 +9,68 @@ version: 1.0.0+1
 
 # Flutter SDK environment
 environment:
-  sdk: ">=2.17.0" # Minimum SDK version to support latest dependencies
+  sdk: ">=3.2.0 <4.0.0"  # Updated to latest stable Flutter SDK
 
 # Dependencies required for the application
 dependencies:
   flutter:
     sdk: flutter
-  camera: ^0.11.0+2
-  provider: ^6.0.5
-  shared_preferences: ^2.2.0
-  cached_network_image: ^3.2.3
-  flutter_svg: ^2.0.7
   flutter_localizations:
     sdk: flutter
-  cupertino_icons: ^1.0.5
-  async: 2.11.0
-  intl: ^0.19.0
-  google_generative_ai: ^0.4.6
-  flutter_markdown: ^0.7.4+2
-  firebase_core: ^2.27.1
-  google_sign_in: ^6.2.1
-  cloud_firestore: ^4.15.5
-  firebase_auth: ^4.17.9
-  connectivity_plus: ^6.0.2
-  permission_handler: ^11.1.0
+
+  # UI Components
+  cupertino_icons: ^1.0.6
+  flutter_svg: ^2.0.9
+  cached_network_image: ^3.3.1
   flutter_switch: ^0.3.2
-  image_picker: ^1.0.7
   activity_ring: ^0.3.0
   responsive_grid_list: ^1.4.0
-  speech_to_text: ^6.6.0
+  flutter_markdown: ^0.7.0
+
+  # State Management
+  provider: ^6.1.1
+
+  # Firebase
+  firebase_core: ^3.9.0
+  firebase_auth: ^5.3.4
+  cloud_firestore: ^5.6.0
+  google_sign_in: ^6.2.1
+
+  # Device Features
+  camera: ^0.11.0+2
+  image_picker: ^1.0.7
+  speech_to_text: ^7.0.1
+  permission_handler: ^11.1.0
+
+  # Storage & Data
+  shared_preferences: ^2.2.2
+
+  # Networking & Connectivity
+  connectivity_plus: ^6.1.1
+
+  # AI & ML
+  google_generative_ai: ^0.4.0
+
+  # Utilities
+  intl: ^0.19.0
+  async: ^2.11.0
 
 # Dev dependencies for testing and linting
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.13.1
 
 # Flutter-specific configuration
 flutter:
   uses-material-design: true
 
-  # Add assets here when needed
+  # Assets
   assets:
     - assets/images/
     - assets/images/fat_goal.svg
     - assets/images/activity_level2.svg
     - assets/images/accessibility.fill.svg
-
-  # Custom fonts configuration (add fonts if needed)
-  # fonts:
-  #   - family: Schyler
-  #     fonts:
-  #       - asset: fonts/Schyler-Regular.ttf
-  #       - asset: fonts/Schyler-Italic.ttf
-  #         style: italic
-  #   - family: Trajan Pro
-  #     fonts:
-  #       - asset: fonts/TrajanPro.ttf
-  #       - asset: fonts/TrajanPro_Bold.ttf
-  #         weight: 700
+    
+    

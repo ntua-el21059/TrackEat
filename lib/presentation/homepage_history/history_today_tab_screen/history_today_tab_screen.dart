@@ -27,6 +27,11 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> with Singl
   bool _isLoading = true;
   late AnimationController _slideController;
   late Animation<Offset> _slideAnimation;
+  
+  // Add PageControllers for each meal type
+  final PageController _breakfastController = PageController();
+  final PageController _lunchController = PageController();
+  final PageController _dinnerController = PageController();
 
   @override
   void initState() {
@@ -85,6 +90,9 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> with Singl
   @override
   void dispose() {
     _slideController.dispose();
+    _breakfastController.dispose();
+    _lunchController.dispose();
+    _dinnerController.dispose();
     super.dispose();
   }
 
@@ -138,23 +146,7 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> with Singl
               ),
             ),
             SizedBox(height: 4.h),
-            Consumer<HistoryTodayTabProvider>(
-              builder: (context, provider, child) {
-                final breakfastMeals = provider.getMealsByType('breakfast');
-                return Container(
-                  height: 110.h,
-                  padding: EdgeInsets.only(right: 26.h),
-                  child: PageView(
-                    physics: const BouncingScrollPhysics(),
-                    children: [
-                      if (breakfastMeals.isNotEmpty)
-                        ...breakfastMeals.map((meal) => _buildMealCard(context, meal, 'breakfast')),
-                      _buildEmptyBreakfast(context),
-                    ],
-                  ),
-                );
-              }
-            ),
+            _buildBreakfastSection(context),
             SizedBox(height: 8.h),
             Padding(
               padding: EdgeInsets.only(left: 18.h),
@@ -164,23 +156,7 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> with Singl
               ),
             ),
             SizedBox(height: 4.h),
-            Consumer<HistoryTodayTabProvider>(
-              builder: (context, provider, child) {
-                final lunchMeals = provider.getMealsByType('lunch');
-                return Container(
-                  height: 110.h,
-                  padding: EdgeInsets.only(right: 26.h),
-                  child: PageView(
-                    physics: const BouncingScrollPhysics(),
-                    children: [
-                      if (lunchMeals.isNotEmpty)
-                        ...lunchMeals.map((meal) => _buildMealCard(context, meal, 'lunch')),
-                      _buildEmptyLunch(context),
-                    ],
-                  ),
-                );
-              }
-            ),
+            _buildLunchSection(context),
             SizedBox(height: 8.h),
             Padding(
               padding: EdgeInsets.only(left: 18.h),
@@ -190,23 +166,7 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> with Singl
               ),
             ),
             SizedBox(height: 4.h),
-            Consumer<HistoryTodayTabProvider>(
-              builder: (context, provider, child) {
-                final dinnerMeals = provider.getMealsByType('dinner');
-                return Container(
-                  height: 110.h,
-                  padding: EdgeInsets.only(right: 26.h),
-                  child: PageView(
-                    physics: const BouncingScrollPhysics(),
-                    children: [
-                      if (dinnerMeals.isNotEmpty)
-                        ...dinnerMeals.map((meal) => _buildMealCard(context, meal, 'dinner')),
-                      _buildEmptyDinner(context),
-                    ],
-                  ),
-                );
-              }
-            ),
+            _buildDinnerSection(context),
           ],
         ),
       ),
@@ -473,7 +433,7 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> with Singl
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
-            "You haven't logged your breakfast yet.",
+            "Log your breakfast!",
             style: TextStyle(
               fontSize: 16,
               color: Colors.black87,
@@ -521,7 +481,7 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> with Singl
         children: [
           SizedBox(height: 8.h),
           Text(
-            "You haven't logged your lunch yet.",
+            "Log your lunch!",
             style: TextStyle(
               fontSize: 16,
               color: Colors.black87,
@@ -570,7 +530,7 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> with Singl
         children: [
           SizedBox(height: 8.h),
           Text(
-            "You haven't logged your dinner yet.",
+            "Log your dinner!",
             style: TextStyle(
               fontSize: 16,
               color: Colors.black87,
@@ -747,6 +707,78 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> with Singl
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildBreakfastSection(BuildContext context) {
+    return Consumer<HistoryTodayTabProvider>(
+      builder: (context, provider, child) {
+        final breakfastMeals = provider.getMealsByType('breakfast');
+        return Container(
+          height: 110.h,
+          child: PageView.builder(
+            controller: _breakfastController,
+            physics: const BouncingScrollPhysics(),
+            pageSnapping: true,
+            itemCount: breakfastMeals.isEmpty ? 1 : breakfastMeals.length + 1,
+            itemBuilder: (context, index) {
+              if (index < breakfastMeals.length) {
+                return _buildMealCard(context, breakfastMeals[index], 'breakfast');
+              } else {
+                return _buildEmptyBreakfast(context);
+              }
+            },
+          ),
+        );
+      }
+    );
+  }
+
+  Widget _buildLunchSection(BuildContext context) {
+    return Consumer<HistoryTodayTabProvider>(
+      builder: (context, provider, child) {
+        final lunchMeals = provider.getMealsByType('lunch');
+        return Container(
+          height: 110.h,
+          child: PageView.builder(
+            controller: _lunchController,
+            physics: const BouncingScrollPhysics(),
+            pageSnapping: true,
+            itemCount: lunchMeals.isEmpty ? 1 : lunchMeals.length + 1,
+            itemBuilder: (context, index) {
+              if (index < lunchMeals.length) {
+                return _buildMealCard(context, lunchMeals[index], 'lunch');
+              } else {
+                return _buildEmptyLunch(context);
+              }
+            },
+          ),
+        );
+      }
+    );
+  }
+
+  Widget _buildDinnerSection(BuildContext context) {
+    return Consumer<HistoryTodayTabProvider>(
+      builder: (context, provider, child) {
+        final dinnerMeals = provider.getMealsByType('dinner');
+        return Container(
+          height: 110.h,
+          child: PageView.builder(
+            controller: _dinnerController,
+            physics: const BouncingScrollPhysics(),
+            pageSnapping: true,
+            itemCount: dinnerMeals.isEmpty ? 1 : dinnerMeals.length + 1,
+            itemBuilder: (context, index) {
+              if (index < dinnerMeals.length) {
+                return _buildMealCard(context, dinnerMeals[index], 'dinner');
+              } else {
+                return _buildEmptyDinner(context);
+              }
+            },
+          ),
+        );
+      }
     );
   }
 }

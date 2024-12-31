@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Meal {
   final String id;
-  final String userId;
+  final String userEmail;
   final String name;
   final String mealType; // breakfast, lunch, or dinner
   final int calories;
@@ -12,7 +12,7 @@ class Meal {
 
   Meal({
     required this.id,
-    required this.userId,
+    required this.userEmail,
     required this.name,
     required this.mealType,
     required this.calories,
@@ -24,7 +24,7 @@ class Meal {
   Map<String, dynamic> toMap() {
     return {
       'id': id,
-      'userId': userId,
+      'userEmail': userEmail,
       'name': name,
       'mealType': mealType,
       'calories': calories,
@@ -37,7 +37,7 @@ class Meal {
   static Meal fromMap(Map<String, dynamic> map, String documentId) {
     return Meal(
       id: documentId,
-      userId: map['userId'],
+      userEmail: map['userEmail'],
       name: map['name'],
       mealType: map['mealType'],
       calories: map['calories'],

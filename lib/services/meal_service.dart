@@ -23,7 +23,7 @@ class MealService {
 
     return _firestore
         .collection(_collection)
-        .where('userId', isEqualTo: userId)
+        .where('userEmail', isEqualTo: userId)
         .where('date', isGreaterThanOrEqualTo: startOfDay)
         .where('date', isLessThan: endOfDay)
         .snapshots()
@@ -65,7 +65,7 @@ class MealService {
     try {
       final querySnapshot = await _firestore
           .collection(_collection)
-          .where('userId', isEqualTo: userId)
+          .where('userEmail', isEqualTo: userId)
           .where('date', isGreaterThanOrEqualTo: startOfDay)
           .where('date', isLessThan: endOfDay)
           .get();
@@ -89,7 +89,7 @@ class MealService {
     try {
       final querySnapshot = await _firestore
           .collection(_collection)
-          .where('userId', isEqualTo: userId)
+          .where('userEmail', isEqualTo: userId)
           .where('date', isGreaterThanOrEqualTo: startOfDay)
           .where('date', isLessThan: endOfDay)
           .get();
