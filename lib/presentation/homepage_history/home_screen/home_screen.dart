@@ -12,6 +12,9 @@ import '../../../presentation/profile_screen/profile_screen.dart';
 import '../../../providers/profile_picture_provider.dart';
 import '../../../providers/user_info_provider.dart';
 import '../../../providers/user_provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../models/user_model.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -43,6 +46,29 @@ class HomeScreenState extends State<HomeScreen> {
         Provider.of<HomeProvider>(context, listen: false).updateSuggestions(context);
       }
     });
+    
+    // Setup Firestore listener
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser?.email != null) {
+      FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentUser!.email)
+          .snapshots()
+          .listen((snapshot) async {
+        if (snapshot.exists && mounted) {
+          final userData = snapshot.data()!;
+          final userModel = UserModel(
+            firstName: userData['firstName'] as String? ?? '',
+            lastName: userData['lastName'] as String? ?? '',
+            username: userData['username'] as String? ?? '',
+            email: currentUser.email,
+          );
+          
+          final userInfoProvider = Provider.of<UserInfoProvider>(context, listen: false);
+          await userInfoProvider.setUser(userModel);
+        }
+      });
+    }
   }
 
   @override
@@ -85,7 +111,7 @@ class HomeScreenState extends State<HomeScreen> {
   /// Section Widget
   PreferredSizeWidget _buildAppbar(BuildContext context) {
     return CustomAppBar(
-      height: 60.h,
+      height: 70.h,
       title: Padding(
         padding: EdgeInsets.only(left: 19.h),
         child: Column(
@@ -97,7 +123,7 @@ class HomeScreenState extends State<HomeScreen> {
             Consumer<UserInfoProvider>(
               builder: (context, userInfo, _) {
                 return AppbarTitle(
-                  text: userInfo.firstName,
+                  text: userInfo.fullName,
                 );
               },
             ),
@@ -109,7 +135,8 @@ class HomeScreenState extends State<HomeScreen> {
           padding: EdgeInsets.only(
             left: 16.h,
             right: 16.h,
-            bottom: 8.h,
+            bottom: 12.h,
+            top: 18.h,
           ),
           child: GestureDetector(
             onTap: () {

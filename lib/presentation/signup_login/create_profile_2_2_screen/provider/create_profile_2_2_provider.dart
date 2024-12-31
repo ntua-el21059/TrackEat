@@ -16,6 +16,36 @@ class CreateProfile22Provider extends ChangeNotifier {
 
   CreateProfile22Model createProfile22ModelObj = CreateProfile22Model();
 
+  String _activityLevel = '';
+  
+  String get activityLevel => _activityLevel;
+
+  void setActivityLevel(String level) {
+    _activityLevel = level;
+    timeController.text = level;
+    notifyListeners();
+  }
+
+  String _dietType = '';
+  
+  String get dietType => _dietType;
+
+  void setDietType(String type) {
+    _dietType = type;
+    inputoneController.text = type;
+    notifyListeners();
+  }
+
+  String _goalType = '';
+  
+  String get goalType => _goalType;
+
+  void setGoalType(String type) {
+    _goalType = type;
+    inputthreeController.text = type;
+    notifyListeners();
+  }
+
   CreateProfile22Provider() {
     timeController.addListener(_textChanged);
     inputoneController.addListener(_textChanged);

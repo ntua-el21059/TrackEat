@@ -9,6 +9,68 @@ import '../../../providers/user_provider.dart';
 import 'models/create_profile_2_2_model.dart';
 import 'provider/create_profile_2_2_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter/services.dart';
+
+const List<Map<String, String>> activityLevels = [
+  {
+    'level': 'Light',
+    'description': '(Walking, light housework)',
+  },
+  {
+    'level': 'Moderate',
+    'description': '(Jogging, cycling, swimming)',
+  },
+  {
+    'level': 'Vigorous',
+    'description': '(Running, intense training)',
+  },
+];
+
+const List<Map<String, String>> dietTypes = [
+  {
+    'type': 'Balanced',
+    'description': '(Mixed diet with all food groups)',
+  },
+  {
+    'type': 'Keto',
+    'description': '(Low-carb, high-fat)',
+  },
+  {
+    'type': 'Vegan',
+    'description': '(No animal products)',
+  },
+  {
+    'type': 'Vegetarian',
+    'description': '(No meat)',
+  },
+  {
+    'type': 'Carnivore',
+    'description': '(Meat-based diet)',
+  },
+  {
+    'type': 'Fruitarian',
+    'description': '(Primarily fruits)',
+  },
+  {
+    'type': 'Pescatarian',
+    'description': '(Fish but no other meat)',
+  },
+];
+
+const List<Map<String, String>> goalTypes = [
+  {
+    'type': 'Lose Weight',
+    'description': '(Caloric deficit)',
+  },
+  {
+    'type': 'Maintain Weight',
+    'description': '(Caloric balance)',
+  },
+  {
+    'type': 'Gain Weight',
+    'description': '(Caloric surplus)',
+  },
+];
 
 class CreateProfile22Screen extends StatefulWidget {
   const CreateProfile22Screen({Key? key}) : super(key: key);
@@ -58,15 +120,22 @@ class CreateProfile22ScreenState extends State<CreateProfile22Screen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Center(
-                child: Text(
-                  "Let’s complete your profile (2/3)",
-                  style: theme.textTheme.headlineSmall,
+                child: Column(
+                  children: [
+                    SizedBox(height: 12.h),
+                    Text(
+                      "Let's complete your profile (2/3)",
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        fontSize: 22.0,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               SizedBox(height: 52.h),
               _buildSectionTitle(context, "Activity"),
               SizedBox(height: 8.h),
-              _buildTime(context),
+              _buildActivityLevel(context),
               SizedBox(height: 8.h),
               _buildSectionTitle(context, "Diet (Optional)"),
               SizedBox(height: 8.h),
@@ -98,7 +167,7 @@ class CreateProfile22ScreenState extends State<CreateProfile22Screen> {
       height: 28.h,
       leadingWidth: 31.h,
       leading: AppbarLeadingImage(
-        imagePath: ImageConstant.imgArrowLeft,
+        imagePath: ImageConstant.imgArrowLeftPrimary,
         height: 20.h,
         width: 20.h,
         margin: EdgeInsets.only(left: 7.h),
@@ -119,84 +188,249 @@ class CreateProfile22ScreenState extends State<CreateProfile22Screen> {
     );
   }
 
-  Widget _buildTime(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 10.h),
-      child: Selector<CreateProfile22Provider, TextEditingController?>(
-        selector: (context, provider) => provider.timeController,
-        builder: (context, timeController, child) {
-          return CustomTextFormField(
-            controller: timeController,
-            hintText: "Daily(6/7 times a week)",
-            hintStyle: CustomTextStyles.bodyLargeGray500,
-            suffix: Container(
-              margin: EdgeInsets.fromLTRB(16.h, 12.h, 10.h, 12.h),
-              child: CustomImageView(
-                imagePath: ImageConstant.img,
-                height: 20.h,
-                width: 14.h,
-                fit: BoxFit.contain,
+  Widget _buildActivityLevel(BuildContext context) {
+    return Consumer<CreateProfile22Provider>(
+      builder: (context, provider, child) {
+        return GestureDetector(
+          onTap: () {
+            showModalBottomSheet(
+              context: context,
+              builder: (BuildContext context) {
+                return Container(
+                  padding: EdgeInsets.symmetric(vertical: 20.h),
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: activityLevels.length,
+                    itemBuilder: (context, index) {
+                      final activity = activityLevels[index];
+                      return ListTile(
+                        title: RichText(
+                          text: TextSpan(
+                            children: [
+                              TextSpan(
+                                text: activity['level']!,
+                                style: CustomTextStyles.bodyLargeBlack90018,
+                              ),
+                              TextSpan(
+                                text: ' ${activity['description']!}',
+                                style: CustomTextStyles.bodyLargeGray50003,
+                              ),
+                            ],
+                          ),
+                        ),
+                        onTap: () {
+                          provider.setActivityLevel(activity['level']!);
+                          Navigator.pop(context);
+                        },
+                      );
+                    },
+                  ),
+                );
+              },
+            );
+          },
+          child: Container(
+            margin: EdgeInsets.only(
+              left: 8.h,
+              right: 16.h,
+            ),
+            padding: EdgeInsets.symmetric(
+              horizontal: 16.h,
+              vertical: 12.h,
+            ),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: appTheme.blueGray100,
+                width: 1,
               ),
             ),
-            suffixConstraints: BoxConstraints(maxHeight: 48.h),
-            contentPadding: EdgeInsets.fromLTRB(16.h, 12.h, 10.h, 12.h),
-          );
-        },
-      ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    provider.activityLevel.isEmpty 
+                        ? "Select activity level" 
+                        : provider.activityLevel,
+                    style: CustomTextStyles.bodyLargeGray500,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                Icon(
+                  Icons.arrow_forward_ios,
+                  size: 20.h,
+                  color: appTheme.blueGray100,
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
   Widget _buildInputone(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 10.h),
-      child: Selector<CreateProfile22Provider, TextEditingController?>(
-        selector: (context, provider) => provider.inputoneController,
-        builder: (context, inputoneController, child) {
-          return CustomTextFormField(
-            controller: inputoneController,
-            hintText: "Vegan",
-            hintStyle: CustomTextStyles.bodyLargeGray500,
-            suffix: Container(
-              margin: EdgeInsets.fromLTRB(16.h, 12.h, 10.h, 12.h),
-              child: CustomImageView(
-                imagePath: ImageConstant.img,
-                height: 20.h,
-                width: 14.h,
-                fit: BoxFit.contain,
+    return Consumer<CreateProfile22Provider>(
+      builder: (context, provider, child) {
+        return GestureDetector(
+          onTap: () {
+            showModalBottomSheet(
+              context: context,
+              builder: (BuildContext context) {
+                return Container(
+                  padding: EdgeInsets.symmetric(vertical: 20.h),
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: dietTypes.length,
+                    itemBuilder: (context, index) {
+                      final diet = dietTypes[index];
+                      return ListTile(
+                        title: RichText(
+                          text: TextSpan(
+                            children: [
+                              TextSpan(
+                                text: diet['type']!,
+                                style: CustomTextStyles.bodyLargeBlack90018,
+                              ),
+                              TextSpan(
+                                text: ' ${diet['description']!}',
+                                style: CustomTextStyles.bodyLargeGray50003,
+                              ),
+                            ],
+                          ),
+                        ),
+                        onTap: () {
+                          provider.setDietType(diet['type']!);
+                          Navigator.pop(context);
+                        },
+                      );
+                    },
+                  ),
+                );
+              },
+            );
+          },
+          child: Container(
+            margin: EdgeInsets.only(
+              left: 8.h,
+              right: 16.h,
+            ),
+            padding: EdgeInsets.symmetric(
+              horizontal: 16.h,
+              vertical: 12.h,
+            ),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: appTheme.blueGray100,
+                width: 1,
               ),
             ),
-            suffixConstraints: BoxConstraints(maxHeight: 48.h),
-            contentPadding: EdgeInsets.fromLTRB(16.h, 12.h, 10.h, 12.h),
-          );
-        },
-      ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    provider.dietType.isEmpty 
+                        ? "Select diet type" 
+                        : provider.dietType,
+                    style: CustomTextStyles.bodyLargeGray500,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                Icon(
+                  Icons.arrow_forward_ios,
+                  size: 20.h,
+                  color: appTheme.blueGray100,
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
   Widget _buildInputthree(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 10.h),
-      child: Selector<CreateProfile22Provider, TextEditingController?>(
-        selector: (context, provider) => provider.inputthreeController,
-        builder: (context, inputthreeController, child) {
-          return CustomTextFormField(
-            controller: inputthreeController,
-            hintText: "Lose weight",
-            hintStyle: CustomTextStyles.bodyLargeGray500,
-            suffix: Container(
-              margin: EdgeInsets.fromLTRB(16.h, 12.h, 10.h, 12.h),
-              child: CustomImageView(
-                imagePath: ImageConstant.img,
-                height: 20.h,
-                width: 14.h,
-                fit: BoxFit.contain,
+    return Consumer<CreateProfile22Provider>(
+      builder: (context, provider, child) {
+        return GestureDetector(
+          onTap: () {
+            showModalBottomSheet(
+              context: context,
+              builder: (BuildContext context) {
+                return Container(
+                  padding: EdgeInsets.symmetric(vertical: 20.h),
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: goalTypes.length,
+                    itemBuilder: (context, index) {
+                      final goal = goalTypes[index];
+                      return ListTile(
+                        title: RichText(
+                          text: TextSpan(
+                            children: [
+                              TextSpan(
+                                text: goal['type']!,
+                                style: CustomTextStyles.bodyLargeBlack90018,
+                              ),
+                              TextSpan(
+                                text: ' ${goal['description']!}',
+                                style: CustomTextStyles.bodyLargeGray50003,
+                              ),
+                            ],
+                          ),
+                        ),
+                        onTap: () {
+                          provider.setGoalType(goal['type']!);
+                          Navigator.pop(context);
+                        },
+                      );
+                    },
+                  ),
+                );
+              },
+            );
+          },
+          child: Container(
+            margin: EdgeInsets.only(
+              left: 8.h,
+              right: 16.h,
+            ),
+            padding: EdgeInsets.symmetric(
+              horizontal: 16.h,
+              vertical: 12.h,
+            ),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: appTheme.blueGray100,
+                width: 1,
               ),
             ),
-            suffixConstraints: BoxConstraints(maxHeight: 48.h),
-            contentPadding: EdgeInsets.fromLTRB(16.h, 12.h, 10.h, 12.h),
-          );
-        },
-      ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    provider.goalType.isEmpty 
+                        ? "Select your goal" 
+                        : provider.goalType,
+                    style: CustomTextStyles.bodyLargeGray500,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                Icon(
+                  Icons.arrow_forward_ios,
+                  size: 20.h,
+                  color: appTheme.blueGray100,
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -208,8 +442,13 @@ class CreateProfile22ScreenState extends State<CreateProfile22Screen> {
         builder: (context, inputfiveController, child) {
           return CustomTextFormField(
             controller: inputfiveController,
-            hintText: "180",
+            hintText: "Enter your height",
             hintStyle: CustomTextStyles.bodyLargeGray500,
+            textInputType: TextInputType.number,
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+              FilteringTextInputFormatter.deny(RegExp(r'^0+')),
+            ],
             contentPadding: EdgeInsets.symmetric(horizontal: 16.h, vertical: 12.h),
           );
         },
@@ -225,8 +464,13 @@ class CreateProfile22ScreenState extends State<CreateProfile22Screen> {
         builder: (context, inputsevenController, child) {
           return CustomTextFormField(
             controller: inputsevenController,
-            hintText: "80",
+            hintText: "Enter your current weight",
             hintStyle: CustomTextStyles.bodyLargeGray500,
+            textInputType: TextInputType.number,
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+              FilteringTextInputFormatter.deny(RegExp(r'^0+')),
+            ],
             textInputAction: TextInputAction.done,
             contentPadding: EdgeInsets.symmetric(horizontal: 16.h, vertical: 12.h),
           );
@@ -238,41 +482,31 @@ class CreateProfile22ScreenState extends State<CreateProfile22Screen> {
   Widget _buildNext(BuildContext context) {
     return Consumer<CreateProfile22Provider>(
       builder: (context, provider, child) {
-        bool isFormValid = provider.timeController.text.isNotEmpty &&
-            provider.inputthreeController.text.isNotEmpty &&
-            provider.inputfiveController.text.isNotEmpty &&
-            provider.inputsevenController.text.isNotEmpty;
-
-        // Additional validation for numeric fields
-        if (isFormValid) {
-          double? height = double.tryParse(provider.inputfiveController.text);
-          double? weight = double.tryParse(provider.inputsevenController.text);
-          isFormValid = height != null && weight != null;
-        }
+        bool isFormValid = 
+            provider.activityLevel.isNotEmpty &&  // Check activity level
+            provider.goalType.isNotEmpty &&       // Check goal type
+            provider.inputfiveController.text.isNotEmpty &&  // Check height
+            provider.inputsevenController.text.isNotEmpty;   // Check weight
+            // Note: diet is optional, so we don't check it
 
         return CustomElevatedButton(
           height: 48.h,
           width: 114.h,
           text: "Next",
-          margin: EdgeInsets.only(right: 8.h),
           buttonStyle: isFormValid 
               ? CustomButtonStyles.fillPrimary
               : CustomButtonStyles.fillGray,
           buttonTextStyle: theme.textTheme.titleMedium!,
           alignment: Alignment.centerRight,
           onPressed: isFormValid ? () {
-            // Parse numeric values
-            double height = double.parse(provider.inputfiveController.text);
-            double weight = double.parse(provider.inputsevenController.text);
-            
             // Save to UserProvider
             final userProvider = Provider.of<UserProvider>(context, listen: false);
             userProvider.setProfile2Info(
-              activity: provider.timeController.text,
-              diet: provider.inputoneController.text.isEmpty ? null : provider.inputoneController.text,
-              goal: provider.inputthreeController.text,
-              height: height,
-              weight: weight,
+              activity: provider.activityLevel,
+              diet: provider.dietType,
+              goal: provider.goalType,
+              height: double.tryParse(provider.inputfiveController.text) ?? 0,
+              weight: double.tryParse(provider.inputsevenController.text) ?? 0,
             );
             
             Navigator.pushNamed(context, AppRoutes.calorieCalculatorScreen);

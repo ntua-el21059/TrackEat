@@ -32,104 +32,141 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> {
   StreamSubscription<DocumentSnapshot>? _userSubscription;
 
   void _showTextInputDialog(BuildContext context, String title, String currentValue, bool isNameField) {
-    _textController.text = currentValue;
+    // Get the current value from Firebase first
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser?.email != null) {
+      FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentUser?.email)
+          .get()
+          .then((doc) {
+        if (doc.exists) {
+          final userData = doc.data()!;
+          String dialogValue = '';
+          
+          switch (title) {
+            case "Name":
+              dialogValue = userData['firstName']?.toString() ?? '';
+              break;
+            case "Surname":
+              dialogValue = userData['lastName']?.toString() ?? '';
+              break;
+            case "Username":
+              dialogValue = userData['username']?.toString() ?? '';
+              break;
+            case "Birthday":
+              dialogValue = userData['birthdate']?.toString() ?? '';
+              break;
+            case "Gender":
+              dialogValue = userData['gender']?.toString() ?? '';
+              break;
+            case "Height":
+              dialogValue = userData['height']?.toString() ?? '';
+              break;
+            default:
+              dialogValue = currentValue;
+          }
+          
+          // Set the text controller value
+          _textController.text = dialogValue;
 
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white.withOpacity(0.9),
-      builder: (BuildContext context) {
-        return Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
-            left: 16.h,
-            right: 16.h,
-            top: 16.h,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(title),
-              TextField(
-                controller: _textController,
-                autofocus: true,
-                decoration: InputDecoration(
-                  hintText: 'Enter $title',
+          showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            backgroundColor: Colors.white.withOpacity(0.9),
+            builder: (BuildContext context) {
+              return Padding(
+                padding: EdgeInsets.only(
+                  bottom: MediaQuery.of(context).viewInsets.bottom,
+                  left: 16.h,
+                  right: 16.h,
+                  top: 16.h,
                 ),
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: Text('Cancel'),
-                  ),
-                  TextButton(
-                    onPressed: () async {
-                      final newValue = _textController.text.trim();
-                      if (newValue.isNotEmpty) {
-                        // Get current user email
-                        final currentUser = FirebaseAuth.instance.currentUser;
-                        if (currentUser?.email != null) {
-                          try {
-                            // Update Firestore document using email as document ID
-                            await FirebaseFirestore.instance
-                                .collection('users')
-                                .doc(currentUser!.email)
-                                .update({
-                              if (title == "Name") 'firstName': newValue,
-                              if (title == "Surname") 'lastName': newValue,
-                              if (title == "Birthday") 'birthdate': newValue,
-                              if (title == "Gender") 'gender': newValue,
-                              if (title == "Height") 'height': newValue.replaceAll(" cm", ""),
-                              if (title == "Username") 'username': newValue,
-                            });
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(title),
+                    TextField(
+                      controller: _textController,
+                      autofocus: true,
+                      decoration: InputDecoration(
+                        hintText: 'Enter $title',
+                      ),
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: Text('Cancel'),
+                        ),
+                        TextButton(
+                          onPressed: () async {
+                            final newValue = _textController.text.trim();
+                            if (newValue.isNotEmpty) {
+                              // Get current user email
+                              if (currentUser?.email != null) {
+                                try {
+                                  // Update Firestore document using email as document ID
+                                  await FirebaseFirestore.instance
+                                      .collection('users')
+                                      .doc(currentUser!.email)
+                                      .update({
+                                    if (title == "Name") 'firstName': newValue,
+                                    if (title == "Surname") 'lastName': newValue,
+                                    if (title == "Birthday") 'birthdate': newValue,
+                                    if (title == "Gender") 'gender': newValue,
+                                    if (title == "Height") 'height': newValue.replaceAll(" cm", ""),
+                                    if (title == "Username") 'username': newValue,
+                                  });
 
-                            // Update local provider
-                            if (mounted) {
-                              final userInfoProvider = Provider.of<UserInfoProvider>(context, listen: false);
-                              switch (title) {
-                                case "Name":
-                                  await userInfoProvider.updateName(newValue, userInfoProvider.lastName);
-                                  break;
-                                case "Surname":
-                                  await userInfoProvider.updateName(userInfoProvider.firstName, newValue);
-                                  break;
-                                case "Birthday":
-                                  await userInfoProvider.updateBirthdate(newValue);
-                                  break;
-                                case "Gender":
-                                  await userInfoProvider.updateGender(newValue);
-                                  break;
-                                case "Height":
-                                  await userInfoProvider.updateHeight(newValue.replaceAll(" cm", ""));
-                                  break;
-                                case "Username":
-                                  await userInfoProvider.updateUsername(newValue);
-                                  break;
+                                  // Update local provider
+                                  if (mounted) {
+                                    final userInfoProvider = Provider.of<UserInfoProvider>(context, listen: false);
+                                    switch (title) {
+                                      case "Name":
+                                        await userInfoProvider.updateName(newValue, userInfoProvider.lastName);
+                                        break;
+                                      case "Surname":
+                                        await userInfoProvider.updateName(userInfoProvider.firstName, newValue);
+                                        break;
+                                      case "Birthday":
+                                        await userInfoProvider.updateBirthdate(newValue);
+                                        break;
+                                      case "Gender":
+                                        await userInfoProvider.updateGender(newValue);
+                                        break;
+                                      case "Height":
+                                        await userInfoProvider.updateHeight(newValue.replaceAll(" cm", ""));
+                                        break;
+                                      case "Username":
+                                        await userInfoProvider.updateUsername(newValue);
+                                        break;
+                                    }
+                                    // Force UI update
+                                    userInfoProvider.notifyListeners();
+                                  }
+                                } catch (e) {
+                                  print("Error updating Firestore: $e");
+                                }
                               }
-                              // Force UI update
-                              userInfoProvider.notifyListeners();
                             }
-                          } catch (e) {
-                            print("Error updating Firestore: $e");
-                            // You might want to show an error message to the user here
-                          }
-                        }
-                      }
-                      if (mounted) {
-                        Navigator.pop(context);
-                      }
-                    },
-                    child: Text('Save'),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        );
-      },
-    );
+                            if (mounted) {
+                              Navigator.pop(context);
+                            }
+                          },
+                          child: Text('Save'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            },
+          );
+        }
+      });
+    }
   }
 
   void _showDatePicker(BuildContext context, String currentValue) {
@@ -438,13 +475,13 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> {
     // Fetch fresh data when screen loads
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (mounted) {
-        final authProvider = Provider.of<auth.AuthProvider>(context, listen: false);
-        if (authProvider.user != null) {
+        final currentUser = FirebaseAuth.instance.currentUser;
+        if (currentUser?.email != null) {
           try {
             // Get fresh data from Firestore
             final doc = await FirebaseFirestore.instance
                 .collection('users')
-                .doc(authProvider.user!.uid)
+                .doc(currentUser?.email)
                 .get();
 
             if (doc.exists && mounted) {
@@ -453,8 +490,8 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> {
               
               // Update provider with fresh Firestore values
               await userInfoProvider.updateName(
-                userData['firstName'] as String? ?? '',
-                userData['lastName'] as String? ?? ''
+                userData['firstName']?.toString() ?? '',
+                userData['lastName']?.toString() ?? ''
               );
               
               // Force UI update
@@ -474,23 +511,27 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> {
     if (currentUser?.email != null) {
       _userSubscription = FirebaseFirestore.instance
           .collection('users')
-          .doc(currentUser!.email)
+          .doc(currentUser?.email)
           .snapshots()
-          .listen((snapshot) {
+          .listen((snapshot) async {
         if (snapshot.exists && mounted) {
           final userData = snapshot.data()!;
           final userInfoProvider = Provider.of<UserInfoProvider>(context, listen: false);
-
-          // Update all fields including dailyCalories
-          userInfoProvider.updateName(
+          
+          // Update provider with fresh Firestore values
+          await userInfoProvider.updateName(
             userData['firstName']?.toString() ?? '',
-            userData['lastName']?.toString() ?? '',
+            userData['lastName']?.toString() ?? ''
           );
+          
           userInfoProvider.updateUsername(userData['username']?.toString() ?? '');
           userInfoProvider.updateBirthdate(userData['birthdate']?.toString() ?? '');
           userInfoProvider.updateGender(userData['gender']?.toString() ?? '');
           userInfoProvider.updateHeight(userData['height']?.toString() ?? '');
           userInfoProvider.updateDailyCalories(userData['dailyCalories']?.toString() ?? '');
+          
+          // Force UI update
+          setState(() {});
         }
       });
     }
@@ -626,16 +667,7 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> {
                             userInfo.gender,
                           ),
                         ),
-                        _buildProfileItem(
-                          label: "Height",
-                          value: "${userInfo.height} cm",
-                          onTap: () => _showTextInputDialog(
-                            context,
-                            "Height",
-                            userInfo.height,
-                            false,
-                          ),
-                        ),
+                        _buildHeightSection(context, userInfo),
                         _buildProfileItem(
                           label: "Username",
                           value: userInfo.username,
@@ -703,12 +735,92 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> {
                   color: Colors.white,
                 ),
               ),
+              Row(
+                children: [
+                  StreamBuilder<DocumentSnapshot>(
+                    stream: FirebaseFirestore.instance
+                        .collection('users')
+                        .doc(FirebaseAuth.instance.currentUser?.email)
+                        .snapshots(),
+                    builder: (context, snapshot) {
+                      if (snapshot.hasData && snapshot.data != null && snapshot.data!.exists) {
+                        final userData = snapshot.data!.data() as Map<String, dynamic>;
+                        String displayValue = value;
+                        if (label == "Name") {
+                          displayValue = userData['firstName']?.toString() ?? "Not set";
+                        } else if (label == "Surname") {
+                          displayValue = userData['lastName']?.toString() ?? "Not set";
+                        } else if (label == "Username") {
+                          displayValue = userData['username']?.toString() ?? "Not set";
+                        }
+                        return Text(
+                          displayValue.isEmpty ? "Not set" : displayValue,
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        );
+                      }
+                      return Text(
+                        value.isEmpty ? "Not set" : value,
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      );
+                    },
+                  ),
+                  SizedBox(width: 8.h),
+                  GestureDetector(
+                    onTap: onTap,
+                    child: CustomImageView(
+                      imagePath: ImageConstant.imgArrowRight,
+                      height: 14.h,
+                      width: 14.h,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        if (label != "Username")
+          Container(
+            height: 1.h,
+            color: Colors.white,
+            margin: EdgeInsets.symmetric(horizontal: 16.h),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildHeightSection(BuildContext context, UserInfoProvider userInfo) {
+    return Column(
+      children: [
+        Container(
+          padding: EdgeInsets.symmetric(vertical: 12.h),
+          margin: EdgeInsets.symmetric(horizontal: 16.h),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "Height",
+                style: theme.textTheme.titleLarge?.copyWith(
+                  color: Colors.white,
+                ),
+              ),
               GestureDetector(
-                onTap: onTap,
+                onTap: () => _showTextInputDialog(
+                  context,
+                  "Height",
+                  "${userInfo.height} cm",
+                  false,
+                ),
                 child: Row(
                   children: [
                     Text(
-                      value.isEmpty ? "Not set" : value,
+                      userInfo.height.isEmpty ? "Not set" : "${userInfo.height} cm",
                       style: theme.textTheme.titleLarge?.copyWith(
                         color: Colors.white,
                         fontWeight: FontWeight.w600,
@@ -727,12 +839,11 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> {
             ],
           ),
         ),
-        if (label != "Username")
-          Container(
-            height: 1.h,
-            color: Colors.white,
-            margin: EdgeInsets.symmetric(horizontal: 16.h),
-          ),
+        Container(
+          height: 1.h,
+          color: Colors.white,
+          margin: EdgeInsets.symmetric(horizontal: 16.h),
+        ),
       ],
     );
   }

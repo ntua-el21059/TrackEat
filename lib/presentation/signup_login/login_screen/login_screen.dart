@@ -63,7 +63,7 @@ class LoginScreenState extends State<LoginScreen> {
               Padding(
                 padding: EdgeInsets.only(left: 8.h),
                 child: Text(
-                  "Email Address or username",
+                  "Email Address",
                   style: CustomTextStyles.bodyLargeBlack90018,
                 ),
               ),
@@ -127,7 +127,7 @@ class LoginScreenState extends State<LoginScreen> {
       height: 28.h,
       leadingWidth: 31.h,
       leading: AppbarLeadingImage(
-        imagePath: ImageConstant.imgArrowLeft,
+        imagePath: ImageConstant.imgArrowLeftPrimary,
         height: 20.h,
         width: 20.h,
         margin: EdgeInsets.only(left: 7.h),

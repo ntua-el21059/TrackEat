@@ -68,13 +68,12 @@ class CreateAccountScreenState extends State<CreateAccountScreen> {
               width: double.maxFinite,
               padding: EdgeInsets.only(
                 left: 22.h,
-                top: 48.h,
+                top: 0.h,
                 right: 22.h,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SizedBox(height: 22.h),
                   Align(
                     alignment: Alignment.center,
                     child: Row(
@@ -88,23 +87,27 @@ class CreateAccountScreenState extends State<CreateAccountScreen> {
                       ],
                     ),
                   ),
-                  SizedBox(height: 14.h),
-                  CustomImageView(
-                    imagePath: ImageConstant.imgLogo,
-                    height: 162.h,
-                    width: double.maxFinite,
-                    margin: EdgeInsets.symmetric(horizontal: 72.h),
+                  Transform.translate(
+                    offset: Offset(0, -20),
+                    child: CustomImageView(
+                      imagePath: ImageConstant.imgLogo,
+                      height: 162.h,
+                      width: double.maxFinite,
+                      margin: EdgeInsets.symmetric(horizontal: 72.h),
+                    ),
                   ),
-                  SizedBox(height: 16.h),
-                  Align(
-                    alignment: Alignment.center,
-                    child: Text(
-                      "We are tremendously happy to \nsee you joining our community",
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center,
-                      style: CustomTextStyles.bodyLargeBlack900.copyWith(
-                        height: 1.29,
+                  Transform.translate(
+                    offset: Offset(0, -20),
+                    child: Align(
+                      alignment: Alignment.center,
+                      child: Text(
+                        "We are tremendously happy to \nsee you joining our community",
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                        style: CustomTextStyles.bodyLargeBlack900.copyWith(
+                          height: 1.29,
+                        ),
                       ),
                     ),
                   ),
@@ -165,12 +168,12 @@ class CreateAccountScreenState extends State<CreateAccountScreen> {
       height: 28.h,
       leadingWidth: 31.h,
       leading: AppbarLeadingImage(
-        imagePath: ImageConstant.imgArrowLeft,
+        imagePath: ImageConstant.imgArrowLeftPrimary,
         height: 20.h,
         width: 20.h,
         margin: EdgeInsets.only(left: 7.h),
         onTap: () {
-          Navigator.pop(context);
+          NavigatorService.goBack();
         },
       ),
     );
@@ -244,7 +247,7 @@ class CreateAccountScreenState extends State<CreateAccountScreen> {
                 provider.changePasswordVisibility();
               },
               child: Container(
-                margin: EdgeInsets.fromLTRB(16.h, 12.h, 10.h, 12.h),
+                margin: EdgeInsets.fromLTRB(16.h, 8.h, 10.h, 8.h),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12.h),
                 ),
@@ -343,6 +346,46 @@ class CreateAccountScreenState extends State<CreateAccountScreen> {
             
             NavigatorService.pushNamed(AppRoutes.createProfile12Screen);
           } : null,
+        );
+      },
+    );
+  }
+
+  // Add this method to check password strength
+  bool _isPasswordStrong(String password) {
+    bool hasUppercase = password.contains(RegExp(r'[A-Z]'));
+    bool hasLowercase = password.contains(RegExp(r'[a-z]'));
+    bool hasDigits = password.contains(RegExp(r'[0-9]'));
+    bool hasSpecialCharacters = password.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'));
+    bool hasMinLength = password.length >= 8;
+
+    return hasUppercase && hasLowercase && hasDigits && hasSpecialCharacters && hasMinLength;
+  }
+
+  // Add this method to show password requirements
+  void _showPasswordRequirements(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Password Requirements'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('• At least 8 characters'),
+              Text('• At least one uppercase letter'),
+              Text('• At least one lowercase letter'),
+              Text('• At least one number'),
+              Text('• At least one special character'),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('OK'),
+            ),
+          ],
         );
       },
     );
