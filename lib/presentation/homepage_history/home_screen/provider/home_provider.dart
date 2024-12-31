@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../../core/app_export.dart';
-import '../models/cards_item_model.dart';
 import '../models/home_initial_model.dart';
 import '../models/home_model.dart';
 

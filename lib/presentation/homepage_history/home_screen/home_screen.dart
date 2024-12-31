@@ -3,18 +3,15 @@ import '../../../core/app_export.dart';
 import '../../../widgets/custom_bottom_bar.dart';
 import '../../../widgets/app_bar/appbar_subtitle_one.dart';
 import '../../../widgets/app_bar/appbar_title.dart';
-import '../../../widgets/app_bar/appbar_trailing_image.dart';
 import '../../../widgets/app_bar/custom_app_bar.dart';
 import 'models/cards_item_model.dart';
-import 'models/home_model.dart';
 import 'provider/home_provider.dart';
 import 'widgets/cards_item_widget.dart';
 import 'package:activity_ring/activity_ring.dart';
 import '../../../presentation/profile_screen/profile_screen.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'package:provider/provider.dart';
 import '../../../providers/profile_picture_provider.dart';
 import '../../../providers/user_info_provider.dart';
+import '../../../providers/user_provider.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -80,33 +77,6 @@ class HomeScreenState extends State<HomeScreen> {
         ),
       ),
       bottomNavigationBar: _buildBottombar(context),
-    );
-  }
-
-  /// Common widget
-  Widget _buildNumberandunit(
-    BuildContext context, {
-    required String p45seventyOne,
-    required String gOne,
-  }) {
-    return Row(
-      children: [
-        Text(
-          p45seventyOne,
-          style: CustomTextStyles.titleLargeLimeA700.copyWith(
-            color: appTheme.limeA700,
-          ),
-        ),
-        Align(
-          alignment: Alignment.bottomCenter,
-          child: Text(
-            gOne,
-            style: CustomTextStyles.titleMediumLimeA700.copyWith(
-              color: appTheme.limeA700,
-            ),
-          ),
-        )
-      ],
     );
   }
 
@@ -179,11 +149,11 @@ class HomeScreenState extends State<HomeScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                "1500 Kcal Remaining...",
+                "${_calculateRemainingCalories()} Kcal Remaining...",
                 style: CustomTextStyles.titleMediumGray90001Bold,
               ),
               Text(
-                "3000 kcal",
+                "${_calculateDailyCalories()} kcal",
                 style: TextStyle(
                   color: const Color(0xFFFF0000),
                   fontSize: 14,
@@ -203,7 +173,7 @@ class HomeScreenState extends State<HomeScreen> {
             child: Row(
               children: [
                 Container(
-                  width: MediaQuery.of(context).size.width * 0.5,
+                  width: MediaQuery.of(context).size.width * (_calculateConsumedPercentage() / 100),
                   decoration: BoxDecoration(
                     color: const Color(0xFF4CD964),
                     borderRadius: BorderRadius.circular(4.h),
@@ -217,54 +187,12 @@ class HomeScreenState extends State<HomeScreen> {
             children: [
               Expanded(
                 flex: 3,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Protein",
-                      style: CustomTextStyles.bodyLargeBlack90016_2,
-                    ),
-                    Text(
-                      "78/98g",
-                      style: TextStyle(
-                        color: const Color(0xFFFA114F),
-                        fontSize: 24,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    SizedBox(height: 16.h),
-                    Text(
-                      "Fats",
-                      style: CustomTextStyles.bodyLargeBlack90016_2,
-                    ),
-                    Text(
-                      "45/70g",
-                      style: TextStyle(
-                        color: const Color(0xFFA6FF00),
-                        fontSize: 24,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    SizedBox(height: 16.h),
-                    Text(
-                      "Carbs",
-                      style: CustomTextStyles.bodyLargeBlack90016_2,
-                    ),
-                    Text(
-                      "95/110g",
-                      style: TextStyle(
-                        color: const Color(0xFF00FFF6),
-                        fontSize: 24,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
+                child: _buildMacronutrients(),
               ),
               Expanded(
                 flex: 2,
                 child: Ring(
-                  percent: _isLoading ? 0 : 78 / 98 * 100,
+                  percent: _isLoading ? 0 : _calculateProteinPercentage(),
                   color: RingColorScheme(
                     ringColor: Color(0xFFFA114F),
                     backgroundColor: Colors.grey.withOpacity(0.2),
@@ -272,7 +200,7 @@ class HomeScreenState extends State<HomeScreen> {
                   radius: 60,
                   width: 15,
                   child: Ring(
-                    percent: _isLoading ? 0 : 45 / 70 * 100,
+                    percent: _isLoading ? 0 : _calculateFatsPercentage(),
                     color: RingColorScheme(
                       ringColor: Color(0xFFA6FF00),
                       backgroundColor: Colors.grey.withOpacity(0.2),
@@ -280,7 +208,7 @@ class HomeScreenState extends State<HomeScreen> {
                     radius: 45,
                     width: 15,
                     child: Ring(
-                      percent: _isLoading ? 0 : 95 / 110 * 100,
+                      percent: _isLoading ? 0 : _calculateCarbsPercentage(),
                       color: RingColorScheme(
                         ringColor: Color(0xFF00FFF6),
                         backgroundColor: Colors.grey.withOpacity(0.2),
@@ -319,6 +247,46 @@ class HomeScreenState extends State<HomeScreen> {
         ],
       ),
     );
+  }
+
+  double _calculateProteinPercentage() {
+    final consumed = 78.0; // TODO: Get from history provider
+    final total = 98.0;
+    return (consumed / total * 100).clamp(0, 100);
+  }
+
+  double _calculateFatsPercentage() {
+    final consumed = 45.0; // TODO: Get from history provider
+    final total = 70.0;
+    return (consumed / total * 100).clamp(0, 100);
+  }
+
+  double _calculateCarbsPercentage() {
+    final consumed = 95.0; // TODO: Get from history provider
+    final total = 110.0;
+    return (consumed / total * 100).clamp(0, 100);
+  }
+
+  int _calculateRemainingCalories() {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final dailyCalories = userProvider.user.dailyCalories ?? 2000;
+    final consumedCalories = 1500; // TODO: Get this from history provider
+    return dailyCalories - consumedCalories;
+  }
+
+  int _calculateDailyCalories() {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    return userProvider.user.dailyCalories ?? 2000;
+  }
+
+  double _calculateConsumedPercentage() {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final dailyCalories = userProvider.user.dailyCalories ?? 2000;
+    final consumedCalories = 1500; // TODO: Get this from history provider
+    
+    // Calculate percentage of calories consumed
+    final percentage = (consumedCalories / dailyCalories) * 100;
+    return percentage.clamp(0, 100); // Ensure percentage is between 0 and 100
   }
 
   Widget _buildSuggestionsone(BuildContext context) {
@@ -377,35 +345,45 @@ class HomeScreenState extends State<HomeScreen> {
             case BottomBarEnum.Leaderboard:
               Navigator.pushNamed(context, "/leaderboard");
               break;
+            case BottomBarEnum.AI:
+              Navigator.pushNamed(context, AppRoutes.aiChatMainScreen);
+              break;
           }
         },
       ),
     );
   }
 
-  Widget _buildProfileSection(BuildContext context) {
-    return Container(
-      width: double.maxFinite,
-      padding: EdgeInsets.all(22.h),
-      decoration: BoxDecoration(
-        color: const Color(0xFFB2D7FF),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        children: [
-          Consumer<ProfilePictureProvider>(
-            builder: (context, profilePicProvider, _) {
-              return CustomImageView(
-                imagePath: profilePicProvider.profileImagePath,
-                isFile: !profilePicProvider.profileImagePath.startsWith('assets/'),
-                height: 40.h,
-                width: 40.h,
-                radius: BorderRadius.circular(20.h),
-              );
-            },
+  Widget _buildMacronutrientText(String label, double consumed, double total, Color color) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: CustomTextStyles.bodyLargeBlack90016_2,
+        ),
+        Text(
+          "${consumed.toInt()}/${total.toInt()}g",
+          style: TextStyle(
+            color: color,
+            fontSize: 24,
+            fontWeight: FontWeight.w500,
           ),
-        ],
-      ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMacronutrients() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildMacronutrientText("Protein", 78, 98, const Color(0xFFFA114F)),
+        SizedBox(height: 16.h),
+        _buildMacronutrientText("Fats", 45, 70, const Color(0xFFA6FF00)),
+        SizedBox(height: 16.h),
+        _buildMacronutrientText("Carbs", 95, 110, const Color(0xFF00FFF6)),
+      ],
     );
   }
 }

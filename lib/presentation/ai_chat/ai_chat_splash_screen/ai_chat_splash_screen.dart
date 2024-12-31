@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../../../core/app_export.dart';
 import '../../../theme/custom_button_style.dart';
 import '../../../widgets/custom_elevated_button.dart';
-import 'models/ai_chat_splash_model.dart';
 import 'provider/ai_chat_splash_provider.dart';
 
 class AiChatSplashScreen extends StatefulWidget {

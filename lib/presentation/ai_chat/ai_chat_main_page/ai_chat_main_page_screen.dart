@@ -1,13 +1,10 @@
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
-import 'package:speech_to_text/speech_recognition_result.dart';
-import 'package:speech_to_text/speech_recognition_error.dart';
 import '../../../../core/app_export.dart';
 import '../../../../widgets/custom_bottom_bar.dart';
 import '../../../services/camera_logic/camera_screen.dart';
 import '../info_blur/info_blur_screen.dart';
-import 'models/ai_chat_main_page_model.dart';
 import 'provider/ai_chat_main_page_provider.dart';
 import 'dart:io';
 
@@ -161,8 +158,7 @@ class AiChatMainScreenState extends State<AiChatMainScreen> {
     // If an image was captured and kept, handle it
     if (imagePath != null) {
       final provider = Provider.of<AiChatMainProvider>(context, listen: false);
-      provider.selectedImage = XFile(imagePath);
-      provider.notifyListeners(); // Trigger UI update
+      provider.setSelectedImage(XFile(imagePath));
     }
   }
 
@@ -440,8 +436,7 @@ class AiChatMainScreenState extends State<AiChatMainScreen> {
                             alignment: Alignment.centerRight,
                             child: GestureDetector(
                               onTap: () {
-                                provider.showTrackDialog = false;
-                                provider.notifyListeners();
+                                provider.setTrackDialogState(false);
                               },
                               child: Padding(
                                 padding: EdgeInsets.only(right: 8.h, bottom: 8.h),

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../core/app_export.dart';
-import '../../../widgets/custom_outlined_button.dart';
 
 class BlurEditScreenDialog extends StatelessWidget {
   const BlurEditScreenDialog({

@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:convert';
-import '../../../../core/app_export.dart';
 import '../models/ai_chat_main_page_model.dart';
 
 const String apiKey = 'AIzaSyDe5fyQXDIfgZ1paU5Ax5HNj6gNyWA0MAA';
@@ -49,9 +47,13 @@ class AiChatMainProvider extends ChangeNotifier {
   Future<void> pickImage() async {
     final XFile? image = await _imagePicker.pickImage(source: ImageSource.gallery);
     if (image != null) {
-      selectedImage = image;
-      notifyListeners();
+      setSelectedImage(image);
     }
+  }
+
+  void setSelectedImage(XFile image) {
+    selectedImage = image;
+    notifyListeners();
   }
 
   void removeImage() {
@@ -182,6 +184,11 @@ Important: Respond with ONLY the JSON object, no other text.""";
       showTrackDialog = false;
       notifyListeners();
     }
+  }
+
+  void setTrackDialogState(bool state) {
+    showTrackDialog = state;
+    notifyListeners();
   }
 
   @override

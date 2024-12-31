@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/app_export.dart';
-import '../../../theme/custom_button_style.dart';
-import '../../../widgets/custom_outlined_button.dart';
 import '../blur_edit_screen_dialog/blur_edit_screen_dialog.dart';
-import '../history_today_tab_screen/provider/history_today_tab_provider.dart';
-import 'package:provider/provider.dart';
+
 
 class BlurChooseActionScreenDialog extends StatelessWidget {
   const BlurChooseActionScreenDialog({

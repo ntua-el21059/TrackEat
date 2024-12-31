@@ -1,11 +1,20 @@
-import '../../../../core/app_export.dart';
-import 'historytoday_item_model.dart';
-
 // ignore_for_file: must_be_immutable
 class HistoryTodayTabModel {
-  List<HistorytodayItemModel> historytodayItemList = [
-    HistorytodayItemModel(weight: "69g", protein: "Protein"),
-    HistorytodayItemModel(weight: "69g", protein: "Fats"),
-    HistorytodayItemModel(weight: "69g", protein: "Carbs")
+  List<MacroNutrient> macroNutrients = [
+    MacroNutrient(amount: "69g", type: "Protein"),
+    MacroNutrient(amount: "69g", type: "Fats"),
+    MacroNutrient(amount: "69g", type: "Carbs")
   ];
+}
+
+class MacroNutrient {
+  MacroNutrient({
+    required this.amount,
+    required this.type,
+    this.id,
+  });
+
+  String amount;
+  String type;
+  String? id;
 }

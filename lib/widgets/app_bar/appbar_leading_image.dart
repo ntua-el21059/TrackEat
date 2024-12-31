@@ -12,11 +12,11 @@ class AppbarLeadingImage extends StatelessWidget {
     this.onTap,
   }) : super(key: key);
 
-  String? imagePath;
-  EdgeInsetsGeometry? margin;
-  double? height;
-  double? width;
-  Function? onTap;
+  final String? imagePath;
+  final EdgeInsetsGeometry? margin;
+  final double? height;
+  final double? width;
+  final Function? onTap;
 
   @override
   Widget build(BuildContext context) {

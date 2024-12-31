@@ -1,4 +1,3 @@
-import '../../../../core/app_export.dart';
 import 'blur_edit_item_model.dart';
 
 // ignore_for_file: must_be_immutable

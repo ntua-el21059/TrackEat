@@ -1,18 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../../core/app_export.dart';
-import '../../../core/utils/date_time_utils.dart';
-import '../../../theme/app_decoration.dart';
-import '../../../theme/custom_text_style.dart';
 import '../../../widgets/app_bar/appbar_leading_image.dart';
 import '../../../widgets/app_bar/appbar_subtitle.dart';
 import '../../../widgets/app_bar/custom_app_bar.dart';
-import '../../../widgets/custom_icon_button.dart';
-import '../../../widgets/custom_image_view.dart';
 import '../blur_choose_action_screen_dialog/blur_choose_action_screen_dialog.dart';
-import 'models/history_today_tab_model.dart';
-import 'models/historytoday_item_model.dart';
 import 'provider/history_today_tab_provider.dart';
-import 'widgets/historytoday_item_widget.dart';
 import 'package:activity_ring/activity_ring.dart';
 
 class HistoryTodayTabScreen extends StatefulWidget {
@@ -623,50 +615,6 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> with Singl
     );
   }
 
-  /// Section Widget
-  Widget _buildNumberandunit(BuildContext context, {
-    required String p45seventyOne,
-    required String gOne,
-  }) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          p45seventyOne,
-          style: CustomTextStyles.bodyLargeBlack900.copyWith(
-            color: appTheme.black900.withAlpha(122),
-          ),
-        ),
-        Text(
-          gOne,
-          style: CustomTextStyles.bodyLargeBlack900.copyWith(
-            color: appTheme.black900.withAlpha(122),
-          ),
-        ),
-      ],
-    );
-  }
-
-  /// Section Widget
-  Widget _buildColumnveganbaco(BuildContext context, {
-    required String veganbaconOne,
-    required String weightOne,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          veganbaconOne,
-          style: CustomTextStyles.titleMediumGray90001Bold,
-        ),
-        SizedBox(height: 4.h),
-        Text(
-          weightOne,
-          style: CustomTextStyles.bodyLargeGray900,
-        ),
-      ],
-    );
-  }
 
   Widget _buildEmptyBreakfast(BuildContext context) {
     return Container(

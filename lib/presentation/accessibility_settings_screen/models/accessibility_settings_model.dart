@@ -1,4 +1,4 @@
-import '../../../core/app_export.dart';
+
 
 class AccessibilitySettingsModel {
   bool voiceOver = false;
