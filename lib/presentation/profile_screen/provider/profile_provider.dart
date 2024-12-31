@@ -69,9 +69,6 @@ class ProfileProvider extends ChangeNotifier {
   void updateNumericValue(String title, double value) {
     for (var item in _profileModelObj.profileItemList) {
       if (item.title == title) {
-        // Keep the unit (kg, g, kcal) while updating the number
-        String unit = item.value!.replaceAll(RegExp(r'[0-9.-]+'), '').trim();
-        
         // Format number: remove .0 if it's a whole number
         String formattedNumber;
         if (value == value.roundToDouble()) {
@@ -80,7 +77,12 @@ class ProfileProvider extends ChangeNotifier {
           formattedNumber = value.toString();
         }
         
-        item.value = "$formattedNumber$unit";
+        // Add appropriate unit based on title
+        if (title == "Cur. Weight") {
+          item.value = "$formattedNumber kg";
+        } else {
+          item.value = formattedNumber;
+        }
         break;
       }
     }

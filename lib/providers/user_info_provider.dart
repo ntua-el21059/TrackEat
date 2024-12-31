@@ -36,6 +36,10 @@ class UserInfoProvider extends ChangeNotifier {
   String get gender => _gender;
   String get height => _height.toString();
   int get dailyCalories => _dailyCalories;
+  String get birthdate => _user?.birthdate ?? '';
+  String get gender => _user?.gender ?? '';
+  String get height => _user?.height?.toString() ?? '';
+  String get dailyCalories => _user?.dailyCalories?.toString() ?? '';
 
   Future<void> _loadUserInfo() async {
     try {
@@ -93,6 +97,43 @@ class UserInfoProvider extends ChangeNotifier {
     _gender = '';
     _height = 0;
     _dailyCalories = 0;
+    notifyListeners();
+  }
+
+  Future<void> updateBirthdate(String birthdate) async {
+    if (_user != null) {
+      _user = _user!.copyWith(birthdate: birthdate);
+      await _firestoreService.createUser(_user!);
+      notifyListeners();
+    }
+  }
+
+  Future<void> updateGender(String gender) async {
+    if (_user != null) {
+      _user = _user!.copyWith(gender: gender);
+      await _firestoreService.createUser(_user!);
+      notifyListeners();
+    }
+  }
+
+  Future<void> updateHeight(String height) async {
+    if (_user != null) {
+      _user = _user!.copyWith(height: double.tryParse(height));
+      await _firestoreService.createUser(_user!);
+      notifyListeners();
+    }
+  }
+
+  Future<void> updateDailyCalories(String calories) async {
+    if (_user != null) {
+      _user = _user!.copyWith(dailyCalories: int.tryParse(calories));
+      await _firestoreService.createUser(_user!);
+      notifyListeners();
+    }
+  }
+
+  Future<void> clearUserInfo() async {
+    _user = null;
     notifyListeners();
   }
 } 

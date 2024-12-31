@@ -1,7 +1,18 @@
-Text(
-  userDoc.data()?['diet'] ?? 'Not specified',
-  style: TextStyle(
-    fontSize: 16,
-    color: Colors.black87,
-  ),
-), 
+import 'package:flutter/material.dart';
+import '../../core/app_export.dart';
+import '../../providers/user_info_provider.dart';
+
+class SocialProfileMyself extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<UserInfoProvider>(
+      builder: (context, userInfo, _) => Text(
+        userInfo.firstName,
+        style: TextStyle(
+          fontSize: 16,
+          color: Colors.black87,
+        ),
+      ),
+    );
+  }
+} 

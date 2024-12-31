@@ -65,10 +65,6 @@ class AuthProvider with ChangeNotifier {
             // Update all values in the provider
             await userInfoProvider.updateName(firstName.toString(), lastName.toString());
             await userInfoProvider.updateUsername(username.toString());
-            await userInfoProvider.updateBirthdate(birthdate.toString());
-            await userInfoProvider.updateGender(gender.toString());
-            await userInfoProvider.updateHeight(height);
-            
             // Force UI update
             userInfoProvider.notifyListeners();
           }
