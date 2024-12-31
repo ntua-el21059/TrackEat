@@ -12,16 +12,19 @@ class CreateAccountProvider extends ChangeNotifier {
   TextEditingController emailtwoController = TextEditingController();
   TextEditingController passwordtwoController = TextEditingController();
   TextEditingController passwordthreeController = TextEditingController();
+  TextEditingController passwordController = TextEditingController();
   CreateAccountModel createAccountModelObj = CreateAccountModel();
 
   bool isShowPassword = true;
   bool isShowPassword1 = true;
+  bool isPasswordVisible = false;
 
   CreateAccountProvider() {
     userNameController.addListener(_textChanged);
     emailtwoController.addListener(_textChanged);
     passwordtwoController.addListener(_textChanged);
     passwordthreeController.addListener(_textChanged);
+    passwordController.addListener(_textChanged);
   }
 
   void _textChanged() {
@@ -38,16 +41,23 @@ class CreateAccountProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void togglePasswordVisibility() {
+    isPasswordVisible = !isPasswordVisible;
+    notifyListeners();
+  }
+
   @override
   void dispose() {
     userNameController.removeListener(_textChanged);
     emailtwoController.removeListener(_textChanged);
     passwordtwoController.removeListener(_textChanged);
     passwordthreeController.removeListener(_textChanged);
+    passwordController.removeListener(_textChanged);
     userNameController.dispose();
     emailtwoController.dispose();
     passwordtwoController.dispose();
     passwordthreeController.dispose();
+    passwordController.dispose();
     super.dispose();
   }
 }

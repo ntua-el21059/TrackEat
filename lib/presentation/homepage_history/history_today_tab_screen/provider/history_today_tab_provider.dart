@@ -65,7 +65,9 @@ class HistoryTodayTabProvider extends ChangeNotifier {
 
   bool isToday() {
     final now = DateTime.now();
-    return isSameDay(selectedDate, now);
+    return selectedDate.year == now.year && 
+           selectedDate.month == now.month && 
+           selectedDate.day == now.day;
   }
 
   int getDaysDifference() {
@@ -75,8 +77,7 @@ class HistoryTodayTabProvider extends ChangeNotifier {
   }
 
   bool canGoForward() {
-    final today = DateTime.now();
-    return selectedDate.isBefore(today);
+    return selectedDate.isBefore(DateTime.now());
   }
 
   void goToPreviousDay() {
@@ -95,18 +96,6 @@ class HistoryTodayTabProvider extends ChangeNotifier {
       _initializeMeals();
       notifyListeners();
     }
-  }
-
-  bool canGoForward() {
-    final today = DateTime.now();
-    return selectedDate.isBefore(today);
-  }
-
-  bool isToday() {
-    final now = DateTime.now();
-    return selectedDate.year == now.year && 
-           selectedDate.month == now.month && 
-           selectedDate.day == now.day;
   }
 
   String getFormattedDate() {

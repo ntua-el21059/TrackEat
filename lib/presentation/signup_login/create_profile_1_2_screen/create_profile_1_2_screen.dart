@@ -65,9 +65,12 @@ class CreateProfile12ScreenState extends State<CreateProfile12Screen> {
           padding: EdgeInsets.symmetric(horizontal: 16.h),
           child: Column(
             children: [
+              SizedBox(height: 12.h),
               Text(
-                "Let’s complete your profile (1/3)",
-                style: theme.textTheme.headlineSmall,
+                "Let's complete your profile (1/3)",
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontSize: 22.0,
+                ),
               ),
               SizedBox(height: 18.h),
               Text(
@@ -125,7 +128,7 @@ class CreateProfile12ScreenState extends State<CreateProfile12Screen> {
                 ),
               ),
               SizedBox(height: 8.h),
-              _buildGendertwo(context),
+              _buildGender(context),
               Spacer(),
               _buildNext(context),
               SizedBox(height: 48.h),
@@ -142,7 +145,7 @@ class CreateProfile12ScreenState extends State<CreateProfile12Screen> {
       height: 28.h,
       leadingWidth: 31.h,
       leading: AppbarLeadingImage(
-        imagePath: ImageConstant.imgArrowLeft,
+        imagePath: ImageConstant.imgArrowLeftPrimary,
         height: 20.h,
         width: 20.h,
         margin: EdgeInsets.only(left: 7.h),
@@ -243,46 +246,63 @@ class CreateProfile12ScreenState extends State<CreateProfile12Screen> {
   }
 
   /// Gender Field
-  Widget _buildGendertwo(BuildContext context) {
+  Widget _buildGender(BuildContext context) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 8.h),
-      child: Selector<CreateProfile12Provider, TextEditingController?>(
-        selector: (context, provider) => provider.gendertwoController,
-        builder: (context, gendertwoController, child) {
+      child: Consumer<CreateProfile12Provider>(
+        builder: (context, provider, child) {
           return CustomTextFormField(
             readOnly: true,
-            controller: gendertwoController,
-            hintText: "Select Gender",
+            controller: provider.gendertwoController,
+            hintText: "Select gender",
             hintStyle: CustomTextStyles.bodyLargeGray500,
-            textInputAction: TextInputAction.done,
+            textInputType: TextInputType.text,
+            suffix: Icon(
+              Icons.arrow_forward_ios,
+              size: 20.h,
+              color: appTheme.blueGray100,
+            ),
+            contentPadding: EdgeInsets.symmetric(
+              horizontal: 16.h,
+              vertical: 12.h,
+            ),
             onTap: () {
-              showDialog(
+              showModalBottomSheet(
                 context: context,
                 builder: (BuildContext context) {
-                  return AlertDialog(
-                    title: Text('Select Gender'),
-                    content: Column(
+                  return Container(
+                    padding: EdgeInsets.symmetric(vertical: 20.h),
+                    child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         ListTile(
-                          title: Text('Male'),
+                          title: Text(
+                            'Male',
+                            style: CustomTextStyles.bodyLargeBlack90018,
+                          ),
                           onTap: () {
-                            gendertwoController?.text = 'Male';
-                            Navigator.of(context).pop();
+                            provider.gendertwoController.text = 'Male';
+                            Navigator.pop(context);
                           },
                         ),
                         ListTile(
-                          title: Text('Female'),
+                          title: Text(
+                            'Female',
+                            style: CustomTextStyles.bodyLargeBlack90018,
+                          ),
                           onTap: () {
-                            gendertwoController?.text = 'Female';
-                            Navigator.of(context).pop();
+                            provider.gendertwoController.text = 'Female';
+                            Navigator.pop(context);
                           },
                         ),
                         ListTile(
-                          title: Text('Non Binary'),
+                          title: Text(
+                            'Non Binary',
+                            style: CustomTextStyles.bodyLargeBlack90018,
+                          ),
                           onTap: () {
-                            gendertwoController?.text = 'Non Binary';
-                            Navigator.of(context).pop();
+                            provider.gendertwoController.text = 'Non Binary';
+                            Navigator.pop(context);
                           },
                         ),
                       ],
@@ -291,19 +311,6 @@ class CreateProfile12ScreenState extends State<CreateProfile12Screen> {
                 },
               );
             },
-            suffix: Container(
-              margin: EdgeInsets.fromLTRB(16.h, 12.h, 10.h, 12.h),
-              child: CustomImageView(
-                imagePath: ImageConstant.img,
-                height: 20.h,
-                width: 14.h,
-                fit: BoxFit.contain,
-              ),
-            ),
-            suffixConstraints: BoxConstraints(
-              maxHeight: 48.h,
-            ),
-            contentPadding: EdgeInsets.fromLTRB(16.h, 12.h, 10.h, 12.h),
           );
         },
       ),

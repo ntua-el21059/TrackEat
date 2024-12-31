@@ -37,17 +37,14 @@ class CalorieCalculatorScreenState extends State<CalorieCalculatorScreen> {
       final userProvider = Provider.of<UserProvider>(context, listen: false);
       final user = userProvider.user;
       
-      if (user.dailyCalories != null) {
-        provider.zipcodeController.text = user.dailyCalories!.toString();
-      } else {
-        // Calculate calories based on user data
-        final weight = user.weight ?? 70.0; // default weight if not set
-        final height = user.height ?? 170.0; // default height if not set
-        final age = user.age ?? 25; // default age if not set
-        final gender = user.gender?.toLowerCase() ?? 'male'; // default gender if not set
-        
-        provider.calculateDailyCalories(weight, height, age, gender);
-      }
+      // Calculate calories based on user data
+      final weight = user.weight ?? 70.0; // default weight if not set
+      final height = user.height ?? 170.0; // default height if not set
+      final age = user.age ?? 25; // default age if not set
+      final gender = user.gender?.toLowerCase() ?? 'male'; // default gender if not set
+      
+      final calculatedCalories = provider.calculateDailyCalories(weight, height, age, gender);
+      provider.zipcodeController.text = calculatedCalories.toString();
     });
   }
 
@@ -55,13 +52,15 @@ class CalorieCalculatorScreenState extends State<CalorieCalculatorScreen> {
   Widget build(BuildContext context) {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     final user = userProvider.user;
+    final provider = Provider.of<CalorieCalculatorProvider>(context, listen: false);
+    
     final weight = user.weight ?? 70.0;
     final height = user.height ?? 170.0;
     final age = user.age ?? 25;
     final gender = user.gender?.toLowerCase() ?? 'male';
     
-    final calculatedCalories = Provider.of<CalorieCalculatorProvider>(context, listen: false)
-        .calculateDailyCalories(weight, height, age, gender);
+    final calculatedCalories = provider.calculateDailyCalories(weight, height, age, gender);
+    provider.zipcodeController.text = calculatedCalories.toString();
 
     return Scaffold(
       backgroundColor: theme.colorScheme.onErrorContainer,
@@ -74,9 +73,12 @@ class CalorieCalculatorScreenState extends State<CalorieCalculatorScreen> {
           padding: EdgeInsets.symmetric(horizontal: 14.h),
           child: Column(
             children: [
+              SizedBox(height: 12.h),
               Text(
                 "Let's complete your profile (3/3)",
-                style: theme.textTheme.headlineSmall,
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontSize: 22.0,
+                ),
               ),
               SizedBox(height: 60.h),
               Text(
@@ -227,7 +229,7 @@ class CalorieCalculatorScreenState extends State<CalorieCalculatorScreen> {
       height: 28.h,
       leadingWidth: 31.h,
       leading: AppbarLeadingImage(
-        imagePath: ImageConstant.imgArrowLeft,
+        imagePath: ImageConstant.imgArrowLeftPrimary,
         height: 20.h,
         width: 20.h,
         margin: EdgeInsets.only(left: 7.h),

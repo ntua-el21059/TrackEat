@@ -626,16 +626,7 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> {
                             userInfo.gender,
                           ),
                         ),
-                        _buildProfileItem(
-                          label: "Height",
-                          value: "${userInfo.height} cm",
-                          onTap: () => _showTextInputDialog(
-                            context,
-                            "Height",
-                            userInfo.height,
-                            false,
-                          ),
-                        ),
+                        _buildHeightSection(context, userInfo),
                         _buildProfileItem(
                           label: "Username",
                           value: userInfo.username,
@@ -733,6 +724,59 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> {
             color: Colors.white,
             margin: EdgeInsets.symmetric(horizontal: 16.h),
           ),
+      ],
+    );
+  }
+
+  Widget _buildHeightSection(BuildContext context, UserInfoProvider userInfo) {
+    return Column(
+      children: [
+        Container(
+          padding: EdgeInsets.symmetric(vertical: 12.h),
+          margin: EdgeInsets.symmetric(horizontal: 16.h),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "Height",
+                style: theme.textTheme.titleLarge?.copyWith(
+                  color: Colors.white,
+                ),
+              ),
+              GestureDetector(
+                onTap: () => _showTextInputDialog(
+                  context,
+                  "Height",
+                  "${userInfo.height} cm",
+                  false,
+                ),
+                child: Row(
+                  children: [
+                    Text(
+                      userInfo.height.isEmpty ? "Not set" : "${userInfo.height} cm",
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    SizedBox(width: 8.h),
+                    CustomImageView(
+                      imagePath: ImageConstant.imgArrowRight,
+                      height: 14.h,
+                      width: 14.h,
+                      color: Colors.white,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        Container(
+          height: 1.h,
+          color: Colors.white,
+          margin: EdgeInsets.symmetric(horizontal: 16.h),
+        ),
       ],
     );
   }

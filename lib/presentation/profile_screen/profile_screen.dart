@@ -234,32 +234,37 @@ class ProfileScreenState extends State<ProfileScreen> {
               child: Row(
                 children: [
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Consumer<UserInfoProvider>(
-                          builder: (context, userInfo, _) {
-                            return Text(
-                              userInfo.fullName,
-                              style: theme.textTheme.titleLarge?.copyWith(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            );
-                          },
-                        ),
-                        Text(
-                          "@${context.watch<UserInfoProvider>().username}",
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            color: Colors.white,
+                    child: GestureDetector(
+                      onTap: () {
+                        Navigator.pushNamed(context, AppRoutes.profileStaticScreen);
+                      },
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Consumer<UserInfoProvider>(
+                            builder: (context, userInfo, _) {
+                              return Text(
+                                userInfo.fullName,
+                                style: theme.textTheme.titleLarge?.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              );
+                            },
                           ),
-                        ),
-                      ],
+                          Text(
+                            "@${context.watch<UserInfoProvider>().username}",
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                   GestureDetector(
                     onTap: () {
-                      Navigator.pushNamed(context, AppRoutes.socialProfileMyselfScreen);
+                      Navigator.pushNamed(context, AppRoutes.profileStaticScreen);
                     },
                     child: CustomImageView(
                       imagePath: ImageConstant.imgArrowRight,
@@ -326,33 +331,6 @@ class ProfileScreenState extends State<ProfileScreen> {
             },
           );
         },
-      ),
-    );
-  }
-
-  Widget _buildProfileItem(
-    String title,
-    String value,
-    String imagePath,
-    {EdgeInsets? iconPadding, double? iconWidth, double? iconHeight, Alignment? alignment}
-  ) {
-    return Container(
-      // ... other widget properties
-      child: Row(
-        children: [
-          // ... left side widgets
-          Text(
-            // Add space for kg units, remove space for others
-            value?.replaceAll('kg', ' kg')  // First add space before all 'kg'
-                .replaceAll(' g', 'g')            // Remove space before 'g'
-                .replaceAll(' kcal', 'kcal') ?? '',  // Remove space before 'kcal'
-            style: theme.textTheme.titleLarge?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          // ... right side widgets
-        ],
       ),
     );
   }

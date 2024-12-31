@@ -12,6 +12,14 @@ import '../../../../providers/user_info_provider.dart';
 class HomeProvider extends ChangeNotifier {
   HomeModel homeModelObj = HomeModel();
   HomeInitialModel _homeInitialModelObj = HomeInitialModel();
+  int _dailyCalories = 0;
+
+  int get dailyCalories => _dailyCalories;
+
+  void setDailyCalories(int calories) {
+    _dailyCalories = calories;
+    notifyListeners();
+  }
 
   HomeInitialModel get homeInitialModelObj => _homeInitialModelObj;
 

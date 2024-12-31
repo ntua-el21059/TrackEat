@@ -9,6 +9,11 @@ class UserInfoProvider extends ChangeNotifier {
   final FirestoreService _firestoreService = FirestoreService();
   UserModel? _user;
 
+  String _birthdate = '';
+  String _gender = '';
+  double _height = 0;
+  int _dailyCalories = 0;
+
   UserInfoProvider() {
     _loadUserInfo();
     // Listen to auth state changes
@@ -26,6 +31,11 @@ class UserInfoProvider extends ChangeNotifier {
   String get lastName => _user?.lastName ?? '';
   String get username => _user?.username ?? 'user';
   String get fullName => '${firstName} ${lastName}'.trim();
+
+  String get birthdate => _birthdate;
+  String get gender => _gender;
+  String get height => _height.toString();
+  int get dailyCalories => _dailyCalories;
 
   Future<void> _loadUserInfo() async {
     try {
@@ -55,5 +65,34 @@ class UserInfoProvider extends ChangeNotifier {
       await _firestoreService.createUser(_user!);
       notifyListeners();
     }
+  }
+
+  Future<void> updateBirthdate(String date) async {
+    _birthdate = date;
+    notifyListeners();
+  }
+
+  Future<void> updateGender(String newGender) async {
+    _gender = newGender;
+    notifyListeners();
+  }
+
+  Future<void> updateHeight(String newHeight) async {
+    String cleanHeight = newHeight.replaceAll(' cm', '');
+    _height = double.tryParse(cleanHeight) ?? 0;
+    notifyListeners();
+  }
+
+  Future<void> updateDailyCalories(String calories) async {
+    _dailyCalories = int.tryParse(calories) ?? 0;
+    notifyListeners();
+  }
+
+  Future<void> clearUserInfo() async {
+    _birthdate = '';
+    _gender = '';
+    _height = 0;
+    _dailyCalories = 0;
+    notifyListeners();
   }
 } 

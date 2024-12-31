@@ -50,7 +50,7 @@ class CustomTextFormField extends StatelessWidget {
     this.readOnly = false,
     this.onTap,
     this.textInputAction = TextInputAction.next,
-    TextInputType? textInputType,
+    this.textInputType = TextInputType.text,
     this.maxLines,
     this.hintText,
     this.hintStyle,
@@ -63,8 +63,8 @@ class CustomTextFormField extends StatelessWidget {
     this.fillColor,
     this.filled = false,
     this.validator,
-  }) : textInputType = textInputType ?? TextInputType.text, 
-       super(key: key);
+    this.inputFormatters,
+  }) : super(key: key);
 
   final Alignment? alignment;
   final double? width;
@@ -91,6 +91,7 @@ class CustomTextFormField extends StatelessWidget {
   final Color? fillColor;
   final bool? filled;
   final FormFieldValidator<String>? validator;
+  final List<TextInputFormatter>? inputFormatters;
 
   @override
   Widget build(BuildContext context) {
@@ -141,6 +142,7 @@ class CustomTextFormField extends StatelessWidget {
             paste: false,
             selectAll: false,
           ),
+          inputFormatters: inputFormatters,
         ),
       );
 
