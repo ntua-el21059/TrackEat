@@ -12,6 +12,7 @@ import 'widgets/profile_item_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../providers/profile_picture_provider.dart';
 import '../../providers/user_info_provider.dart';
+import '../../models/user_model.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../services/firebase/auth/auth_provider.dart' as app_auth;
@@ -40,14 +41,37 @@ class ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
     super.initState();
+    _fetchInitialUserData();
     _setupFirestoreListener();
     _fetchUserDiet();
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final authProvider = Provider.of<app_auth.AuthProvider>(context, listen: false);
-      if (authProvider.userData?.diet == null) {
-        await authProvider.updateUserDiet('Balanced');
+  }
+
+  void _fetchInitialUserData() async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser?.email != null) {
+      try {
+        final doc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(currentUser!.email)
+            .get();
+            
+        if (doc.exists && mounted) {
+          final userData = doc.data()!;
+          final userModel = UserModel(
+            firstName: userData['firstName'] as String? ?? '',
+            lastName: userData['lastName'] as String? ?? '',
+            username: userData['username'] as String? ?? '',
+            email: currentUser.email,
+          );
+          
+          // Set the user model first
+          final userInfoProvider = Provider.of<UserInfoProvider>(context, listen: false);
+          await userInfoProvider.setUser(userModel);
+        }
+      } catch (e) {
+        print("Error fetching user data: $e");
       }
-    });
+    }
   }
 
   void _setupFirestoreListener() {
@@ -57,7 +81,7 @@ class ProfileScreenState extends State<ProfileScreen> {
           .collection('users')
           .doc(currentUser!.email)
           .snapshots()
-          .listen((snapshot) {
+          .listen((snapshot) async {
         if (snapshot.exists && mounted) {
           final userData = snapshot.data()!;
           
@@ -80,6 +104,17 @@ class ProfileScreenState extends State<ProfileScreen> {
           final weight = userData['weight']?.toString() ?? '0';
           Provider.of<ProfileProvider>(context, listen: false)
               .updateNumericValue('Cur. Weight', double.parse(weight));
+
+          // Update user data
+          final userModel = UserModel(
+            firstName: userData['firstName'] as String? ?? '',
+            lastName: userData['lastName'] as String? ?? '',
+            username: userData['username'] as String? ?? '',
+            email: currentUser.email,
+          );
+          
+          final userInfoProvider = Provider.of<UserInfoProvider>(context, listen: false);
+          await userInfoProvider.setUser(userModel);
         }
       });
     }
@@ -211,30 +246,34 @@ class ProfileScreenState extends State<ProfileScreen> {
     return Container(
       width: double.maxFinite,
       padding: EdgeInsets.symmetric(
-        horizontal: 26.h,
-        vertical: 20.h,
+        horizontal: 10.h,
+        vertical: 12.h,
       ),
       margin: EdgeInsets.symmetric(horizontal: 4.h),
       decoration: AppDecoration.lightBlueLayoutPadding.copyWith(
         borderRadius: BorderRadiusStyle.roundedBorder20,
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Consumer<ProfilePictureProvider>(
-            builder: (context, profilePicProvider, _) {
-              return CustomImageView(
-                imagePath: profilePicProvider.profileImagePath,
-                isFile: !profilePicProvider.profileImagePath.startsWith('assets/'),
-                height: 72.h,
-                width: 72.h,
-                radius: BorderRadius.circular(36.h),
-              );
-            },
+          Container(
+            margin: EdgeInsets.only(left: 8.h),
+            child: Consumer<ProfilePictureProvider>(
+              builder: (context, profilePicProvider, _) {
+                return CustomImageView(
+                  imagePath: profilePicProvider.profileImagePath,
+                  isFile: !profilePicProvider.profileImagePath.startsWith('assets/'),
+                  height: 72.h,
+                  width: 72.h,
+                  radius: BorderRadius.circular(36.h),
+                );
+              },
+            ),
           ),
           Expanded(
             child: Container(
-              margin: EdgeInsets.only(top: 4.h, left: 16.h),
+              margin: EdgeInsets.only(top: 4.h, left: 0.h),
               padding: EdgeInsets.symmetric(horizontal: 12.h),
               child: Row(
                 children: [
@@ -249,7 +288,7 @@ class ProfileScreenState extends State<ProfileScreen> {
                           Consumer<UserInfoProvider>(
                             builder: (context, userInfo, _) {
                               return Text(
-                                userInfo.fullName,
+                                userInfo.fullName.isEmpty ? "Add Name" : userInfo.fullName,
                                 style: theme.textTheme.titleLarge?.copyWith(
                                   color: Colors.white,
                                   fontWeight: FontWeight.w600,
@@ -257,11 +296,15 @@ class ProfileScreenState extends State<ProfileScreen> {
                               );
                             },
                           ),
-                          Text(
-                            "@${context.watch<UserInfoProvider>().username}",
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              color: Colors.white,
-                            ),
+                          Consumer<UserInfoProvider>(
+                            builder: (context, userInfo, _) {
+                              return Text(
+                                userInfo.username.isEmpty ? "Add Username" : "@${userInfo.username}",
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  color: Colors.white,
+                                ),
+                              );
+                            },
                           ),
                         ],
                       ),
@@ -271,17 +314,18 @@ class ProfileScreenState extends State<ProfileScreen> {
                     onTap: () {
                       Navigator.pushNamed(context, AppRoutes.profileStaticScreen);
                     },
-                    child: CustomImageView(
-                      imagePath: ImageConstant.imgArrowRight,
-                      height: 30.h,
-                      width: 18.h,
-                      alignment: Alignment.bottomCenter,
-                      margin: EdgeInsets.only(
-                        right: 2.h,
-                        bottom: 0,
-                        top: 2.h,
+                    child: Container(
+                      padding: EdgeInsets.only(bottom: 5.h),
+                      child: CustomImageView(
+                        imagePath: ImageConstant.imgArrowRight,
+                        height: 30.h,
+                        width: 18.h,
+                        alignment: Alignment.center,
+                        margin: EdgeInsets.only(
+                          right: 2.h,
+                        ),
+                        color: Colors.white,
                       ),
-                      color: Colors.white,
                     ),
                   ),
                 ],
@@ -327,8 +371,9 @@ class ProfileScreenState extends State<ProfileScreen> {
                     _showActivityLevelDialog(context);
                   } else if (model.title == "Calories Goal") {
                     _showCaloriesInputDialog(context, model.value ?? "0");
-                  } else if (model.title?.contains('Goal') ?? false || 
-                           model.title == "Cur. Weight") {
+                  } else if (model.title == "Cur. Weight") {
+                    _showWeightInputDialog(context, model.value ?? "0");
+                  } else if (model.title?.contains('Goal') ?? false) {
                     _showNumberInputDialog(context, model.title ?? "", model.value ?? "0");
                   }
                 },
@@ -590,8 +635,109 @@ class ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _showNumberInputDialog(BuildContext context, String title, String currentValue) {
-    final TextEditingController controller = TextEditingController(text: currentValue);
+    // Get the current value from Firebase first
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser?.email != null && title == "Cur. Weight") {
+      FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentUser?.email)
+          .get()
+          .then((doc) {
+        if (doc.exists) {
+          final userData = doc.data()!;
+          final weight = userData['weight']?.toString() ?? '0';
+          
+          // Show dialog with current weight from Firebase
+          _showWeightInputDialog(context, weight);
+        }
+      });
+    } else {
+      // For other numeric fields
+      final TextEditingController controller = TextEditingController(text: currentValue);
+      _showGenericNumberInputDialog(context, title, controller);
+    }
+  }
 
+  void _showWeightInputDialog(BuildContext context, String currentWeight) {
+    final TextEditingController controller = TextEditingController(text: currentWeight);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
+      ),
+      builder: (BuildContext context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+            left: 16.h,
+            right: 16.h,
+            top: 16.h,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                "Current Weight",
+                style: theme.textTheme.titleLarge?.copyWith(
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 16.h),
+              TextField(
+                controller: controller,
+                autofocus: true,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  hintText: 'Enter weight in kg',
+                  suffixText: 'kg',
+                ),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text('Cancel'),
+                  ),
+                  TextButton(
+                    onPressed: () async {
+                      final newValue = double.tryParse(controller.text);
+                      if (newValue != null) {
+                        final currentUser = FirebaseAuth.instance.currentUser;
+                        if (currentUser?.email != null) {
+                          try {
+                            // Update Firebase
+                            await FirebaseFirestore.instance
+                                .collection('users')
+                                .doc(currentUser!.email)
+                                .update({'weight': newValue});
+
+                            // Update local provider
+                            Provider.of<ProfileProvider>(context, listen: false)
+                                .updateNumericValue("Cur. Weight", newValue);
+                          } catch (e) {
+                            print("Error updating weight: $e");
+                          }
+                        }
+                      }
+                      Navigator.pop(context);
+                    },
+                    child: Text('Save'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showGenericNumberInputDialog(BuildContext context, String title, TextEditingController controller) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -639,17 +785,6 @@ class ProfileScreenState extends State<ProfileScreen> {
                       if (newValue != null) {
                         Provider.of<ProfileProvider>(context, listen: false)
                             .updateNumericValue(title, newValue);
-                            
-                        // Save weight to Firebase if it's the weight field
-                        if (title == "Cur. Weight") {
-                          final currentUser = FirebaseAuth.instance.currentUser;
-                          if (currentUser?.email != null) {
-                            FirebaseFirestore.instance
-                                .collection('users')
-                                .doc(currentUser!.email)
-                                .update({'weight': newValue});
-                          }
-                        }
                       }
                       Navigator.pop(context);
                     },

@@ -15,16 +15,51 @@ class UserInfoProvider extends ChangeNotifier {
   String get gender => _gender;
   String get height => _height.toString();
   int get dailyCalories => _dailyCalories;
-  String get firstName => _user?.firstName ?? 'User';
+  String get firstName => _user?.firstName ?? '';
   String get lastName => _user?.lastName ?? '';
-  String get username => _user?.username ?? 'user';
+  String get username => _user?.username ?? '';
   String get fullName => '${firstName} ${lastName}'.trim();
+
+  // Set user data
+  Future<void> setUser(UserModel user) async {
+    _user = user;
+    _birthdate = user.birthdate ?? _birthdate;
+    _gender = user.gender ?? _gender;
+    _height = user.height ?? _height;
+    _dailyCalories = user.dailyCalories ?? _dailyCalories;
+    notifyListeners();
+  }
 
   // Update methods
   Future<void> updateBirthdate(String date) async {
     _birthdate = date;
     if (_user != null) {
       _user = _user!.copyWith(birthdate: date);
+      await _firestoreService.createUser(_user!);
+    }
+    notifyListeners();
+  }
+
+  Future<void> updateName(String firstName, String lastName) async {
+    if (_user != null) {
+      _user = _user!.copyWith(firstName: firstName, lastName: lastName);
+      await _firestoreService.createUser(_user!);
+      notifyListeners();
+    }
+  }
+
+  Future<void> updateUsername(String username) async {
+    if (_user != null) {
+      _user = _user!.copyWith(username: username);
+      await _firestoreService.createUser(_user!);
+      notifyListeners();
+    }
+  }
+
+  Future<void> updateDailyCalories(String calories) async {
+    _dailyCalories = int.tryParse(calories) ?? 0;
+    if (_user != null) {
+      _user = _user!.copyWith(dailyCalories: _dailyCalories);
       await _firestoreService.createUser(_user!);
     }
     notifyListeners();
@@ -48,46 +83,12 @@ class UserInfoProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> updateDailyCalories(String calories) async {
-    _dailyCalories = int.tryParse(calories) ?? 0;
-    if (_user != null) {
-      _user = _user!.copyWith(dailyCalories: _dailyCalories);
-      await _firestoreService.createUser(_user!);
-    }
-    notifyListeners();
-  }
-
-  Future<void> updateName(String firstName, String lastName) async {
-    if (_user != null) {
-      _user = _user!.copyWith(firstName: firstName, lastName: lastName);
-      await _firestoreService.createUser(_user!);
-      notifyListeners();
-    }
-  }
-
-  Future<void> updateUsername(String newUsername) async {
-    if (_user != null) {
-      _user = _user!.copyWith(username: newUsername);
-      await _firestoreService.createUser(_user!);
-      notifyListeners();
-    }
-  }
-
   Future<void> clearUserInfo() async {
     _birthdate = '';
     _gender = '';
     _height = 0;
     _dailyCalories = 0;
     _user = null;
-    notifyListeners();
-  }
-
-  Future<void> setUser(UserModel user) async {
-    _user = user;
-    _birthdate = user.birthdate ?? '';
-    _gender = user.gender ?? '';
-    _height = user.height ?? 0;
-    _dailyCalories = user.dailyCalories ?? 0;
     notifyListeners();
   }
 } 
