@@ -75,6 +75,11 @@ class ProfileScreenState extends State<ProfileScreen> {
           final activity = userData['activity'] as String? ?? 'Moderate';
           Provider.of<ProfileProvider>(context, listen: false)
               .updateActivityLevel(activity);
+
+          // Listen for weight changes
+          final weight = userData['weight']?.toString() ?? '0';
+          Provider.of<ProfileProvider>(context, listen: false)
+              .updateNumericValue('Cur. Weight', double.parse(weight));
         }
       });
     }
@@ -259,7 +264,7 @@ class ProfileScreenState extends State<ProfileScreen> {
                   ),
                   GestureDetector(
                     onTap: () {
-                      Navigator.pushNamed(context, AppRoutes.socialProfileMyselfScreen);
+                      Navigator.pushNamed(context, AppRoutes.profileStaticScreen);
                     },
                     child: CustomImageView(
                       imagePath: ImageConstant.imgArrowRight,
@@ -656,6 +661,17 @@ class ProfileScreenState extends State<ProfileScreen> {
                       if (newValue != null) {
                         Provider.of<ProfileProvider>(context, listen: false)
                             .updateNumericValue(title, newValue);
+                            
+                        // Save weight to Firebase if it's the weight field
+                        if (title == "Cur. Weight") {
+                          final currentUser = FirebaseAuth.instance.currentUser;
+                          if (currentUser?.email != null) {
+                            FirebaseFirestore.instance
+                                .collection('users')
+                                .doc(currentUser!.email)
+                                .update({'weight': newValue});
+                          }
+                        }
                       }
                       Navigator.pop(context);
                     },

@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../services/meal_service.dart';
@@ -95,18 +93,6 @@ class HistoryTodayTabProvider extends ChangeNotifier {
       _initializeMeals();
       notifyListeners();
     }
-  }
-
-  bool canGoForward() {
-    final today = DateTime.now();
-    return selectedDate.isBefore(today);
-  }
-
-  bool isToday() {
-    final now = DateTime.now();
-    return selectedDate.year == now.year && 
-           selectedDate.month == now.month && 
-           selectedDate.day == now.day;
   }
 
   String getFormattedDate() {
