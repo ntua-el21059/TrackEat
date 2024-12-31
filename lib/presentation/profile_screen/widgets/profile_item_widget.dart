@@ -8,11 +8,13 @@ import '../../../providers/user_info_provider.dart';
 
 // ignore_for_file: must_be_immutable
 class ProfileItemWidget extends StatelessWidget {
-  ProfileItemWidget(this.profileItemModelObj, {Key? key}) : super(key: key);
+  final ProfileItemModel model;
+  final VoidCallback? onArrowTap;
 
-  ProfileItemModel profileItemModelObj;
-  final List<String> activityLevels = ['Light', 'Moderate', 'Vigorous'];
-  final List<String> dietTypes = [
+  ProfileItemWidget(this.model, {this.onArrowTap, Key? key}) : super(key: key);
+
+  static const List<String> activityLevels = ['Light', 'Moderate', 'Vigorous'];
+  static const List<String> dietTypes = [
     'Keto',
     'Vegan',
     'Vegetarian',
@@ -20,6 +22,7 @@ class ProfileItemWidget extends StatelessWidget {
     'Fruitarian',
     'Pescatarian'
   ];
+  
   final TextEditingController _numberController = TextEditingController();
 
   String _shortenText(String text) {
@@ -324,12 +327,12 @@ class ProfileItemWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    bool isActivityLevel = profileItemModelObj.title == "Activity Level";
-    bool isWeeklyGoal = profileItemModelObj.title == "Weekly Goal";
-    bool isGoalWeight = profileItemModelObj.title == "Goal Weight";
-    bool isCaloriesGoal = profileItemModelObj.title == "Calories Goal";
-    bool isCurWeight = profileItemModelObj.title == "Cur. Weight";
-    bool isDiet = profileItemModelObj.title == "Diet";
+    bool isActivityLevel = model.title == "Activity Level";
+    bool isWeeklyGoal = model.title == "Weekly Goal";
+    bool isGoalWeight = model.title == "Goal Weight";
+    bool isCaloriesGoal = model.title == "Calories Goal";
+    bool isCurWeight = model.title == "Cur. Weight";
+    bool isDiet = model.title == "Diet";
     bool isNumericField = [
       "Weekly Goal",
       "Goal Weight",
@@ -338,7 +341,7 @@ class ProfileItemWidget extends StatelessWidget {
       "Carbs Goal",
       "Protein Goal",
       "Fat Goal"
-    ].contains(profileItemModelObj.title);
+    ].contains(model.title);
 
     // Calculate fixed position for icons
     final double basePosition = _getTextWidth(context, "Activity Level") + 5.h;
@@ -370,7 +373,7 @@ class ProfileItemWidget extends StatelessWidget {
                   children: [
                     // Text
                     Text(
-                      profileItemModelObj.title ?? "",
+                      model.title ?? "",
                       style: theme.textTheme.titleLarge?.copyWith(
                         color: Colors.white,
                       ),
@@ -383,7 +386,7 @@ class ProfileItemWidget extends StatelessWidget {
                         child: CustomImageView(
                           imagePath: isActivityLevel 
                               ? ImageConstant.imgActivityLevel
-                              : profileItemModelObj.icon,
+                              : model.icon,
                           height: isWeeklyGoal ? 23.h : 25.h,
                           width: isWeeklyGoal ? 23.h : 25.h,
                           color: Colors.white,
@@ -395,7 +398,7 @@ class ProfileItemWidget extends StatelessWidget {
                         left: caloriesAdjustedPosition,
                         top: 0,
                         child: CustomImageView(
-                          imagePath: profileItemModelObj.icon,
+                          imagePath: model.icon,
                           height: 26.h,
                           width: 26.h,
                           color: Colors.white,
@@ -407,7 +410,7 @@ class ProfileItemWidget extends StatelessWidget {
                         left: goalWeightAdjustedPosition,
                         top: 2.h,
                         child: CustomImageView(
-                          imagePath: profileItemModelObj.icon,
+                          imagePath: model.icon,
                           height: 22.h,
                           width: 22.h,
                           color: Colors.white,
@@ -419,7 +422,7 @@ class ProfileItemWidget extends StatelessWidget {
                         left: 137.h,
                         top: 3.h,
                         child: CustomImageView(
-                          imagePath: profileItemModelObj.icon,
+                          imagePath: model.icon,
                           height: 22.h,
                           width: 22.h,
                           color: Colors.white,
@@ -429,18 +432,18 @@ class ProfileItemWidget extends StatelessWidget {
                     // For other icons, keep original positioning
                     if (!isActivityLevel && !isWeeklyGoal && !isGoalWeight && !isCaloriesGoal && !isCurWeight)
                       Positioned(
-                        left: profileItemModelObj.title == "Fat Goal" 
+                        left: model.title == "Fat Goal" 
                             ? fatGoalPosition 
-                            : profileItemModelObj.title == "Diet" 
+                            : model.title == "Diet" 
                                 ? dietPosition 
-                                : profileItemModelObj.title == "Carbs Goal"
+                                : model.title == "Carbs Goal"
                                     ? carbsGoalPosition
                                     : 135.h,
                         top: 0,
                         child: CustomImageView(
-                          imagePath: profileItemModelObj.icon,
-                          height: profileItemModelObj.title == "Fat Goal" ? 27.h : 25.h,
-                          width: profileItemModelObj.title == "Fat Goal" ? 27.h : 25.h,
+                          imagePath: model.icon,
+                          height: model.title == "Fat Goal" ? 27.h : 25.h,
+                          width: model.title == "Fat Goal" ? 27.h : 25.h,
                           color: Colors.white,
                           fit: BoxFit.contain,
                         ),
@@ -450,22 +453,12 @@ class ProfileItemWidget extends StatelessWidget {
               ),
               // Right side with value and arrow
               GestureDetector(
-                onTap: isActivityLevel 
-                    ? () => _showActivityLevelPicker(context)
-                    : isDiet 
-                        ? () => _showDietPicker(context)
-                        : isNumericField
-                            ? () => _showNumberPicker(
-                                context,
-                                profileItemModelObj.title ?? "",
-                                profileItemModelObj.value ?? "",
-                              )
-                            : null,
+                onTap: onArrowTap,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     Text(
-                      profileItemModelObj.value ?? "",
+                      model.value ?? "",
                       style: theme.textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.w600,
                         color: Colors.white,

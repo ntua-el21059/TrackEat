@@ -17,7 +17,7 @@ class ProfileProvider extends ChangeNotifier {
   ProfileModel get profileModelObj => _profileModelObj;
   String get profileImagePath => _profileImagePath;
 
-  void updateActivityLevel(String newLevel) {
+  void updateActivityLevel(String newLevel) async {
     // Find and update the activity level item
     for (var item in _profileModelObj.profileItemList) {
       if (item.title == "Activity Level") {
@@ -26,16 +26,44 @@ class ProfileProvider extends ChangeNotifier {
       }
     }
     notifyListeners();
-  }
 
-  void updateDiet(String newDiet) {
-    for (var item in _profileModelObj.profileItemList) {
-      if (item.title == "Diet") {
-        item.value = newDiet;
-        break;
+    // Update Firebase
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser?.email != null) {
+      try {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(currentUser!.email)
+            .update({'activity': newLevel});
+      } catch (e) {
+        print("Error updating activity level in Firebase: $e");
       }
     }
-    notifyListeners();
+  }
+
+  void updateDiet(String newDiet) async {
+    final dietItem = profileModelObj.profileItemList.firstWhere(
+      (item) => item.title?.toLowerCase().contains('diet') ?? false,
+      orElse: () => ProfileItemModel(),
+    );
+    
+    if (dietItem != null) {
+      dietItem.value = newDiet;
+      notifyListeners();
+      
+      // Update Firebase
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser?.email != null) {
+        try {
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(currentUser!.email)
+              .update({'diet': newDiet});
+        } catch (e) {
+          print("Error updating diet in Firebase: $e");
+        }
+      }
+    }
   }
 
   void updateNumericValue(String title, double value) {
@@ -129,7 +157,7 @@ class ProfileProvider extends ChangeNotifier {
       ),
       ProfileItemModel(
         title: "Diet",
-        value: "Frutarian",
+        value: "Balanced",
         icon: ImageConstant.imgCarbsGoal,
       ),
       ProfileItemModel(

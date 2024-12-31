@@ -26,10 +26,12 @@ class ProfileScreen extends StatefulWidget {
 class ProfileScreenState extends State<ProfileScreen> {
   final List<String> dietChoices = [
     'Balanced',
-    'Vegetarian',
-    'Vegan',
-    'Pescatarian',
     'Keto',
+    'Vegan',
+    'Vegetarian',
+    'Carnivore',
+    'Fruitarian',
+    'Pescatarian',
     'Mediterranean',
   ];
 
@@ -39,6 +41,7 @@ class ProfileScreenState extends State<ProfileScreen> {
   void initState() {
     super.initState();
     _setupFirestoreListener();
+    _fetchUserDiet();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final authProvider = Provider.of<app_auth.AuthProvider>(context, listen: false);
       if (authProvider.userData?.diet == null) {
@@ -57,12 +60,44 @@ class ProfileScreenState extends State<ProfileScreen> {
           .listen((snapshot) {
         if (snapshot.exists && mounted) {
           final userData = snapshot.data()!;
-          final calories = userData['dailyCalories']?.toString() ?? '0';
           
-          // Update the calories in the provider
+          // Listen for calories changes
+          final calories = userData['dailyCalories']?.toString() ?? '0';
           Provider.of<ProfileProvider>(context, listen: false)
               .updateCalories(calories);
+            
+          // Listen for diet changes
+          final diet = userData['diet'] as String? ?? 'Balanced';
+          Provider.of<ProfileProvider>(context, listen: false)
+              .updateDiet(diet);
+
+          // Listen for activity level changes
+          final activity = userData['activity'] as String? ?? 'Moderate';
+          Provider.of<ProfileProvider>(context, listen: false)
+              .updateActivityLevel(activity);
         }
+      });
+    }
+  }
+
+  void _fetchUserDiet() {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser?.email != null) {
+      FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentUser!.email)
+          .get()
+          .then((doc) {
+        if (doc.exists && mounted) {
+          final userData = doc.data()!;
+          final diet = userData['diet'] as String? ?? 'Balanced';
+          
+          // Update only local provider
+          Provider.of<ProfileProvider>(context, listen: false)
+              .updateDiet(diet);
+        }
+      }).catchError((e) {
+        print("Error fetching diet: $e");
       });
     }
   }
@@ -193,40 +228,40 @@ class ProfileScreenState extends State<ProfileScreen> {
             },
           ),
           Expanded(
-            child: GestureDetector(
-              onTap: () {
-                Navigator.pushNamed(context, AppRoutes.profileStaticScreen);
-              },
-              child: Container(
-                margin: EdgeInsets.only(top: 4.h, left: 16.h),
-                padding: EdgeInsets.symmetric(horizontal: 12.h),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Consumer<UserInfoProvider>(
-                            builder: (context, userInfo, _) {
-                              return Text(
-                                userInfo.fullName,
-                                style: theme.textTheme.titleLarge?.copyWith(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              );
-                            },
+            child: Container(
+              margin: EdgeInsets.only(top: 4.h, left: 16.h),
+              padding: EdgeInsets.symmetric(horizontal: 12.h),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Consumer<UserInfoProvider>(
+                          builder: (context, userInfo, _) {
+                            return Text(
+                              userInfo.fullName,
+                              style: theme.textTheme.titleLarge?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            );
+                          },
+                        ),
+                        Text(
+                          "@${context.watch<UserInfoProvider>().username}",
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            color: Colors.white,
                           ),
-                          Text(
-                            "@${context.watch<UserInfoProvider>().username}",
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              color: Colors.white,
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                    CustomImageView(
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.pushNamed(context, AppRoutes.socialProfileMyselfScreen);
+                    },
+                    child: CustomImageView(
                       imagePath: ImageConstant.imgArrowRight,
                       height: 30.h,
                       width: 18.h,
@@ -238,8 +273,8 @@ class ProfileScreenState extends State<ProfileScreen> {
                       ),
                       color: Colors.white,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -271,9 +306,23 @@ class ProfileScreenState extends State<ProfileScreen> {
             },
             itemCount: provider.profileModelObj.profileItemList.length,
             itemBuilder: (context, index) {
-              ProfileItemModel model =
-                  provider.profileModelObj.profileItemList[index];
-              return ProfileItemWidget(model);
+              ProfileItemModel model = provider.profileModelObj.profileItemList[index];
+              return ProfileItemWidget(
+                model,
+                onArrowTap: () {
+                  // Handle different menu types
+                  if (model.title?.toLowerCase().contains('diet') ?? false) {
+                    _showDietSelectionDialog(context);
+                  } else if (model.title == "Activity Level") {
+                    _showActivityLevelDialog(context);
+                  } else if (model.title == "Calories Goal") {
+                    _showCaloriesInputDialog(context, model.value ?? "0");
+                  } else if (model.title?.contains('Goal') ?? false || 
+                           model.title == "Cur. Weight") {
+                    _showNumberInputDialog(context, model.title ?? "", model.value ?? "0");
+                  }
+                },
+              );
             },
           );
         },
@@ -388,6 +437,227 @@ class ProfileScreenState extends State<ProfileScreen> {
                       if (mounted) {
                         Navigator.pop(context);
                       }
+                    },
+                    child: Text('Save'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showDietSelectionDialog(BuildContext context) {
+    final List<String> menuChoices = [
+      'Balanced',
+      'Keto',
+      'Vegan',
+      'Vegetarian',
+      'Carnivore',
+      'Fruitarian',
+    ];
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
+      ),
+      builder: (BuildContext context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ...menuChoices.map((diet) => Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () async {
+                    final currentUser = FirebaseAuth.instance.currentUser;
+                    if (currentUser?.email != null) {
+                      try {
+                        // Update Firebase
+                        await FirebaseFirestore.instance
+                            .collection('users')
+                            .doc(currentUser!.email)
+                            .update({'diet': diet});
+
+                        // Update only local provider
+                        Provider.of<ProfileProvider>(context, listen: false)
+                            .updateDiet(diet);
+                      } catch (e) {
+                        print("Error updating diet: $e");
+                      }
+                    }
+                    Navigator.pop(context);
+                  },
+                  child: Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                    child: Text(
+                      diet,
+                      style: TextStyle(
+                        fontSize: 17,
+                        color: Colors.black,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+              )).toList(),
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () => Navigator.pop(context),
+                  child: Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.symmetric(vertical: 16),
+                    child: Text(
+                      'Cancel',
+                      style: TextStyle(
+                        fontSize: 17,
+                        color: Colors.blue,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showActivityLevelDialog(BuildContext context) {
+    final List<String> activityLevels = ['Light', 'Moderate', 'Vigorous'];
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
+      ),
+      builder: (BuildContext context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ...activityLevels.map((level) => Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () async {
+                    final currentUser = FirebaseAuth.instance.currentUser;
+                    if (currentUser?.email != null) {
+                      try {
+                        // Update Firebase
+                        await FirebaseFirestore.instance
+                            .collection('users')
+                            .doc(currentUser!.email)
+                            .update({'activity': level});
+
+                        // Update local provider
+                        Provider.of<ProfileProvider>(context, listen: false)
+                            .updateActivityLevel(level);
+                      } catch (e) {
+                        print("Error updating activity level: $e");
+                      }
+                    }
+                    Navigator.pop(context);
+                  },
+                  child: Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                    child: Text(
+                      level,
+                      style: TextStyle(
+                        fontSize: 17,
+                        color: Colors.black,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+              )).toList(),
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () => Navigator.pop(context),
+                  child: Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.symmetric(vertical: 16),
+                    child: Text(
+                      'Cancel',
+                      style: TextStyle(
+                        fontSize: 17,
+                        color: Colors.blue,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showNumberInputDialog(BuildContext context, String title, String currentValue) {
+    final TextEditingController controller = TextEditingController(text: currentValue);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
+      ),
+      builder: (BuildContext context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+            left: 16.h,
+            right: 16.h,
+            top: 16.h,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                title,
+                style: theme.textTheme.titleLarge?.copyWith(
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 16.h),
+              TextField(
+                controller: controller,
+                autofocus: true,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  hintText: 'Enter value',
+                ),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text('Cancel'),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      final newValue = double.tryParse(controller.text);
+                      if (newValue != null) {
+                        Provider.of<ProfileProvider>(context, listen: false)
+                            .updateNumericValue(title, newValue);
+                      }
+                      Navigator.pop(context);
                     },
                     child: Text('Save'),
                   ),
