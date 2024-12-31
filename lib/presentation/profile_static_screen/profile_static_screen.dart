@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -7,10 +9,13 @@ import '../../widgets/app_bar/appbar_subtitle.dart';
 import '../../widgets/app_bar/custom_app_bar.dart';
 import '../profile_screen/provider/profile_provider.dart';
 import 'provider/profile_static_provider.dart';
-import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import '../../../providers/profile_picture_provider.dart';
 import '../../../providers/user_info_provider.dart';
+import '../../services/firebase/auth/auth_provider.dart' as auth;
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class ProfileStaticScreen extends StatefulWidget {
   const ProfileStaticScreen({Key? key}) : super(key: key);
@@ -24,6 +29,7 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> {
   final TextEditingController _textController = TextEditingController();
   final ImagePicker _picker = ImagePicker();
   File? _selectedImage;
+  StreamSubscription<DocumentSnapshot>? _userSubscription;
 
   void _showTextInputDialog(BuildContext context, String title, String currentValue, bool isNameField) {
     _textController.text = currentValue;
@@ -43,67 +49,79 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                title,
-                style: theme.textTheme.titleLarge?.copyWith(
-                  color: Colors.black,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              SizedBox(height: 16.h),
+              Text(title),
               TextField(
                 controller: _textController,
                 autofocus: true,
-                style: TextStyle(color: Colors.black),
                 decoration: InputDecoration(
                   hintText: 'Enter $title',
-                  border: OutlineInputBorder(),
                 ),
-                // Only allow letters for name and surname
-                inputFormatters: isNameField ? [
-                  FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z\s]')),
-                ] : null,
               ),
-              SizedBox(height: 16.h),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: Text(
-                      'Cancel',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        color: Colors.grey,
-                      ),
-                    ),
+                    child: Text('Cancel'),
                   ),
-                  SizedBox(width: 16.h),
                   TextButton(
-                    onPressed: () {
-                      if (title == "Name") {
-                        context.read<UserInfoProvider>().updateName(
-                          _textController.text, 
-                          context.read<UserInfoProvider>().lastName
-                        );
-                      } else if (title == "Surname") {
-                        context.read<UserInfoProvider>().updateName(
-                          context.read<UserInfoProvider>().firstName, 
-                          _textController.text
-                        );
-                      } else if (title == "Username") {
-                        context.read<UserInfoProvider>().updateUsername(_textController.text);
+                    onPressed: () async {
+                      final newValue = _textController.text.trim();
+                      if (newValue.isNotEmpty) {
+                        // Get current user email
+                        final currentUser = FirebaseAuth.instance.currentUser;
+                        if (currentUser?.email != null) {
+                          try {
+                            // Update Firestore document using email as document ID
+                            await FirebaseFirestore.instance
+                                .collection('users')
+                                .doc(currentUser!.email)
+                                .update({
+                              if (title == "Name") 'firstName': newValue,
+                              if (title == "Surname") 'lastName': newValue,
+                              if (title == "Birthday") 'birthdate': newValue,
+                              if (title == "Gender") 'gender': newValue,
+                              if (title == "Height") 'height': newValue.replaceAll(" cm", ""),
+                              if (title == "Username") 'username': newValue,
+                            });
+
+                            // Update local provider
+                            if (mounted) {
+                              final userInfoProvider = Provider.of<UserInfoProvider>(context, listen: false);
+                              switch (title) {
+                                case "Name":
+                                  await userInfoProvider.updateName(newValue, userInfoProvider.lastName);
+                                  break;
+                                case "Surname":
+                                  await userInfoProvider.updateName(userInfoProvider.firstName, newValue);
+                                  break;
+                                case "Birthday":
+                                  await userInfoProvider.updateBirthdate(newValue);
+                                  break;
+                                case "Gender":
+                                  await userInfoProvider.updateGender(newValue);
+                                  break;
+                                case "Height":
+                                  await userInfoProvider.updateHeight(newValue.replaceAll(" cm", ""));
+                                  break;
+                                case "Username":
+                                  await userInfoProvider.updateUsername(newValue);
+                                  break;
+                              }
+                              // Force UI update
+                              userInfoProvider.notifyListeners();
+                            }
+                          } catch (e) {
+                            print("Error updating Firestore: $e");
+                            // You might want to show an error message to the user here
+                          }
+                        }
                       }
-                      Provider.of<ProfileStaticProvider>(context, listen: false)
-                          .updateValue(title, _textController.text);
-                      Navigator.pop(context);
+                      if (mounted) {
+                        Navigator.pop(context);
+                      }
                     },
-                    child: Text(
-                      'Save',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        color: Colors.blue,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    child: Text('Save'),
                   ),
                 ],
               ),
@@ -312,6 +330,179 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> {
     }
   }
 
+  void _showGenderSelector(BuildContext context, String currentValue) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white.withOpacity(0.9),
+      builder: (BuildContext context) {
+        return Container(
+          padding: EdgeInsets.all(16.h),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                "Select Gender",
+                style: theme.textTheme.titleLarge?.copyWith(
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 16.h),
+              // Male Button
+              _buildGenderButton(
+                context: context,
+                label: "Male",
+                currentValue: currentValue,
+              ),
+              SizedBox(height: 8.h),
+              // Female Button
+              _buildGenderButton(
+                context: context,
+                label: "Female",
+                currentValue: currentValue,
+              ),
+              SizedBox(height: 8.h),
+              // Non Binary Button
+              _buildGenderButton(
+                context: context,
+                label: "Non Binary",
+                currentValue: currentValue,
+              ),
+              SizedBox(height: 16.h),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  // Helper method to build gender selection buttons
+  Widget _buildGenderButton({
+    required BuildContext context,
+    required String label,
+    required String currentValue,
+  }) {
+    final isSelected = currentValue == label;
+    
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: isSelected ? Colors.blue : Colors.grey[200],
+          padding: EdgeInsets.symmetric(vertical: 12.h),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8.h),
+          ),
+        ),
+        onPressed: () async {
+          // Get current user email
+          final currentUser = FirebaseAuth.instance.currentUser;
+          if (currentUser?.email != null) {
+            try {
+              // Update Firestore
+              await FirebaseFirestore.instance
+                  .collection('users')
+                  .doc(currentUser!.email)
+                  .update({'gender': label});
+
+              // Update local provider
+              if (context.mounted) {
+                final userInfoProvider = Provider.of<UserInfoProvider>(context, listen: false);
+                await userInfoProvider.updateGender(label);
+                userInfoProvider.notifyListeners();
+              }
+            } catch (e) {
+              print("Error updating gender: $e");
+            }
+          }
+          if (context.mounted) {
+            Navigator.pop(context);
+          }
+        },
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? Colors.white : Colors.black,
+            fontSize: 16.h,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    
+    // Fetch fresh data when screen loads
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (mounted) {
+        final authProvider = Provider.of<auth.AuthProvider>(context, listen: false);
+        if (authProvider.user != null) {
+          try {
+            // Get fresh data from Firestore
+            final doc = await FirebaseFirestore.instance
+                .collection('users')
+                .doc(authProvider.user!.uid)
+                .get();
+
+            if (doc.exists && mounted) {
+              final userData = doc.data()!;
+              final userInfoProvider = Provider.of<UserInfoProvider>(context, listen: false);
+              
+              // Update provider with fresh Firestore values
+              await userInfoProvider.updateName(
+                userData['firstName'] as String? ?? '',
+                userData['lastName'] as String? ?? ''
+              );
+              
+              // Force UI update
+              setState(() {});
+            }
+          } catch (e) {
+            print("Error fetching user data: $e");
+          }
+        }
+      }
+    });
+    _setupFirestoreListener();
+  }
+
+  void _setupFirestoreListener() {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser?.email != null) {
+      _userSubscription = FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentUser!.email)
+          .snapshots()
+          .listen((snapshot) {
+        if (snapshot.exists && mounted) {
+          final userData = snapshot.data()!;
+          final userInfoProvider = Provider.of<UserInfoProvider>(context, listen: false);
+
+          // Update all fields including dailyCalories
+          userInfoProvider.updateName(
+            userData['firstName']?.toString() ?? '',
+            userData['lastName']?.toString() ?? '',
+          );
+          userInfoProvider.updateUsername(userData['username']?.toString() ?? '');
+          userInfoProvider.updateBirthdate(userData['birthdate']?.toString() ?? '');
+          userInfoProvider.updateGender(userData['gender']?.toString() ?? '');
+          userInfoProvider.updateHeight(userData['height']?.toString() ?? '');
+          userInfoProvider.updateDailyCalories(userData['dailyCalories']?.toString() ?? '');
+        }
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    // Cancel the subscription when the screen is disposed
+    _userSubscription?.cancel();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -350,169 +541,199 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> {
       ),
       body: SafeArea(
         top: false,
-        child: Container(
-          width: double.maxFinite,
-          padding: EdgeInsets.symmetric(horizontal: 4.h),
-          child: SingleChildScrollView(
-            child: Column(
-              children: [
-                SizedBox(height: 16.h),
-                Container(
-                  width: double.maxFinite,
-                  margin: EdgeInsets.symmetric(horizontal: 4.h),
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 10.h,
-                    vertical: 12.h,
-                  ),
-                  decoration: AppDecoration.lightBlueLayoutPadding.copyWith(
-                    borderRadius: BorderRadiusStyle.roundedBorder20,
-                  ),
-                  child: Column(
-                    children: [
-                      Consumer<ProfilePictureProvider>(
-                        builder: (context, profilePicProvider, _) {
-                          return Column(
-                            children: [
-                              CustomImageView(
-                                imagePath: profilePicProvider.profileImagePath,
-                                isFile: !profilePicProvider.profileImagePath.startsWith('assets/'),
-                                height: 72.h,
-                                width: 72.h,
-                                radius: BorderRadius.circular(36.h),
-                              ),
-                              SizedBox(height: 8.h),
-                              GestureDetector(
-                                onTap: _pickImage,
-                                child: Text(
-                                  "Edit",
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 16.h,
+        child: Consumer<UserInfoProvider>(
+          builder: (context, userInfo, _) {
+            return SingleChildScrollView(
+              child: Column(
+                children: [
+                  SizedBox(height: 16.h),
+                  Container(
+                    width: double.maxFinite,
+                    margin: EdgeInsets.symmetric(horizontal: 4.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 10.h,
+                      vertical: 12.h,
+                    ),
+                    decoration: AppDecoration.lightBlueLayoutPadding.copyWith(
+                      borderRadius: BorderRadiusStyle.roundedBorder20,
+                    ),
+                    child: Column(
+                      children: [
+                        // Profile Picture Section
+                        Consumer<ProfilePictureProvider>(
+                          builder: (context, profilePicProvider, _) {
+                            return Column(
+                              children: [
+                                CustomImageView(
+                                  imagePath: profilePicProvider.profileImagePath,
+                                  isFile: !profilePicProvider.profileImagePath.startsWith('assets/'),
+                                  height: 72.h,
+                                  width: 72.h,
+                                  radius: BorderRadius.circular(36.h),
+                                ),
+                                SizedBox(height: 8.h),
+                                GestureDetector(
+                                  onTap: _pickImage,
+                                  child: Text(
+                                    "Edit",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16.h,
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            );
+                          },
+                        ),
+                        SizedBox(height: 16.h),
+                        // Profile Details
+                        _buildProfileItem(
+                          label: "Name",
+                          value: userInfo.firstName,
+                          onTap: () => _showTextInputDialog(
+                            context,
+                            "Name",
+                            userInfo.firstName,
+                            true,
+                          ),
+                        ),
+                        _buildProfileItem(
+                          label: "Surname",
+                          value: userInfo.lastName,
+                          onTap: () => _showTextInputDialog(
+                            context,
+                            "Surname",
+                            userInfo.lastName,
+                            true,
+                          ),
+                        ),
+                        _buildProfileItem(
+                          label: "Birthday",
+                          value: userInfo.birthdate,
+                          onTap: () => _showTextInputDialog(
+                            context,
+                            "Birthday",
+                            userInfo.birthdate,
+                            false,
+                          ),
+                        ),
+                        _buildProfileItem(
+                          label: "Gender",
+                          value: userInfo.gender,
+                          onTap: () => _showGenderSelector(
+                            context,
+                            userInfo.gender,
+                          ),
+                        ),
+                        _buildProfileItem(
+                          label: "Height",
+                          value: "${userInfo.height} cm",
+                          onTap: () => _showTextInputDialog(
+                            context,
+                            "Height",
+                            userInfo.height,
+                            false,
+                          ),
+                        ),
+                        _buildProfileItem(
+                          label: "Username",
+                          value: userInfo.username,
+                          onTap: () => _showTextInputDialog(
+                            context,
+                            "Username",
+                            userInfo.username,
+                            false,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 20.h),
+                  // Sign out button
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 10.h),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: GestureDetector(
+                        onTap: () async {
+                          final authProvider = Provider.of<auth.AuthProvider>(context, listen: false);
+                          await authProvider.signOut(context);
+                          Navigator.pushNamedAndRemoveUntil(
+                            context,
+                            AppRoutes.welcomeScreen,
+                            (route) => false,
                           );
                         },
-                      ),
-                      SizedBox(height: 16.h),
-                      // Profile Details
-                      _buildProfileItem("Name", Provider.of<ProfileStaticProvider>(context, listen: false).getValue("Name")),
-                      _buildProfileItem("Surname", Provider.of<ProfileStaticProvider>(context, listen: false).getValue("Surname")),
-                      _buildProfileItem("Birthday", "23/01/1993"),
-                      _buildProfileItem("Sex", "Male"),
-                      _buildProfileItem("Height", "180 cm"),
-                      _buildProfileItem("Username", Provider.of<ProfileStaticProvider>(context, listen: false).getValue("Username")),
-                    ],
-                  ),
-                ),
-                SizedBox(height: 20.h),
-                // Sign out button
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 10.h),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: GestureDetector(
-                      onTap: () {
-                        Navigator.pushNamedAndRemoveUntil(
-                          context,
-                          AppRoutes.welcomeScreen,
-                          (route) => false,
-                        );
-                      },
-                      child: Text(
-                        "Sign out",
-                        style: TextStyle(
-                          color: Colors.blue,
-                          fontSize: 16.h,
+                        child: Text(
+                          "Sign out",
+                          style: TextStyle(
+                            color: Colors.blue,
+                            fontSize: 16.h,
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
-              ],
-            ),
-          ),
+                ],
+              ),
+            );
+          },
         ),
       ),
     );
   }
 
-  Widget _buildProfileItem(String label, String value) {
-    bool isEditable = ["Name", "Surname", "Username"].contains(label);
-    bool isNameField = ["Name", "Surname"].contains(label);
-    bool isBirthday = label == "Birthday";
-    bool isSex = label == "Sex";
-    bool isHeight = label == "Height";
-
-    return Consumer<ProfileStaticProvider>(
-      builder: (context, provider, child) {
-        return Column(
-          children: [
-            Container(
-              padding: EdgeInsets.symmetric(vertical: 12.h),
-              margin: EdgeInsets.symmetric(horizontal: 16.h),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    label,
-                    style: theme.textTheme.titleLarge?.copyWith(
+  Widget _buildProfileItem({
+    required String label,
+    required String value,
+    required VoidCallback onTap,
+  }) {
+    return Column(
+      children: [
+        Container(
+          padding: EdgeInsets.symmetric(vertical: 12.h),
+          margin: EdgeInsets.symmetric(horizontal: 16.h),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                label,
+                style: theme.textTheme.titleLarge?.copyWith(
+                  color: Colors.white,
+                ),
+              ),
+              GestureDetector(
+                onTap: onTap,
+                child: Row(
+                  children: [
+                    Text(
+                      value.isEmpty ? "Not set" : value,
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    SizedBox(width: 8.h),
+                    CustomImageView(
+                      imagePath: ImageConstant.imgArrowRight,
+                      height: 14.h,
+                      width: 14.h,
                       color: Colors.white,
                     ),
-                  ),
-                  GestureDetector(
-                    onTap: isHeight
-                      ? () => _showHeightInputDialog(context, provider.getValue('height'))
-                      : isSex 
-                        ? () => _showSexSelectionMenu(context)
-                        : isBirthday 
-                          ? () => _showDatePicker(context, provider.getValue(label))
-                          : isEditable 
-                            ? () => _showTextInputDialog(
-                                context,
-                                label,
-                                provider.getValue(label),
-                                isNameField,
-                              ) 
-                            : null,
-                    child: Row(
-                      children: [
-                        Text(
-                          isHeight
-                            ? provider.getValue('height')
-                            : isSex 
-                              ? provider.getValue('sex')
-                              : isBirthday 
-                                ? provider.getValue('birthday')
-                                : provider.getValue(label),
-                          style: theme.textTheme.titleLarge?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        SizedBox(width: 8.h),
-                        CustomImageView(
-                          imagePath: ImageConstant.imgArrowRight,
-                          height: 14.h,
-                          width: 14.h,
-                          color: Colors.white,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            if (label != "Username")
-              Container(
-                height: 1.h,
-                color: Colors.white,
-                margin: EdgeInsets.symmetric(horizontal: 16.h),
-              ),
-          ],
-        );
-      },
+            ],
+          ),
+        ),
+        if (label != "Username")
+          Container(
+            height: 1.h,
+            color: Colors.white,
+            margin: EdgeInsets.symmetric(horizontal: 16.h),
+          ),
+      ],
     );
   }
 }

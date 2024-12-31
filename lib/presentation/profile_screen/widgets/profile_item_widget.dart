@@ -283,21 +283,24 @@ class ProfileItemWidget extends StatelessWidget {
                       ),
                     ),
                     TextButton(
-                      onPressed: () {
+                      onPressed: () async {
                         final newValue = double.tryParse(_numberController.text);
                         if (newValue != null) {
-                          // Only allow positive numbers for specified fields
                           if (isPositiveOnly && newValue < 0) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Please enter a positive number'),
-                                duration: Duration(seconds: 2),
-                              ),
+                              SnackBar(content: Text('Please enter a positive number')),
                             );
                             return;
                           }
-                          Provider.of<ProfileProvider>(context, listen: false)
-                              .updateNumericValue(title, newValue);
+
+                          // Special handling for Calories Goal
+                          if (title == "Calories Goal") {
+                            await Provider.of<ProfileProvider>(context, listen: false)
+                                .updateCaloriesInFirebase(newValue.toInt().toString());
+                          } else {
+                            Provider.of<ProfileProvider>(context, listen: false)
+                                .updateNumericValue(title, newValue);
+                          }
                           Navigator.pop(context);
                         }
                       },

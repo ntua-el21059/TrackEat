@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
+import '../models/history_today_tab_model.dart';
 
 /// A provider class for the HistoryTodayTabScreen.
 ///
@@ -7,28 +10,37 @@ import 'package:intl/intl.dart';
 /// current historyTodayTabModelObj
 // ignore_for_file: must_be_immutable
 class HistoryTodayTabProvider extends ChangeNotifier {
+  HistoryTodayTabModel historyTodayTabModelObj = HistoryTodayTabModel();
   DateTime selectedDate = DateTime.now();
+  int _dailyCalories = 2000; // Default value
+  
+  int get dailyCalories => _dailyCalories;
 
-  bool get hasBreakfast {
-    return isToday(); // Only show breakfast on today's date
+  // Navigation getters
+  bool get hasBreakfast => isToday(); // Only show breakfast on today's date
+  bool get hasLunch => isToday(); // Only show lunch on today's date
+
+  HistoryTodayTabProvider() {
+    listenToDailyCalories();
   }
 
-  bool get hasLunch {
-    return isToday(); // Only show lunch on today's date
+  void listenToDailyCalories() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.email)
+          .snapshots()
+          .listen((snapshot) {
+        if (snapshot.exists) {
+          _dailyCalories = snapshot.data()?['dailyCalories'] ?? 2000;
+          notifyListeners();
+        }
+      });
+    }
   }
 
-  bool isToday() {
-    final now = DateTime.now();
-    return selectedDate.year == now.year && 
-           selectedDate.month == now.month && 
-           selectedDate.day == now.day;
-  }
-
-  bool canGoForward() {
-    final today = DateTime.now();
-    return selectedDate.isBefore(today);
-  }
-
+  // Date navigation methods
   void goToPreviousDay() {
     selectedDate = selectedDate.subtract(Duration(days: 1));
     notifyListeners();
@@ -45,11 +57,25 @@ class HistoryTodayTabProvider extends ChangeNotifier {
     }
   }
 
+  bool canGoForward() {
+    final today = DateTime.now();
+    return selectedDate.isBefore(today);
+  }
+
+  bool isToday() {
+    final now = DateTime.now();
+    return selectedDate.year == now.year && 
+           selectedDate.month == now.month && 
+           selectedDate.day == now.day;
+  }
+
   String getFormattedDate() {
     return DateFormat('EEEE, MMMM d').format(selectedDate);
   }
 
+  // Meal management
   void deleteMeal(String mealType) {
+    // TODO: Implement meal deletion with Firebase
     notifyListeners();
   }
 }

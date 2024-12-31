@@ -12,6 +12,9 @@ import 'widgets/profile_item_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../providers/profile_picture_provider.dart';
 import '../../providers/user_info_provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../services/firebase/auth/auth_provider.dart' as app_auth;
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({Key? key}) : super(key: key);
@@ -21,9 +24,53 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class ProfileScreenState extends State<ProfileScreen> {
+  final List<String> dietChoices = [
+    'Balanced',
+    'Vegetarian',
+    'Vegan',
+    'Pescatarian',
+    'Keto',
+    'Mediterranean',
+  ];
+
+  String? selectedDiet;
+
   @override
   void initState() {
     super.initState();
+    _setupFirestoreListener();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final authProvider = Provider.of<app_auth.AuthProvider>(context, listen: false);
+      if (authProvider.userData?.diet == null) {
+        await authProvider.updateUserDiet('Balanced');
+      }
+    });
+  }
+
+  void _setupFirestoreListener() {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser?.email != null) {
+      FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentUser!.email)
+          .snapshots()
+          .listen((snapshot) {
+        if (snapshot.exists && mounted) {
+          final userData = snapshot.data()!;
+          final calories = userData['dailyCalories']?.toString() ?? '0';
+          
+          // Update the calories in the provider
+          Provider.of<ProfileProvider>(context, listen: false)
+              .updateCalories(calories);
+        }
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    // Clean up any listeners if needed
+    super.dispose();
   }
 
   @override
@@ -268,5 +315,88 @@ class ProfileScreenState extends State<ProfileScreen> {
     if (image != null) {
       context.read<ProfilePictureProvider>().updateProfilePicture(image.path);
     }
+  }
+
+  void _showCaloriesInputDialog(BuildContext context, String currentValue) {
+    final TextEditingController controller = TextEditingController(text: currentValue);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white.withOpacity(0.9),
+      builder: (BuildContext context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+            left: 16.h,
+            right: 16.h,
+            top: 16.h,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                "Daily Calories Goal",
+                style: theme.textTheme.titleLarge?.copyWith(
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 16.h),
+              TextField(
+                controller: controller,
+                autofocus: true,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  hintText: 'Enter daily calories goal',
+                  suffixText: 'kcal',
+                ),
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                ],
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text('Cancel'),
+                  ),
+                  TextButton(
+                    onPressed: () async {
+                      final newValue = controller.text.trim();
+                      if (newValue.isNotEmpty) {
+                        final currentUser = FirebaseAuth.instance.currentUser;
+                        if (currentUser?.email != null) {
+                          try {
+                            // Update Firestore
+                            await FirebaseFirestore.instance
+                                .collection('users')
+                                .doc(currentUser!.email)
+                                .update({'dailyCalories': int.parse(newValue)});
+
+                            // Update local provider
+                            if (mounted) {
+                              final userInfoProvider = Provider.of<UserInfoProvider>(context, listen: false);
+                              await userInfoProvider.updateDailyCalories(newValue);
+                            }
+                          } catch (e) {
+                            print("Error updating calories: $e");
+                          }
+                        }
+                      }
+                      if (mounted) {
+                        Navigator.pop(context);
+                      }
+                    },
+                    child: Text('Save'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 }

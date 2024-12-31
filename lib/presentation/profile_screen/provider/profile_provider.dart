@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../../core/app_export.dart';
 import '../models/profile_item_model.dart';
 import '../models/profile_model.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 /// A provider class for the ProfileScreen.
 ///
@@ -60,6 +62,37 @@ class ProfileProvider extends ChangeNotifier {
   void updateProfileImage(String imagePath) {
     _profileImagePath = imagePath;
     notifyListeners();
+  }
+
+  Future<void> updateCaloriesInFirebase(String calories) async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser?.email != null) {
+      try {
+        // Update Firestore with integer value
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(currentUser!.email)
+            .update({'dailyCalories': int.parse(calories.replaceAll('kcal', '').trim())});
+
+        // Update local UI
+        updateCalories(calories);
+      } catch (e) {
+        print("Error updating calories in Firebase: $e");
+      }
+    }
+  }
+
+  void updateCalories(String calories) {
+    final caloriesItem = profileModelObj.profileItemList.firstWhere(
+      (item) => item.title == "Calories Goal",
+      orElse: () => ProfileItemModel(),
+    );
+    
+    if (caloriesItem != null) {
+      // Make sure we store just the number in Firebase
+      caloriesItem.value = calories.endsWith('kcal') ? calories : "$calories kcal";
+      notifyListeners();
+    }
   }
 
   @override

@@ -57,6 +57,7 @@ void main() async {
         ),
         ChangeNotifierProvider(
           create: (_) => UserInfoProvider(prefs),
+          lazy: false,
         ),
       ],
       child: MyApp(),

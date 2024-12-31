@@ -226,13 +226,17 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> with Singl
                 "1500 Kcal Remaining...",
                 style: CustomTextStyles.titleMediumGray90001Bold,
               ),
-              Text(
-                "3000 kcal",
-                style: TextStyle(
-                  color: const Color(0xFFFF0000),
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
+              Consumer<HistoryTodayTabProvider>(
+                builder: (context, provider, _) {
+                  return Text(
+                    "${provider.dailyCalories} kcal",
+                    style: TextStyle(
+                      color: const Color(0xFFFF0000),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  );
+                },
               ),
             ],
           ),

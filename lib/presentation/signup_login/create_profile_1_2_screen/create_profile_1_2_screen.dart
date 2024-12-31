@@ -278,6 +278,13 @@ class CreateProfile12ScreenState extends State<CreateProfile12Screen> {
                             Navigator.of(context).pop();
                           },
                         ),
+                        ListTile(
+                          title: Text('Non Binary'),
+                          onTap: () {
+                            gendertwoController?.text = 'Non Binary';
+                            Navigator.of(context).pop();
+                          },
+                        ),
                       ],
                     ),
                   );
