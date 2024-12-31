@@ -112,17 +112,17 @@ class PhotoPreviewScreen extends StatelessWidget {
                         ),
                       ),
                       SizedBox(height: 24.h),
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 32.h,
-                          vertical: 12.h,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(24.h),
-                        ),
-                        child: GestureDetector(
-                          onTap: () => Navigator.pop(context, imagePath),
+                      GestureDetector(
+                        onTap: () => Navigator.pop(context, imagePath),
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 32.h,
+                            vertical: 12.h,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(24.h),
+                          ),
                           child: Text(
                             'Keep',
                             style: TextStyle(

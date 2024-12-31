@@ -98,7 +98,10 @@ class BlurChooseActionScreenDialog extends StatelessWidget {
                 minimumSize: Size(double.infinity, 40.h),
                 fixedSize: Size.fromHeight(40.h),
               ),
-              onPressed: onDelete,
+              onPressed: () {
+                Navigator.of(context).pop();
+                onDelete();
+              },
               child: Text(
                 "Delete",
                 style: TextStyle(

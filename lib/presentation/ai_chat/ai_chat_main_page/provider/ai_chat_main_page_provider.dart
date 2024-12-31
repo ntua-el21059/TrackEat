@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:convert';
+import '../../../../models/meal.dart';
+import '../../../../services/meal_service.dart';
 import '../models/ai_chat_main_page_model.dart';
 
 const String apiKey = 'AIzaSyDe5fyQXDIfgZ1paU5Ax5HNj6gNyWA0MAA';
@@ -21,12 +24,18 @@ Always maintain a friendly, witty tone while guiding users back to food-related 
 ''';
 
 class AiChatMainProvider extends ChangeNotifier {
+  final MealService _mealService = MealService();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
   TextEditingController messageController = TextEditingController();
   AiChatMainModel aiChatMainModelObj = AiChatMainModel();
   final ImagePicker _imagePicker = ImagePicker();
   XFile? selectedImage;
   bool showTrackDialog = false;
   Map<String, dynamic>? lastNutritionData;
+  double slideProgress = 0.0;
+  bool showMealTypeSelection = false;
+  bool showTrackingSuccess = false;
+  String? selectedMealType;
   
   final GenerativeModel _model = GenerativeModel(
     model: modelName,
@@ -68,6 +77,8 @@ class AiChatMainProvider extends ChangeNotifier {
       isLoading = true;
       showTrackDialog = false;
       lastNutritionData = null;
+      showMealTypeSelection = false;
+      slideProgress = 0.0;
       notifyListeners();
 
       // If an image is selected
@@ -180,15 +191,96 @@ Important: Respond with ONLY the JSON object, no other text.""";
 
   void trackNutrition() {
     if (lastNutritionData != null) {
-      // TODO: Implement tracking logic
-      showTrackDialog = false;
+      // TODO: Implement tracking logic with selectedMealType
+      showTrackingSuccess = true;
       notifyListeners();
+      
+      // Auto-dismiss after 2 seconds
+      Future.delayed(Duration(seconds: 2), () {
+        showTrackDialog = false;
+        showMealTypeSelection = false;
+        showTrackingSuccess = false;
+        selectedMealType = null;
+        notifyListeners();
+      });
     }
   }
 
   void setTrackDialogState(bool state) {
     showTrackDialog = state;
+    if (!state) {
+      // Reset all states when canceling
+      showMealTypeSelection = false;
+      showTrackingSuccess = false;
+      slideProgress = 0.0;
+      selectedMealType = null;
+    }
     notifyListeners();
+  }
+
+  void updateSlideProgress(double progress) {
+    slideProgress = progress.clamp(0.0, 1.0);
+    notifyListeners();
+    if (slideProgress >= 1.0) {
+      showMealTypeSelection = true;
+      notifyListeners();
+    }
+  }
+
+  void resetSlideProgress() {
+    slideProgress = 0.0;
+    showMealTypeSelection = false;
+    selectedMealType = null;
+    notifyListeners();
+  }
+
+  void selectMealType(String mealType) async {
+    if (lastNutritionData == null || _auth.currentUser == null) return;
+
+    selectedMealType = mealType;
+    notifyListeners();
+
+    try {
+      // Create a new meal object
+      final meal = Meal(
+        id: '', // Will be set by Firestore
+        userId: _auth.currentUser!.uid,
+        name: lastNutritionData!['food'],
+        mealType: mealType.toLowerCase(),
+        calories: lastNutritionData!['calories'],
+        servingSize: double.parse(lastNutritionData!['serving_size'].replaceAll(RegExp(r'[^0-9.]'), '')),
+        macros: {
+          'protein': lastNutritionData!['protein'].toDouble(),
+          'fats': lastNutritionData!['fat'].toDouble(),
+          'carbs': lastNutritionData!['carbs'].toDouble(),
+        },
+        date: DateTime.now(),
+      );
+
+      // Save to Firebase
+      await _mealService.addMeal(meal);
+
+      // Show success message
+      showTrackingSuccess = true;
+      notifyListeners();
+      
+      // Auto-dismiss after 2 seconds
+      Future.delayed(Duration(seconds: 2), () {
+        showTrackDialog = false;
+        showMealTypeSelection = false;
+        showTrackingSuccess = false;
+        selectedMealType = null;
+        notifyListeners();
+      });
+    } catch (e) {
+      print('Error saving meal: $e');
+      // Reset states on error
+      showTrackDialog = false;
+      showMealTypeSelection = false;
+      showTrackingSuccess = false;
+      selectedMealType = null;
+      notifyListeners();
+    }
   }
 
   @override

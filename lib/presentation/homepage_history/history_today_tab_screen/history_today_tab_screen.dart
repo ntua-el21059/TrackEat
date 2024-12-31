@@ -3,9 +3,11 @@ import '../../../core/app_export.dart';
 import '../../../widgets/app_bar/appbar_leading_image.dart';
 import '../../../widgets/app_bar/appbar_subtitle.dart';
 import '../../../widgets/app_bar/custom_app_bar.dart';
-import '../blur_choose_action_screen_dialog/blur_choose_action_screen_dialog.dart';
-import 'provider/history_today_tab_provider.dart';
+import '../../../models/meal.dart';
 import 'package:activity_ring/activity_ring.dart';
+import '../../../providers/user_provider.dart';
+import 'provider/history_today_tab_provider.dart';
+import '../blur_choose_action_screen_dialog/blur_choose_action_screen_dialog.dart';
 
 class HistoryTodayTabScreen extends StatefulWidget {
   const HistoryTodayTabScreen({Key? key}) : super(key: key);
@@ -56,7 +58,7 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> with Singl
     
     setState(() {
       _slideAnimation = Tween<Offset>(
-        begin: Offset(goingBack ? -1 : 1, 0),
+        begin: Offset(goingBack ? 1 : -1, 0),
         end: Offset.zero,
       ).animate(CurvedAnimation(
         parent: _slideController,
@@ -64,14 +66,19 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> with Singl
       ));
     });
 
-    if (goingBack) {
-      provider.goToPreviousDay();
-    } else {
-      provider.goToNextDay();
-    }
+    // Reset to start position
+    _slideController.value = 0;
     
-    _slideController.forward().then((_) {
-      _slideController.reset();
+    // Start animation
+    _slideController.forward();
+
+    // Update the date after a small delay to allow animation to start
+    Future.delayed(Duration(milliseconds: 200), () {
+      if (goingBack) {
+        provider.goToPreviousDay();
+      } else if (provider.canGoForward()) {
+        provider.goToNextDay();
+      }
     });
   }
 
@@ -84,11 +91,9 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> with Singl
   Widget _buildMainContent() {
     return SingleChildScrollView(
       child: Container(
-        height: 760.h,
         width: double.maxFinite,
         padding: EdgeInsets.symmetric(horizontal: 4.h),
         child: Column(
-          mainAxisSize: MainAxisSize.max,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
@@ -101,15 +106,30 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> with Singl
             Align(
               alignment: Alignment.center,
               child: Consumer<HistoryTodayTabProvider>(
-                builder: (context, provider, _) => Text(
-                  provider.getFormattedDate().toUpperCase(),
-                  style: CustomTextStyles.labelLargeSFProBluegray400,
+                builder: (context, provider, _) => Column(
+                  children: [
+                    Text(
+                      provider.isToday() 
+                        ? "TODAY"
+                        : "${provider.getDaysDifference()} ${provider.getDaysDifference() == 1 ? 'DAY' : 'DAYS'} AGO",
+                      style: TextStyle(
+                        color: provider.isToday() ? const Color(0xFF4CD964) : Colors.grey,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    SizedBox(height: 4.h),
+                    Text(
+                      provider.getFormattedDate().toUpperCase(),
+                      style: CustomTextStyles.labelLargeSFProBluegray400,
+                    ),
+                  ],
                 ),
               ),
             ),
-            SizedBox(height: 12.h),
+            SizedBox(height: 8.h),
             _buildCalories(context),
-            SizedBox(height: 38.h),
+            SizedBox(height: 8.h),
             Padding(
               padding: EdgeInsets.only(left: 18.h),
               child: Text(
@@ -117,15 +137,25 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> with Singl
                 style: CustomTextStyles.headlineSmallBold,
               ),
             ),
-            SizedBox(height: 6.h),
+            SizedBox(height: 4.h),
             Consumer<HistoryTodayTabProvider>(
               builder: (context, provider, child) {
-                return provider.hasBreakfast 
-                  ? _buildColumnlinear(context)
-                  : _buildEmptyBreakfast(context);
+                final breakfastMeals = provider.getMealsByType('breakfast');
+                return Container(
+                  height: 110.h,
+                  padding: EdgeInsets.only(right: 26.h),
+                  child: PageView(
+                    physics: const BouncingScrollPhysics(),
+                    children: [
+                      if (breakfastMeals.isNotEmpty)
+                        ...breakfastMeals.map((meal) => _buildMealCard(context, meal, 'breakfast')),
+                      _buildEmptyBreakfast(context),
+                    ],
+                  ),
+                );
               }
             ),
-            SizedBox(height: 24.h),
+            SizedBox(height: 8.h),
             Padding(
               padding: EdgeInsets.only(left: 18.h),
               child: Text(
@@ -136,9 +166,45 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> with Singl
             SizedBox(height: 4.h),
             Consumer<HistoryTodayTabProvider>(
               builder: (context, provider, child) {
-                return provider.hasLunch 
-                  ? _buildColumnlinear1(context)
-                  : _buildEmptyLunch(context);
+                final lunchMeals = provider.getMealsByType('lunch');
+                return Container(
+                  height: 110.h,
+                  padding: EdgeInsets.only(right: 26.h),
+                  child: PageView(
+                    physics: const BouncingScrollPhysics(),
+                    children: [
+                      if (lunchMeals.isNotEmpty)
+                        ...lunchMeals.map((meal) => _buildMealCard(context, meal, 'lunch')),
+                      _buildEmptyLunch(context),
+                    ],
+                  ),
+                );
+              }
+            ),
+            SizedBox(height: 8.h),
+            Padding(
+              padding: EdgeInsets.only(left: 18.h),
+              child: Text(
+                "Dinner",
+                style: CustomTextStyles.headlineSmallBold,
+              ),
+            ),
+            SizedBox(height: 4.h),
+            Consumer<HistoryTodayTabProvider>(
+              builder: (context, provider, child) {
+                final dinnerMeals = provider.getMealsByType('dinner');
+                return Container(
+                  height: 110.h,
+                  padding: EdgeInsets.only(right: 26.h),
+                  child: PageView(
+                    physics: const BouncingScrollPhysics(),
+                    children: [
+                      if (dinnerMeals.isNotEmpty)
+                        ...dinnerMeals.map((meal) => _buildMealCard(context, meal, 'dinner')),
+                      _buildEmptyDinner(context),
+                    ],
+                  ),
+                );
               }
             ),
           ],
@@ -173,7 +239,6 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> with Singl
           },
           child: Stack(
             children: [
-              _buildMainContent(),
               SlideTransition(
                 position: _slideAnimation,
                 child: _buildMainContent(),
@@ -223,11 +288,11 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> with Singl
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                "1500 Kcal Remaining...",
+                "${_calculateRemainingCalories()} Kcal Remaining...",
                 style: CustomTextStyles.titleMediumGray90001Bold,
               ),
               Text(
-                "3000 kcal",
+                "${_calculateDailyCalories()} kcal",
                 style: TextStyle(
                   color: const Color(0xFFFF0000),
                   fontSize: 14,
@@ -247,7 +312,7 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> with Singl
             child: Row(
               children: [
                 Container(
-                  width: MediaQuery.of(context).size.width * 0.5,
+                  width: MediaQuery.of(context).size.width * (_calculateConsumedPercentage() / 100),
                   decoration: BoxDecoration(
                     color: const Color(0xFF4CD964),
                     borderRadius: BorderRadius.circular(4.h),
@@ -308,7 +373,7 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> with Singl
               Expanded(
                 flex: 2,
                 child: Ring(
-                  percent: _isLoading ? 0 : 78 / 98 * 100,
+                  percent: _isLoading ? 0 : _calculateProteinPercentage(),
                   color: RingColorScheme(
                     ringColor: Color(0xFFFA114F),
                     backgroundColor: Colors.grey.withOpacity(0.2),
@@ -316,7 +381,7 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> with Singl
                   radius: 60,
                   width: 15,
                   child: Ring(
-                    percent: _isLoading ? 0 : 45 / 70 * 100,
+                    percent: _isLoading ? 0 : _calculateFatsPercentage(),
                     color: RingColorScheme(
                       ringColor: Color(0xFFA6FF00),
                       backgroundColor: Colors.grey.withOpacity(0.2),
@@ -324,7 +389,7 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> with Singl
                     radius: 45,
                     width: 15,
                     child: Ring(
-                      percent: _isLoading ? 0 : 95 / 110 * 100,
+                      percent: _isLoading ? 0 : _calculateCarbsPercentage(),
                       color: RingColorScheme(
                         ringColor: Color(0xFF00FFF6),
                         backgroundColor: Colors.grey.withOpacity(0.2),
@@ -344,12 +409,14 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> with Singl
 
   /// Section Widget
   Widget _buildColumnlinear(BuildContext context) {
+    final provider = Provider.of<HistoryTodayTabProvider>(context, listen: false);
+    final meal = provider.getMealByType('breakfast');
+    
+    if (meal == null) return _buildEmptyBreakfast(context);
+    
     return Container(
       width: double.maxFinite,
-      margin: EdgeInsets.only(
-        left: 18.h,
-        right: 26.h,
-      ),
+      margin: EdgeInsets.symmetric(horizontal: 22.h),
       padding: EdgeInsets.all(8.h),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -368,7 +435,7 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> with Singl
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    "Salad",
+                    meal.name,
                     style: TextStyle(
                       fontSize: 17,
                       fontWeight: FontWeight.w400,
@@ -385,7 +452,7 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> with Singl
                         ),
                       ),
                       Text(
-                        " 69 kcal -100g",
+                        " ${meal.calories} kcal -${meal.servingSize.toInt()}g",
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.grey,
@@ -404,7 +471,6 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> with Singl
                 ),
                 child: GestureDetector(
                   onTap: () {
-                    final provider = context.read<HistoryTodayTabProvider>();
                     showDialog(
                       context: context,
                       builder: (BuildContext dialogContext) {
@@ -413,9 +479,8 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> with Singl
                           'breakfast',
                           () {
                             provider.deleteMeal('breakfast');
-                            Navigator.pop(dialogContext);
                           },
-                          'Salad',
+                          meal.name,
                         );
                       },
                     );
@@ -430,19 +495,19 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> with Singl
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               _buildMacroColumn(
-                "69g",
+                "${meal.macros['protein']?.toInt()}g",
                 "Protein",
                 const Color(0xFF4CD964),
                 0.7,
               ),
               _buildMacroColumn(
-                "69g",
+                "${meal.macros['fats']?.toInt()}g",
                 "Fats",
                 const Color(0xFFFA114F),
                 0.5,
               ),
               _buildMacroColumn(
-                "69g",
+                "${meal.macros['carbs']?.toInt()}g",
                 "Carbs",
                 const Color(0xFFFFD60A),
                 0.3,
@@ -505,12 +570,14 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> with Singl
 
   /// Section Widget
   Widget _buildColumnlinear1(BuildContext context) {
+    final provider = Provider.of<HistoryTodayTabProvider>(context, listen: false);
+    final meal = provider.getMealByType('lunch');
+    
+    if (meal == null) return _buildEmptyLunch(context);
+    
     return Container(
       width: double.maxFinite,
-      margin: EdgeInsets.only(
-        left: 18.h,
-        right: 26.h,
-      ),
+      margin: EdgeInsets.symmetric(horizontal: 22.h),
       padding: EdgeInsets.all(8.h),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -529,7 +596,7 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> with Singl
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    "Vegan bacon cheeseburger",
+                    meal.name,
                     style: TextStyle(
                       fontSize: 17,
                       fontWeight: FontWeight.w400,
@@ -546,7 +613,7 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> with Singl
                         ),
                       ),
                       Text(
-                        " 69 kcal -100g",
+                        " ${meal.calories} kcal -${meal.servingSize.toInt()}g",
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.grey,
@@ -565,7 +632,6 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> with Singl
                 ),
                 child: GestureDetector(
                   onTap: () {
-                    final provider = context.read<HistoryTodayTabProvider>();
                     showDialog(
                       context: context,
                       builder: (BuildContext dialogContext) {
@@ -574,9 +640,8 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> with Singl
                           'lunch',
                           () {
                             provider.deleteMeal('lunch');
-                            Navigator.pop(dialogContext);
                           },
-                          'Vegan bacon cheeseburger',
+                          meal.name,
                         );
                       },
                     );
@@ -591,19 +656,19 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> with Singl
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               _buildMacroColumn(
-                "69g",
+                "${meal.macros['protein']?.toInt()}g",
                 "Protein",
                 const Color(0xFF4CD964),
                 0.7,
               ),
               _buildMacroColumn(
-                "69g",
+                "${meal.macros['fats']?.toInt()}g",
                 "Fats",
                 const Color(0xFFFA114F),
                 0.5,
               ),
               _buildMacroColumn(
-                "69g",
+                "${meal.macros['carbs']?.toInt()}g",
                 "Carbs",
                 const Color(0xFFFFD60A),
                 0.3,
@@ -615,14 +680,10 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> with Singl
     );
   }
 
-
   Widget _buildEmptyBreakfast(BuildContext context) {
     return Container(
       width: double.maxFinite,
-      margin: EdgeInsets.only(
-        left: 18.h,
-        right: 26.h,
-      ),
+      margin: EdgeInsets.symmetric(horizontal: 22.h),
       padding: EdgeInsets.all(8.h),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -633,7 +694,6 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> with Singl
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          SizedBox(height: 8.h),
           Text(
             "You haven't logged your breakfast yet.",
             style: TextStyle(
@@ -656,13 +716,12 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> with Singl
                 color: Colors.white,
                 size: 20.h,
               ),
+              padding: EdgeInsets.zero,
               onPressed: () {
-                // Navigate to AI main page
                 Navigator.pushNamed(context, AppRoutes.aiChatMainScreen);
               },
             ),
           ),
-          SizedBox(height: 8.h),
         ],
       ),
     );
@@ -671,10 +730,7 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> with Singl
   Widget _buildEmptyLunch(BuildContext context) {
     return Container(
       width: double.maxFinite,
-      margin: EdgeInsets.only(
-        left: 18.h,
-        right: 26.h,
-      ),
+      margin: EdgeInsets.symmetric(horizontal: 22.h),
       padding: EdgeInsets.all(8.h),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -715,6 +771,312 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> with Singl
             ),
           ),
           SizedBox(height: 8.h),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyDinner(BuildContext context) {
+    return Container(
+      width: double.maxFinite,
+      margin: EdgeInsets.symmetric(horizontal: 22.h),
+      padding: EdgeInsets.all(8.h),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFB2D7FF)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          SizedBox(height: 8.h),
+          Text(
+            "You haven't logged your dinner yet.",
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.black87,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          SizedBox(height: 8.h),
+          Container(
+            width: 40.h,
+            height: 40.h,
+            decoration: BoxDecoration(
+              color: const Color(0xFFB2D7FF),
+              shape: BoxShape.circle,
+            ),
+            child: IconButton(
+              icon: Icon(
+                Icons.add,
+                color: Colors.white,
+                size: 20.h,
+              ),
+              onPressed: () {
+                // Navigate to AI main page
+                Navigator.pushNamed(context, AppRoutes.aiChatMainScreen);
+              },
+            ),
+          ),
+          SizedBox(height: 8.h),
+        ],
+      ),
+    );
+  }
+
+  double _calculateProteinPercentage() {
+    final consumed = 78.0; // TODO: Get from history provider
+    final total = 98.0;
+    return (consumed / total * 100).clamp(0, 100);
+  }
+
+  double _calculateFatsPercentage() {
+    final consumed = 45.0; // TODO: Get from history provider
+    final total = 70.0;
+    return (consumed / total * 100).clamp(0, 100);
+  }
+
+  double _calculateCarbsPercentage() {
+    final consumed = 95.0; // TODO: Get from history provider
+    final total = 110.0;
+    return (consumed / total * 100).clamp(0, 100);
+  }
+
+  int _calculateRemainingCalories() {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final dailyCalories = userProvider.user.dailyCalories ?? 2000;
+    final consumedCalories = 1500; // TODO: Get this from history provider
+    return dailyCalories - consumedCalories;
+  }
+
+  int _calculateDailyCalories() {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    return userProvider.user.dailyCalories ?? 2000;
+  }
+
+  double _calculateConsumedPercentage() {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final dailyCalories = userProvider.user.dailyCalories ?? 2000;
+    final consumedCalories = 1500; // TODO: Get this from history provider
+    
+    // Calculate percentage of calories consumed
+    final percentage = (consumedCalories / dailyCalories) * 100;
+    return percentage.clamp(0, 100); // Ensure percentage is between 0 and 100
+  }
+
+  Widget _buildColumnlinear2(BuildContext context) {
+    final provider = Provider.of<HistoryTodayTabProvider>(context, listen: false);
+    final meal = provider.getMealByType('dinner');
+    
+    if (meal == null) return _buildEmptyDinner(context);
+    
+    return Container(
+      width: double.maxFinite,
+      margin: EdgeInsets.symmetric(horizontal: 22.h),
+      padding: EdgeInsets.all(8.h),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFB2D7FF)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    meal.name,
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w400,
+                      color: Colors.black,
+                    ),
+                  ),
+                  SizedBox(height: 2.h),
+                  Row(
+                    children: [
+                      Text(
+                        "🔥",
+                        style: TextStyle(
+                          fontSize: 12,
+                        ),
+                      ),
+                      Text(
+                        " ${meal.calories} kcal -${meal.servingSize.toInt()}g",
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              Container(
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                  color: Color.fromRGBO(178, 215, 255, 0.3),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: GestureDetector(
+                  onTap: () {
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext dialogContext) {
+                        return BlurChooseActionScreenDialog.builder(
+                          dialogContext,
+                          'dinner',
+                          () {
+                            provider.deleteMeal('dinner');
+                          },
+                          meal.name,
+                        );
+                      },
+                    );
+                  },
+                  child: Icon(Icons.more_horiz, color: Colors.black54, size: 16),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 8.h),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _buildMacroColumn(
+                "${meal.macros['protein']?.toInt()}g",
+                "Protein",
+                const Color(0xFF4CD964),
+                0.7,
+              ),
+              _buildMacroColumn(
+                "${meal.macros['fats']?.toInt()}g",
+                "Fats",
+                const Color(0xFFFA114F),
+                0.5,
+              ),
+              _buildMacroColumn(
+                "${meal.macros['carbs']?.toInt()}g",
+                "Carbs",
+                const Color(0xFFFFD60A),
+                0.3,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMealCard(BuildContext context, Meal meal, String mealType) {
+    return Container(
+      width: double.maxFinite,
+      margin: EdgeInsets.symmetric(horizontal: 22.h),
+      padding: EdgeInsets.all(8.h),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFB2D7FF)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    meal.name,
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w400,
+                      color: Colors.black,
+                    ),
+                  ),
+                  SizedBox(height: 2.h),
+                  Row(
+                    children: [
+                      Text(
+                        "🔥",
+                        style: TextStyle(
+                          fontSize: 12,
+                        ),
+                      ),
+                      Text(
+                        " ${meal.calories} kcal -${meal.servingSize.toInt()}g",
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              Container(
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                  color: Color.fromRGBO(178, 215, 255, 0.3),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: GestureDetector(
+                  onTap: () {
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext dialogContext) {
+                        return BlurChooseActionScreenDialog.builder(
+                          dialogContext,
+                          mealType,
+                          () {
+                            Provider.of<HistoryTodayTabProvider>(context, listen: false).deleteMeal(meal.id);
+                          },
+                          meal.name,
+                        );
+                      },
+                    );
+                  },
+                  child: Icon(Icons.more_horiz, color: Colors.black54, size: 16),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 8.h),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _buildMacroColumn(
+                "${meal.macros['protein']?.toInt()}g",
+                "Protein",
+                const Color(0xFF4CD964),
+                0.7,
+              ),
+              _buildMacroColumn(
+                "${meal.macros['fats']?.toInt()}g",
+                "Fats",
+                const Color(0xFFFA114F),
+                0.5,
+              ),
+              _buildMacroColumn(
+                "${meal.macros['carbs']?.toInt()}g",
+                "Carbs",
+                const Color(0xFFFFD60A),
+                0.3,
+              ),
+            ],
+          ),
         ],
       ),
     );

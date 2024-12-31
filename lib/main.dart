@@ -50,13 +50,19 @@ void main() async {
         ChangeNotifierProvider<app_theme.ThemeProvider>(
           create: (_) => app_theme.ThemeProvider(),
         ),
+        ChangeNotifierProvider<app_auth.AuthProvider>(
+          create: (context) => app_auth.AuthProvider(),
+        ),
+        ChangeNotifierProvider<UserProvider>(
+          create: (context) => UserProvider(),
+        ),
         ChangeNotifierProvider(create: (_) => ProfileProvider()),
         ChangeNotifierProvider(create: (_) => ProfileStaticProvider()),
         ChangeNotifierProvider(
           create: (_) => ProfilePictureProvider(prefs),
         ),
         ChangeNotifierProvider(
-          create: (_) => UserInfoProvider(prefs),
+          create: (_) => UserInfoProvider(),
         ),
       ],
       child: MyApp(),
@@ -85,59 +91,42 @@ class MyApp extends StatelessWidget {
               0, 0, 0, 1, 0,
             ],
           ),
-          child: MultiProvider(
-            providers: [
-              ChangeNotifierProvider<UserProvider>(
-                create: (context) => UserProvider(),
+          child: MaterialApp(
+            title: 'trackeat',
+            debugShowCheckedModeBanner: false,
+            theme: ThemeData(
+              appBarTheme: AppBarTheme(
+                systemOverlayStyle: SystemUiOverlayStyle.dark.copyWith(
+                  statusBarColor: Colors.transparent,
+                  systemNavigationBarColor: Colors.transparent,
+                  systemNavigationBarDividerColor: Colors.transparent,
+                ),
               ),
-              ChangeNotifierProvider<app_auth.AuthProvider>(
-                create: (context) => app_auth.AuthProvider(),
-              ),
-            ],
-            child: MaterialApp(
-              title: 'trackeat',
-              debugShowCheckedModeBanner: false,
-              theme: ThemeData(
-                appBarTheme: AppBarTheme(
-                  systemOverlayStyle: SystemUiOverlayStyle.dark.copyWith(
+            ),
+            builder: (context, child) {
+              return MediaQuery(
+                data: MediaQuery.of(context).copyWith(
+                  textScaler: TextScaler.linear(themeProvider.textScaleFactor),
+                ),
+                child: AnnotatedRegion<SystemUiOverlayStyle>(
+                  value: SystemUiOverlayStyle.dark.copyWith(
                     statusBarColor: Colors.transparent,
                     systemNavigationBarColor: Colors.transparent,
                     systemNavigationBarDividerColor: Colors.transparent,
                   ),
+                  child: child!,
                 ),
-                // ... other theme data
-              ),
-              builder: (context, child) {
-                // Ensure system overlays are visible
-                SystemChrome.setEnabledSystemUIMode(
-                  SystemUiMode.manual,
-                  overlays: [SystemUiOverlay.top, SystemUiOverlay.bottom],
-                );
-                
-                return MediaQuery(
-                  data: MediaQuery.of(context).copyWith(
-                    textScaler: TextScaler.linear(themeProvider.textScaleFactor),
-                  ),
-                  child: AnnotatedRegion<SystemUiOverlayStyle>(
-                    value: SystemUiOverlayStyle.dark.copyWith(
-                      statusBarColor: Colors.transparent,
-                      systemNavigationBarColor: Colors.transparent,
-                      systemNavigationBarDividerColor: Colors.transparent,
-                    ),
-                    child: child!,
-                  ),
-                );
-              },
-              navigatorKey: NavigatorService.navigatorKey,
-              localizationsDelegates: [
-                GlobalMaterialLocalizations.delegate,
-                GlobalWidgetsLocalizations.delegate,
-                GlobalCupertinoLocalizations.delegate
-              ],
-              supportedLocales: [Locale('en', '')],
-              initialRoute: AppRoutes.initialRoute,
-              routes: AppRoutes.routes,
-            ),
+              );
+            },
+            navigatorKey: NavigatorService.navigatorKey,
+            localizationsDelegates: [
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate
+            ],
+            supportedLocales: [Locale('en', '')],
+            initialRoute: AppRoutes.initialRoute,
+            routes: AppRoutes.routes,
           ),
         );
       },

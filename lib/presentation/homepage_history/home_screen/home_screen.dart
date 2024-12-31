@@ -39,6 +39,8 @@ class HomeScreenState extends State<HomeScreen> {
         setState(() {
           _isLoading = false;
         });
+        // Update suggestions with user's name
+        Provider.of<HomeProvider>(context, listen: false).updateSuggestions(context);
       }
     });
   }
@@ -95,7 +97,7 @@ class HomeScreenState extends State<HomeScreen> {
             Consumer<UserInfoProvider>(
               builder: (context, userInfo, _) {
                 return AppbarTitle(
-                  text: userInfo.fullName,
+                  text: userInfo.firstName,
                 );
               },
             ),

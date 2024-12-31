@@ -432,66 +432,146 @@ class AiChatMainScreenState extends State<AiChatMainScreen> {
                       margin: EdgeInsets.only(bottom: 12.h),
                       child: Column(
                         children: [
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: GestureDetector(
-                              onTap: () {
-                                provider.setTrackDialogState(false);
-                              },
-                              child: Padding(
-                                padding: EdgeInsets.only(right: 8.h, bottom: 8.h),
-                                child: Text(
-                                  'Cancel',
-                                  style: TextStyle(
-                                    color: Colors.red,
-                                    fontSize: 16.h,
+                          if (!provider.showTrackingSuccess)
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: GestureDetector(
+                                onTap: () {
+                                  provider.setTrackDialogState(false);
+                                },
+                                child: Padding(
+                                  padding: EdgeInsets.only(right: 8.h, bottom: 8.h),
+                                  child: Text(
+                                    'Cancel',
+                                    style: TextStyle(
+                                      color: Colors.red,
+                                      fontSize: 16.h,
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
-                          ),
-                          Container(
-                            height: 50.h,
-                            decoration: BoxDecoration(
-                              color: Colors.grey.withOpacity(0.3),
-                              borderRadius: BorderRadius.circular(25.h),
-                            ),
-                            child: GestureDetector(
-                              onHorizontalDragEnd: (details) {
-                                if (details.primaryVelocity! < 0) {
-                                  provider.trackNutrition();
-                                }
-                              },
-                              child: Row(
-                                children: [
-                                  Container(
-                                    padding: EdgeInsets.all(8.h),
-                                    margin: EdgeInsets.all(4.h),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: Icon(
-                                      Icons.check,
-                                      color: Colors.green,
-                                      size: 24.h,
-                                    ),
-                                  ),
-                                  Expanded(
-                                    child: Text(
-                                      'Slide to track it',
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 16.h,
+                          if (!provider.showMealTypeSelection && !provider.showTrackingSuccess)
+                            Container(
+                              height: 50.h,
+                              decoration: BoxDecoration(
+                                color: Colors.grey.withOpacity(0.3),
+                                borderRadius: BorderRadius.circular(25.h),
+                              ),
+                              child: GestureDetector(
+                                onHorizontalDragUpdate: (details) {
+                                  final RenderBox box = context.findRenderObject() as RenderBox;
+                                  final double maxDx = box.size.width - 50.h;
+                                  final double progress = (details.localPosition.dx / maxDx).clamp(0.0, 1.0);
+                                  provider.updateSlideProgress(progress);
+                                },
+                                onHorizontalDragEnd: (_) {
+                                  if (provider.slideProgress < 0.8) {
+                                    provider.resetSlideProgress();
+                                  }
+                                },
+                                onHorizontalDragCancel: () {
+                                  provider.resetSlideProgress();
+                                },
+                                child: Stack(
+                                  children: [
+                                    // Sliding progress indicator
+                                    Container(
+                                      width: (MediaQuery.of(context).size.width - 72.h) * provider.slideProgress,
+                                      decoration: BoxDecoration(
+                                        color: Colors.green,
+                                        borderRadius: BorderRadius.circular(25.h),
                                       ),
                                     ),
+                                    // Content
+                                    Row(
+                                      children: [
+                                        Transform.translate(
+                                          offset: Offset(
+                                            provider.slideProgress * (MediaQuery.of(context).size.width - 120.h),
+                                            0,
+                                          ),
+                                          child: Container(
+                                            padding: EdgeInsets.all(8.h),
+                                            margin: EdgeInsets.all(4.h),
+                                            decoration: BoxDecoration(
+                                              color: Colors.white,
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: Icon(
+                                              Icons.check,
+                                              color: Colors.green,
+                                              size: 24.h,
+                                            ),
+                                          ),
+                                        ),
+                                        Expanded(
+                                          child: Center(
+                                            child: Text(
+                                              'Slide to track it',
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 16.h,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            )
+                          else if (provider.showTrackingSuccess)
+                            Container(
+                              padding: EdgeInsets.symmetric(horizontal: 16.h, vertical: 8.h),
+                              decoration: BoxDecoration(
+                                color: Colors.green,
+                                borderRadius: BorderRadius.circular(20.h),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    'Tracked Successfully',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 14.h,
+                                    ),
                                   ),
-                                  SizedBox(width: 40.h),
+                                  SizedBox(width: 4.h),
+                                  Icon(
+                                    Icons.check,
+                                    color: Colors.white,
+                                    size: 16.h,
+                                  ),
                                 ],
                               ),
+                            )
+                          else
+                            Column(
+                              children: [
+                                Text(
+                                  'Track it as:',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16.h,
+                                  ),
+                                ),
+                                SizedBox(height: 12.h),
+                                Container(
+                                  height: 50.h,
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                    children: [
+                                      _buildMealTypeButton(context, 'Breakfast', provider),
+                                      _buildMealTypeButton(context, 'Lunch', provider),
+                                      _buildMealTypeButton(context, 'Dinner', provider),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
                         ],
                       ),
                     ),
@@ -672,6 +752,26 @@ class AiChatMainScreenState extends State<AiChatMainScreen> {
               width: 24.h,
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMealTypeButton(BuildContext context, String mealType, AiChatMainProvider provider) {
+    return GestureDetector(
+      onTap: () => provider.selectMealType(mealType),
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 16.h, vertical: 8.h),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1B6A9C),
+          borderRadius: BorderRadius.circular(16.h),
+        ),
+        child: Text(
+          mealType,
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 13.h,
+          ),
         ),
       ),
     );
