@@ -25,13 +25,13 @@ class BlurChooseActionScreenDialog extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16.h),
       ),
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFB2D7FF),
       child: Container(
+        margin: EdgeInsets.all(2.h),
         padding: EdgeInsets.all(16.h),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(16.h),
-          border: Border.all(color: const Color(0xFFB2D7FF)),
+          borderRadius: BorderRadius.circular(14.h),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -50,26 +50,28 @@ class BlurChooseActionScreenDialog extends StatelessWidget {
                 ),
                 GestureDetector(
                   onTap: () => Navigator.pop(context),
-                  child: Icon(Icons.close, size: 24),
+                  child: Container(
+                    padding: EdgeInsets.all(4.h),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFB2D7FF).withOpacity(0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(Icons.close, size: 20, color: Colors.black87),
+                  ),
                 ),
               ],
             ),
             SizedBox(height: 24.h),
-            CustomOutlinedButton(
-              height: 48.h,
-              text: "Edit",
-              buttonStyle: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all(Colors.white),
-                shape: MaterialStateProperty.all(
-                  RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16.h),
-                    side: BorderSide(color: const Color(0xFFB2D7FF)),
-                  ),
+            OutlinedButton(
+              style: OutlinedButton.styleFrom(
+                backgroundColor: Colors.white,
+                side: BorderSide(color: const Color(0xFFB2D7FF), width: 2),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16.h),
                 ),
-              ),
-              buttonTextStyle: TextStyle(
-                fontSize: 16,
-                color: Colors.black87,
+                padding: EdgeInsets.symmetric(vertical: 8.h),
+                minimumSize: Size(double.infinity, 40.h),
+                fixedSize: Size.fromHeight(40.h),
               ),
               onPressed: () {
                 Navigator.pop(context);
@@ -78,25 +80,35 @@ class BlurChooseActionScreenDialog extends StatelessWidget {
                   builder: (context) => BlurEditScreenDialog.builder(context, mealName),
                 );
               },
-            ),
-            SizedBox(height: 16.h),
-            CustomOutlinedButton(
-              height: 48.h,
-              text: "Delete",
-              buttonStyle: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all(Colors.white),
-                shape: MaterialStateProperty.all(
-                  RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16.h),
-                    side: BorderSide(color: const Color(0xFFB2D7FF)),
-                  ),
+              child: Text(
+                "Edit",
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87,
                 ),
               ),
-              buttonTextStyle: TextStyle(
-                fontSize: 16,
-                color: Colors.red,
+            ),
+            SizedBox(height: 16.h),
+            OutlinedButton(
+              style: OutlinedButton.styleFrom(
+                backgroundColor: Colors.white,
+                side: BorderSide(color: const Color(0xFFB2D7FF), width: 2),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16.h),
+                ),
+                padding: EdgeInsets.symmetric(vertical: 8.h),
+                minimumSize: Size(double.infinity, 40.h),
+                fixedSize: Size.fromHeight(40.h),
               ),
               onPressed: onDelete,
+              child: Text(
+                "Delete",
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.red,
+                ),
+              ),
             ),
             SizedBox(height: 8.h),
           ],
@@ -109,3 +121,4 @@ class BlurChooseActionScreenDialog extends StatelessWidget {
     return BlurChooseActionScreenDialog(mealType: mealType, onDelete: onDelete, mealName: mealName);
   }
 }
+

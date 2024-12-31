@@ -26,7 +26,7 @@ import '../presentation/homepage_history/history_today_tab_screen/history_today_
 import '../presentation/profile_screen/profile_screen.dart';
 import '../presentation/profile_static_screen/profile_static_screen.dart';
 import '../presentation/accessibility_settings_screen/accessibility_settings_screen.dart';
-import '../presentation/ai_chat/ai_chat_splash_screen/ai_chat_splash_screen.dart';
+// import '../presentation/ai_chat/ai_chat_splash_screen/ai_chat_splash_screen.dart';
 import '../presentation/ai_chat/ai_chat_main_page/ai_chat_main_page_screen.dart';
 import '../presentation/social_profile_myself_screen/social_profile_myself_screen.dart';
 import '../presentation/challenge_award_screen/challenge_award_screen.dart';
@@ -40,7 +40,7 @@ class AppRoutes {
   static const String homeInitialPage = '/home_initial_page';
   static const String historyTodayTabScreen = '/history_today_tab_screen';
   static const String historyEmptyBreakfastScreen = '/history_empty_breakfast_screen';
-  static const String aiChatSplashScreen = '/ai_chat_splash_screen';
+  // static const String aiChatSplashScreen = '/ai_chat_splash_screen';
   static const String aiChatMainScreen = '/ai_chat_main_screen';
   static const String aiChatInfoScreen = '/ai_chat_info_screen';
   static const String aiChatCameraScreen = '/ai_chat_camera_screen';
@@ -91,7 +91,7 @@ class AppRoutes {
         finalizedAccountScreen: FinalizedAccountScreen.builder,
         homeScreen: HomeScreen.builder,
         historyTodayTabScreen: HistoryTodayTabScreen.builder,
-        aiChatSplashScreen: AiChatSplashScreen.builder,
+        // aiChatSplashScreen: AiChatSplashScreen.builder,
         aiChatMainScreen: AiChatMainScreen.builder,
         initialRoute: SplashScreen.builder,
         profileScreen: (context) => ProfileScreen(),

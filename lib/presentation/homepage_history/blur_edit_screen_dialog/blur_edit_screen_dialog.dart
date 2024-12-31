@@ -43,7 +43,14 @@ class BlurEditScreenDialog extends StatelessWidget {
                 ),
                 GestureDetector(
                   onTap: () => Navigator.pop(context),
-                  child: Icon(Icons.close, size: 24),
+                  child: Container(
+                    padding: EdgeInsets.all(4.h),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFB2D7FF).withOpacity(0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(Icons.close, size: 20, color: Colors.black87),
+                  ),
                 ),
               ],
             ),

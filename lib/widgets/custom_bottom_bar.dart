@@ -81,8 +81,10 @@ class CustomBottomBarState extends State<CustomBottomBar> {
           child: Center(
             child: GestureDetector(
               onTap: () {
-                widget.onChanged?.call(BottomBarEnum.AI);
-                Navigator.pushNamed(context, AppRoutes.aiChatSplashScreen);
+                if (currentRoute != AppRoutes.aiChatMainScreen) {
+                  widget.onChanged?.call(BottomBarEnum.AI);
+                  Navigator.pushNamed(context, AppRoutes.aiChatMainScreen);
+                }
               },
               child: SvgPicture.asset(
                 'assets/images/ai_logo.svg',

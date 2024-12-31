@@ -65,13 +65,6 @@ class AiChatMainScreenState extends State<AiChatMainScreen> {
             setState(() {
               _isListening = status == 'listening';
             });
-            
-            if (status == 'done' || status == 'notListening') {
-              // Send the message if we have text
-              if (provider.messageController.text.isNotEmpty) {
-                provider.sendMessage(provider.messageController.text);
-              }
-            }
           },
           onError: (errorNotification) {
             print('Speech recognition error: ${errorNotification.errorMsg}');
@@ -120,7 +113,7 @@ class AiChatMainScreenState extends State<AiChatMainScreen> {
               });
             },
             listenFor: Duration(seconds: 30),
-            pauseFor: Duration(seconds: 3),
+            pauseFor: Duration(seconds: 8),
             partialResults: true,
             cancelOnError: false,
             listenMode: stt.ListenMode.dictation,
@@ -140,10 +133,6 @@ class AiChatMainScreenState extends State<AiChatMainScreen> {
     } else {
       setState(() => _isListening = false);
       await _speech.stop();
-      // Send the message if we have text
-      if (provider.messageController.text.isNotEmpty) {
-        provider.sendMessage(provider.messageController.text);
-      }
     }
   }
 
@@ -225,6 +214,8 @@ class AiChatMainScreenState extends State<AiChatMainScreen> {
                                       context,
                                       PageRouteBuilder(
                                         opaque: false,
+                                        transitionDuration: Duration(milliseconds: 150),
+                                        reverseTransitionDuration: Duration(milliseconds: 150),
                                         pageBuilder: (context, _, __) => const InfoBlurScreen(),
                                         transitionsBuilder: (context, animation, secondaryAnimation, child) {
                                           return Stack(
@@ -393,7 +384,7 @@ class AiChatMainScreenState extends State<AiChatMainScreen> {
               Navigator.pushNamed(context, "/leaderboard");
               break;
             case BottomBarEnum.AI:
-              Navigator.pushNamed(context, AppRoutes.aiChatSplashScreen);
+              // Already on AI chat page, no navigation needed
               break;
           }
         },

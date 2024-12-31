@@ -29,12 +29,26 @@ class HistoryTodayTabScreen extends StatefulWidget {
   }
 }
 
-class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> {
+class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> with SingleTickerProviderStateMixin {
   bool _isLoading = true;
+  late AnimationController _slideController;
+  late Animation<Offset> _slideAnimation;
 
   @override
   void initState() {
     super.initState();
+    _slideController = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: 400),
+    );
+    _slideAnimation = Tween<Offset>(
+      begin: Offset.zero,
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _slideController,
+      curve: Curves.easeOutCubic,
+    ));
+
     // Simulate loading delay
     Future.delayed(Duration(milliseconds: 500), () {
       if (mounted) {
@@ -45,6 +59,102 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> {
     });
   }
 
+  void _animateAndNavigate(bool goingBack) {
+    final provider = Provider.of<HistoryTodayTabProvider>(context, listen: false);
+    
+    setState(() {
+      _slideAnimation = Tween<Offset>(
+        begin: Offset(goingBack ? -1 : 1, 0),
+        end: Offset.zero,
+      ).animate(CurvedAnimation(
+        parent: _slideController,
+        curve: Curves.easeOutCubic,
+      ));
+    });
+
+    if (goingBack) {
+      provider.goToPreviousDay();
+    } else {
+      provider.goToNextDay();
+    }
+    
+    _slideController.forward().then((_) {
+      _slideController.reset();
+    });
+  }
+
+  @override
+  void dispose() {
+    _slideController.dispose();
+    super.dispose();
+  }
+
+  Widget _buildMainContent() {
+    return SingleChildScrollView(
+      child: Container(
+        height: 760.h,
+        width: double.maxFinite,
+        padding: EdgeInsets.symmetric(horizontal: 4.h),
+        child: Column(
+          mainAxisSize: MainAxisSize.max,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: EdgeInsets.only(left: 4.h),
+              child: Text(
+                "History",
+                style: theme.textTheme.headlineMedium,
+              ),
+            ),
+            Align(
+              alignment: Alignment.center,
+              child: Consumer<HistoryTodayTabProvider>(
+                builder: (context, provider, _) => Text(
+                  provider.getFormattedDate().toUpperCase(),
+                  style: CustomTextStyles.labelLargeSFProBluegray400,
+                ),
+              ),
+            ),
+            SizedBox(height: 12.h),
+            _buildCalories(context),
+            SizedBox(height: 38.h),
+            Padding(
+              padding: EdgeInsets.only(left: 18.h),
+              child: Text(
+                "Breakfast",
+                style: CustomTextStyles.headlineSmallBold,
+              ),
+            ),
+            SizedBox(height: 6.h),
+            Consumer<HistoryTodayTabProvider>(
+              builder: (context, provider, child) {
+                return provider.hasBreakfast 
+                  ? _buildColumnlinear(context)
+                  : _buildEmptyBreakfast(context);
+              }
+            ),
+            SizedBox(height: 24.h),
+            Padding(
+              padding: EdgeInsets.only(left: 18.h),
+              child: Text(
+                "Lunch",
+                style: CustomTextStyles.headlineSmallBold,
+              ),
+            ),
+            SizedBox(height: 4.h),
+            Consumer<HistoryTodayTabProvider>(
+              builder: (context, provider, child) {
+                return provider.hasLunch 
+                  ? _buildColumnlinear1(context)
+                  : _buildEmptyLunch(context);
+              }
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -52,68 +162,31 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> {
       appBar: _buildAppbar(context),
       body: SafeArea(
         top: false,
-        child: SizedBox(
-          width: double.maxFinite,
-          child: SingleChildScrollView(
-            child: Container(
-              height: 760.h,
-              width: double.maxFinite,
-              padding: EdgeInsets.symmetric(horizontal: 4.h),
-              child: Column(
-                mainAxisSize: MainAxisSize.max,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: EdgeInsets.only(left: 4.h),
-                    child: Text(
-                      "History",
-                      style: theme.textTheme.headlineMedium,
-                    ),
-                  ),
-                  Align(
-                    alignment: Alignment.center,
-                    child: Text(
-                      DateTimeUtils.getCurrentDate().toUpperCase(),
-                      style: CustomTextStyles.labelLargeSFProBluegray400,
-                    ),
-                  ),
-                  SizedBox(height: 12.h),
-                  _buildCalories(context),
-                  SizedBox(height: 38.h),
-                  Padding(
-                    padding: EdgeInsets.only(left: 18.h),
-                    child: Text(
-                      "Breakfast",
-                      style: CustomTextStyles.headlineSmallBold,
-                    ),
-                  ),
-                  SizedBox(height: 6.h),
-                  Consumer<HistoryTodayTabProvider>(
-                    builder: (context, provider, child) {
-                      return provider.hasBreakfast 
-                        ? _buildColumnlinear(context)
-                        : _buildEmptyBreakfast(context);
-                    }
-                  ),
-                  SizedBox(height: 24.h),
-                  Padding(
-                    padding: EdgeInsets.only(left: 18.h),
-                    child: Text(
-                      "Lunch",
-                      style: CustomTextStyles.headlineSmallBold,
-                    ),
-                  ),
-                  SizedBox(height: 4.h),
-                  Consumer<HistoryTodayTabProvider>(
-                    builder: (context, provider, child) {
-                      return provider.hasLunch 
-                        ? _buildColumnlinear1(context)
-                        : _buildEmptyLunch(context);
-                    }
-                  ),
-                ],
+        child: GestureDetector(
+          onHorizontalDragEnd: (details) {
+            // Require minimum velocity and distance for swipe
+            if (details.primaryVelocity!.abs() < 800) {  // Minimum velocity threshold
+              return;
+            }
+            
+            final provider = Provider.of<HistoryTodayTabProvider>(context, listen: false);
+            if (details.primaryVelocity! > 0) { // Swiping right (to go back)
+              _animateAndNavigate(true);
+            } else if (details.primaryVelocity! < 0 && provider.canGoForward()) { // Swiping left (to go forward)
+              // Double check we're not on today's date
+              if (!provider.isToday()) {
+                _animateAndNavigate(false);
+              }
+            }
+          },
+          child: Stack(
+            children: [
+              _buildMainContent(),
+              SlideTransition(
+                position: _slideAnimation,
+                child: _buildMainContent(),
               ),
-            ),
+            ],
           ),
         ),
       ),
@@ -636,7 +709,8 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> {
                 size: 20.h,
               ),
               onPressed: () {
-                // Your existing onPressed logic
+                // Navigate to AI main page
+                Navigator.pushNamed(context, AppRoutes.aiChatMainScreen);
               },
             ),
           ),
@@ -687,7 +761,8 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> {
                 size: 20.h,
               ),
               onPressed: () {
-                // Your existing onPressed logic
+                // Navigate to AI main page
+                Navigator.pushNamed(context, AppRoutes.aiChatMainScreen);
               },
             ),
           ),
