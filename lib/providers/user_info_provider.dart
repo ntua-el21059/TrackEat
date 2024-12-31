@@ -1,58 +1,60 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import '../services/firebase/auth/auth_service.dart';
 import '../services/firebase/firestore/firestore_service.dart';
 import '../models/user_model.dart';
 
 class UserInfoProvider extends ChangeNotifier {
-  final AuthService _authService = AuthService();
-  final FirestoreService _firestoreService = FirestoreService();
-  UserModel? _user;
-
   String _birthdate = '';
   String _gender = '';
   double _height = 0;
   int _dailyCalories = 0;
+  final FirestoreService _firestoreService = FirestoreService();
+  UserModel? _user;
 
-  UserInfoProvider() {
-    _loadUserInfo();
-    // Listen to auth state changes
-    FirebaseAuth.instance.authStateChanges().listen((User? user) {
-      if (user != null) {
-        _loadUserInfo();
-      } else {
-        _user = null;
-        notifyListeners();
-      }
-    });
-  }
-
+  // Getters
+  String get birthdate => _birthdate;
+  String get gender => _gender;
+  String get height => _height.toString();
+  int get dailyCalories => _dailyCalories;
   String get firstName => _user?.firstName ?? 'User';
   String get lastName => _user?.lastName ?? '';
   String get username => _user?.username ?? 'user';
   String get fullName => '${firstName} ${lastName}'.trim();
 
-  String get birthdate => _birthdate;
-  String get gender => _gender;
-  String get height => _height.toString();
-  int get dailyCalories => _dailyCalories;
-  String get birthdate => _user?.birthdate ?? '';
-  String get gender => _user?.gender ?? '';
-  String get height => _user?.height?.toString() ?? '';
-  String get dailyCalories => _user?.dailyCalories?.toString() ?? '';
-
-  Future<void> _loadUserInfo() async {
-    try {
-      final currentUser = _authService.currentUser;
-      if (currentUser?.email != null) {
-        print('Loading user info for email: ${currentUser!.email}');
-        _user = await _firestoreService.getUser(currentUser.email!);
-        print('Loaded user info: ${_user?.toJson()}');
-        notifyListeners();
-      }
-    } catch (e) {
-      print('Error loading user info: $e');
+  // Update methods
+  Future<void> updateBirthdate(String date) async {
+    _birthdate = date;
+    if (_user != null) {
+      _user = _user!.copyWith(birthdate: date);
+      await _firestoreService.createUser(_user!);
     }
+    notifyListeners();
+  }
+
+  Future<void> updateGender(String newGender) async {
+    _gender = newGender;
+    if (_user != null) {
+      _user = _user!.copyWith(gender: newGender);
+      await _firestoreService.createUser(_user!);
+    }
+    notifyListeners();
+  }
+
+  Future<void> updateHeight(String newHeight) async {
+    _height = double.tryParse(newHeight) ?? 0;
+    if (_user != null) {
+      _user = _user!.copyWith(height: _height);
+      await _firestoreService.createUser(_user!);
+    }
+    notifyListeners();
+  }
+
+  Future<void> updateDailyCalories(String calories) async {
+    _dailyCalories = int.tryParse(calories) ?? 0;
+    if (_user != null) {
+      _user = _user!.copyWith(dailyCalories: _dailyCalories);
+      await _firestoreService.createUser(_user!);
+    }
+    notifyListeners();
   }
 
   Future<void> updateName(String firstName, String lastName) async {
@@ -71,69 +73,21 @@ class UserInfoProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> updateBirthdate(String date) async {
-    _birthdate = date;
-    notifyListeners();
-  }
-
-  Future<void> updateGender(String newGender) async {
-    _gender = newGender;
-    notifyListeners();
-  }
-
-  Future<void> updateHeight(String newHeight) async {
-    String cleanHeight = newHeight.replaceAll(' cm', '');
-    _height = double.tryParse(cleanHeight) ?? 0;
-    notifyListeners();
-  }
-
-  Future<void> updateDailyCalories(String calories) async {
-    _dailyCalories = int.tryParse(calories) ?? 0;
-    notifyListeners();
-  }
-
   Future<void> clearUserInfo() async {
     _birthdate = '';
     _gender = '';
     _height = 0;
     _dailyCalories = 0;
+    _user = null;
     notifyListeners();
   }
 
-  Future<void> updateBirthdate(String birthdate) async {
-    if (_user != null) {
-      _user = _user!.copyWith(birthdate: birthdate);
-      await _firestoreService.createUser(_user!);
-      notifyListeners();
-    }
-  }
-
-  Future<void> updateGender(String gender) async {
-    if (_user != null) {
-      _user = _user!.copyWith(gender: gender);
-      await _firestoreService.createUser(_user!);
-      notifyListeners();
-    }
-  }
-
-  Future<void> updateHeight(String height) async {
-    if (_user != null) {
-      _user = _user!.copyWith(height: double.tryParse(height));
-      await _firestoreService.createUser(_user!);
-      notifyListeners();
-    }
-  }
-
-  Future<void> updateDailyCalories(String calories) async {
-    if (_user != null) {
-      _user = _user!.copyWith(dailyCalories: int.tryParse(calories));
-      await _firestoreService.createUser(_user!);
-      notifyListeners();
-    }
-  }
-
-  Future<void> clearUserInfo() async {
-    _user = null;
+  Future<void> setUser(UserModel user) async {
+    _user = user;
+    _birthdate = user.birthdate ?? '';
+    _gender = user.gender ?? '';
+    _height = user.height ?? 0;
+    _dailyCalories = user.dailyCalories ?? 0;
     notifyListeners();
   }
 } 
