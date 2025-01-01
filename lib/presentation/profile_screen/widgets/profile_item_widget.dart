@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../core/app_export.dart';
 import '../models/profile_item_model.dart';
-import 'package:provider/provider.dart';
 import '../provider/profile_provider.dart';
 import '../../social_profile_myself_screen/provider/social_profile_myself_provider.dart';
-import '../../../providers/user_info_provider.dart';
 
 // ignore_for_file: must_be_immutable
 class ProfileItemWidget extends StatelessWidget {

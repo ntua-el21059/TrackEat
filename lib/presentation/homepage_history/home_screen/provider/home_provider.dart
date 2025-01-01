@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import '../models/home_initial_model.dart';
 import '../models/home_model.dart';
-import '../../../../providers/user_info_provider.dart';
 
 /// A provider class for the HomeScreen.
 ///
@@ -24,8 +22,7 @@ class HomeProvider extends ChangeNotifier {
   HomeInitialModel get homeInitialModelObj => _homeInitialModelObj;
 
   void updateSuggestions(BuildContext context) {
-    final userInfo = Provider.of<UserInfoProvider>(context, listen: false);
-    _homeInitialModelObj = HomeInitialModel()..updateGreens(userInfo.firstName);
+    _homeInitialModelObj = HomeInitialModel();
     notifyListeners();
   }
 

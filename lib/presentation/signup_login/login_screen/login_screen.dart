@@ -7,9 +7,7 @@ import '../../../widgets/custom_checkbox_button.dart';
 import '../../../widgets/custom_elevated_button.dart';
 import '../../../widgets/custom_text_form_field.dart';
 import '../../../services/firebase/auth/auth_provider.dart' as auth;
-import 'models/login_model.dart';
 import 'provider/login_provider.dart';
-import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginScreen extends StatefulWidget {

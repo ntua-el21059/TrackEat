@@ -8,9 +8,7 @@ import '../../../widgets/app_bar/custom_app_bar.dart';
 import '../../../widgets/custom_elevated_button.dart';
 import '../../../widgets/custom_text_form_field.dart';
 import '../../../providers/user_provider.dart';
-import 'models/create_profile_2_2_model.dart';
 import 'provider/create_profile_2_2_provider.dart';
-import 'package:provider/provider.dart';
 import 'package:flutter/services.dart';
 
 const List<Map<String, String>> activityLevels = [

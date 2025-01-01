@@ -2,19 +2,16 @@ import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
 import '../../core/app_export.dart';
 import '../../widgets/app_bar/appbar_leading_image.dart';
 import '../../widgets/app_bar/appbar_subtitle.dart';
 import '../../widgets/app_bar/custom_app_bar.dart';
-import '../profile_screen/provider/profile_provider.dart';
 import 'provider/profile_static_provider.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../providers/profile_picture_provider.dart';
 import '../../../providers/user_info_provider.dart';
 import '../../services/firebase/auth/auth_provider.dart' as auth;
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class ProfileStaticScreen extends StatefulWidget {

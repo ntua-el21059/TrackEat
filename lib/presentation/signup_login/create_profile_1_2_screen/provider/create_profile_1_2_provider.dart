@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../../core/app_export.dart';
 import '../models/create_profile_1_2_model.dart';
 
 /// A provider class for the CreateProfile12Screen.

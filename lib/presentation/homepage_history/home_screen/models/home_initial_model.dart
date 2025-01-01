@@ -13,7 +13,7 @@ class HomeInitialModel {
     CardsItemModel(
       thumbsupOne: ImageConstant.imgTicket,
       cutdownsweets: "Boost your greens",
-      yourweekly: "adding even a handful can give you extra energy",
+      yourweekly: "A handful can give you extra energy",
     ),
     CardsItemModel(
       thumbsupOne: ImageConstant.imgIcon,
@@ -21,12 +21,4 @@ class HomeInitialModel {
       yourweekly: "Swap sugary drinks for water or tea",
     ),
   ];
-
-  void updateGreens(String firstName) {
-    cardsItemList[1] = CardsItemModel(
-      thumbsupOne: ImageConstant.imgTicket,
-      cutdownsweets: "Boost your greens",
-      yourweekly: "adding even a handful can give you extra energy",
-    );
-  }
 }
