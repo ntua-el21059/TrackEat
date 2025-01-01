@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:responsive_grid_list/responsive_grid_list.dart';
 import '../../core/app_export.dart';
@@ -11,7 +10,6 @@ import '../../widgets/custom_elevated_button.dart';
 import '../profile_screen/provider/profile_provider.dart';
 import 'models/gridvector_one_item_model.dart';
 import 'models/listvegan_item_model.dart';
-import 'models/social_profile_myself_model.dart';
 import 'provider/social_profile_myself_provider.dart';
 import 'widgets/gridvector_one_item_widget.dart';
 import 'widgets/listvegan_item_widget.dart';

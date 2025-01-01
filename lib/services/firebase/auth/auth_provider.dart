@@ -56,9 +56,6 @@ class AuthProvider with ChangeNotifier {
           final firstName = userData['firstName'] ?? '';
           final lastName = userData['lastName'] ?? '';
           final username = userData['username'] ?? '';
-          final birthdate = userData['birthdate'] ?? '';
-          final gender = userData['gender'] ?? '';
-          final height = userData['height']?.toString() ?? '';
 
           if (context.mounted) {
             final userInfoProvider = Provider.of<UserInfoProvider>(context, listen: false);

@@ -24,6 +24,13 @@
 	<string>????</string>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>app-settings</string>
+		<string>App-prefs</string>
+		<string>prefs</string>
+		<string>App-Prefs</string>
+	</array>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
@@ -32,8 +39,14 @@
 	<string>This app needs access to microphone to record your voice for meal descriptions.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>This app needs access to photo library to select photos of your meals.</string>
+	<key>NSSiriUsageDescription</key>
+	<string>This app uses Siri to quickly access VoiceOver settings</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
 	<string>This app needs access to speech recognition to convert your voice to text for meal descriptions.</string>
+	<key>NSUserActivityTypes</key>
+	<array>
+		<string>OpenVoiceOverSettingsIntent</string>
+	</array>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
@@ -57,18 +70,5 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
-	<key>LSApplicationQueriesSchemes</key>
-	<array>
-		<string>app-settings</string>
-		<string>App-prefs</string>
-		<string>prefs</string>
-		<string>App-Prefs</string>
-	</array>
-	<key>NSUserActivityTypes</key>
-	<array>
-		<string>OpenVoiceOverSettingsIntent</string>
-	</array>
-	<key>NSSiriUsageDescription</key>
-	<string>This app uses Siri to quickly access VoiceOver settings</string>
 </dict>
 </plist>

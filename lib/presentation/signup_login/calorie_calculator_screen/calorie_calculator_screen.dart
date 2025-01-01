@@ -7,9 +7,7 @@ import '../../../widgets/custom_elevated_button.dart';
 import '../../../widgets/custom_text_form_field.dart';
 import '../../../providers/user_provider.dart';
 import '../../../services/firebase/auth/auth_provider.dart' as app_auth;
-import 'models/calorie_calculator_model.dart';
 import 'provider/calorie_calculator_provider.dart';
-import 'package:provider/provider.dart';
 import '../../../services/firebase/firestore/firestore_service.dart';
 
 class CalorieCalculatorScreen extends StatefulWidget {

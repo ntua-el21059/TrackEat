@@ -8,9 +8,7 @@ import '../../../widgets/app_bar/custom_app_bar.dart';
 import '../../../widgets/custom_elevated_button.dart';
 import '../../../widgets/custom_text_form_field.dart';
 import '../../../providers/user_provider.dart';
-import 'models/create_profile_1_2_model.dart';
 import 'provider/create_profile_1_2_provider.dart';
-import 'package:provider/provider.dart';
 
 class CreateProfile12Screen extends StatefulWidget {
   const CreateProfile12Screen({Key? key}) : super(key: key);

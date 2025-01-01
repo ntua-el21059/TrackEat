@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../core/app_export.dart';
-import 'models/splash_model.dart';
 import 'provider/splash_provider.dart';
 import '../login_screen/provider/login_provider.dart';
 

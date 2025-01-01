@@ -6,7 +6,6 @@ import '../../../../widgets/app_bar/custom_app_bar.dart';
 import '../../../../widgets/custom_elevated_button.dart';
 import '../../../../widgets/custom_text_form_field.dart';
 import '../../../../providers/user_provider.dart';
-import 'models/create_account_model.dart';
 import 'provider/create_account_provider.dart';
 import 'package:provider/provider.dart';
 
@@ -346,46 +345,6 @@ class CreateAccountScreenState extends State<CreateAccountScreen> {
             
             NavigatorService.pushNamed(AppRoutes.createProfile12Screen);
           } : null,
-        );
-      },
-    );
-  }
-
-  // Add this method to check password strength
-  bool _isPasswordStrong(String password) {
-    bool hasUppercase = password.contains(RegExp(r'[A-Z]'));
-    bool hasLowercase = password.contains(RegExp(r'[a-z]'));
-    bool hasDigits = password.contains(RegExp(r'[0-9]'));
-    bool hasSpecialCharacters = password.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'));
-    bool hasMinLength = password.length >= 8;
-
-    return hasUppercase && hasLowercase && hasDigits && hasSpecialCharacters && hasMinLength;
-  }
-
-  // Add this method to show password requirements
-  void _showPasswordRequirements(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Password Requirements'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('• At least 8 characters'),
-              Text('• At least one uppercase letter'),
-              Text('• At least one lowercase letter'),
-              Text('• At least one number'),
-              Text('• At least one special character'),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text('OK'),
-            ),
-          ],
         );
       },
     );

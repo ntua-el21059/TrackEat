@@ -6,16 +6,13 @@ import '../../widgets/app_bar/appbar_leading_image.dart';
 import '../../widgets/app_bar/appbar_subtitle.dart';
 import '../../widgets/app_bar/custom_app_bar.dart';
 import 'models/profile_item_model.dart';
-import 'models/profile_model.dart';
 import 'provider/profile_provider.dart';
 import 'widgets/profile_item_widget.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../providers/profile_picture_provider.dart';
 import '../../providers/user_info_provider.dart';
 import '../../models/user_model.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../services/firebase/auth/auth_provider.dart' as app_auth;
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({Key? key}) : super(key: key);

@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../core/app_export.dart';
 import '../../../providers/user_provider.dart';
-import '../../../theme/custom_text_style.dart';
 import '../../../widgets/custom_bottom_bar.dart';
 import '../../../widgets/app_bar/appbar_subtitle_one.dart';
 import '../../../widgets/app_bar/appbar_title.dart';
@@ -16,9 +14,6 @@ import 'package:activity_ring/activity_ring.dart';
 import '../../../presentation/profile_screen/profile_screen.dart';
 import '../../../providers/profile_picture_provider.dart';
 import '../../../providers/user_info_provider.dart';
-import '../../../providers/user_provider.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../models/user_model.dart';
 
 class HomeScreen extends StatefulWidget {
