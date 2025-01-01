@@ -26,6 +26,9 @@ dependencies:
   activity_ring: ^0.3.0
   responsive_grid_list: ^1.4.0
   flutter_markdown: ^0.7.0
+  image_cropper: ^5.0.1
+  path_provider: ^2.1.2
+  path: ^1.8.3
 
   # State Management
   provider: ^6.1.1

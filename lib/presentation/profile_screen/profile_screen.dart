@@ -237,15 +237,18 @@ class ProfileScreenState extends State<ProfileScreen> {
         children: [
           Container(
             margin: EdgeInsets.only(left: 8.h),
+            width: 72.h,
+            height: 72.h,
+            alignment: Alignment.center,
             child: Consumer<ProfilePictureProvider>(
               builder: (context, profilePicProvider, _) {
                 return ClipOval(
                   child: CustomImageView(
                     imagePath: profilePicProvider.profileImagePath,
                     isFile: !profilePicProvider.profileImagePath.startsWith('assets/'),
-                    height: 72.h,
-                    width: 72.h,
-                    radius: BorderRadius.circular(36.h),
+                    height: 56.h,
+                    width: 56.h,
+                    radius: BorderRadius.circular(28.h),
                   ),
                 );
               },
@@ -254,7 +257,7 @@ class ProfileScreenState extends State<ProfileScreen> {
           Expanded(
             child: Container(
               margin: EdgeInsets.only(top: 4.h, left: 0.h),
-              padding: EdgeInsets.symmetric(horizontal: 12.h),
+              padding: EdgeInsets.only(left: 4.h, right: 12.h),
               child: Row(
                 children: [
                   Expanded(

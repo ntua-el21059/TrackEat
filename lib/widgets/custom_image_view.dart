@@ -45,47 +45,57 @@ class CustomImageView extends StatelessWidget {
 
   Widget _buildWidget() {
     if (imagePath == null || imagePath!.isEmpty) {
-      return const SizedBox();
+      return _buildDefaultImage();
     }
 
     Widget imageWidget;
 
     if (isFile) {
-      imageWidget = Image.file(
-        File(imagePath!),
-        height: height,
-        width: width,
-        fit: fit ?? BoxFit.contain,
-        color: color,
-      );
-    } else if (imagePath!.endsWith('.svg')) {
-      imageWidget = SvgPicture.asset(
-        imagePath!,
-        height: height,
-        width: width,
-        fit: fit ?? BoxFit.contain,
-        color: color,
-        allowDrawingOutsideViewBox: true,
-        clipBehavior: Clip.none,
-      );
-    } else if (imagePath!.startsWith('http') || imagePath!.startsWith('https')) {
+      try {
+        imageWidget = Image.file(
+          File(imagePath!),
+          height: height,
+          width: width,
+          fit: fit ?? BoxFit.cover,
+          color: color,
+          errorBuilder: (context, error, stackTrace) => _buildDefaultImage(),
+        );
+      } catch (e) {
+        imageWidget = _buildDefaultImage();
+      }
+    } else if (imagePath!.startsWith('http')) {
       imageWidget = CachedNetworkImage(
         imageUrl: imagePath!,
         height: height,
         width: width,
-        fit: fit,
+        fit: fit ?? BoxFit.cover,
         color: color,
-        alignment: alignment ?? Alignment.center,
+        placeholder: (context, url) => _buildDefaultImage(),
+        errorWidget: (context, url, error) => _buildDefaultImage(),
       );
     } else {
-      imageWidget = Image.asset(
-        imagePath!,
-        height: height,
-        width: width,
-        fit: fit ?? BoxFit.contain,
-        alignment: alignment ?? Alignment.center,
-        color: color,
-      );
+      try {
+        if (imagePath!.endsWith('.svg')) {
+          imageWidget = SvgPicture.asset(
+            imagePath!,
+            height: height,
+            width: width,
+            fit: fit ?? BoxFit.cover,
+            color: color,
+          );
+        } else {
+          imageWidget = Image.asset(
+            imagePath!,
+            height: height,
+            width: width,
+            fit: fit ?? BoxFit.cover,
+            color: color,
+            errorBuilder: (context, error, stackTrace) => _buildDefaultImage(),
+          );
+        }
+      } catch (e) {
+        imageWidget = _buildDefaultImage();
+      }
     }
 
     if (radius != null || border != null) {
@@ -109,5 +119,15 @@ class CustomImageView extends StatelessWidget {
     }
 
     return imageWidget;
+  }
+
+  Widget _buildDefaultImage() {
+    return Image.asset(
+      'assets/images/imgVector80x84.png',
+      height: height,
+      width: width,
+      fit: fit ?? BoxFit.cover,
+      color: color,
+    );
   }
 }

@@ -59,20 +59,21 @@ class HomeScreenState extends State<HomeScreen> {
 
   void _fetchInitialUserData() async {
     final currentUser = FirebaseAuth.instance.currentUser;
-    if (currentUser?.email != null) {
+    final email = currentUser?.email;
+    if (email != null) {
       try {
         final doc = await FirebaseFirestore.instance
             .collection('users')
-            .doc(currentUser!.email)
+            .doc(email)
             .get();
             
         if (doc.exists && mounted) {
           final userData = doc.data()!;
           final userModel = UserModel(
-            firstName: userData['firstName'] as String? ?? '',
-            lastName: userData['lastName'] as String? ?? '',
-            username: userData['username'] as String? ?? '',
-            email: currentUser.email,
+            firstName: userData['firstName']?.toString() ?? 'User',
+            lastName: userData['lastName']?.toString() ?? '',
+            username: userData['username']?.toString() ?? '',
+            email: email,
           );
           
           // Set the user model first
@@ -81,6 +82,16 @@ class HomeScreenState extends State<HomeScreen> {
         }
       } catch (e) {
         print("Error fetching user data: $e");
+        // Set a default user model if there's an error
+        if (mounted) {
+          final userInfoProvider = Provider.of<UserInfoProvider>(context, listen: false);
+          await userInfoProvider.setUser(UserModel(
+            firstName: 'User',
+            lastName: '',
+            username: '',
+            email: email,
+          ));
+        }
       }
     }
   }

@@ -381,7 +381,7 @@ class ProfileItemWidget extends StatelessWidget {
                     // Icon positioning
                     if (isActivityLevel || isWeeklyGoal)
                       Positioned(
-                        left: isActivityLevel ? activityLevelPosition : weeklyGoalPosition,
+                        left: isActivityLevel ? activityLevelPosition : weeklyGoalPosition + 2.h,
                         top: isWeeklyGoal ? 2.h : 0,
                         child: CustomImageView(
                           imagePath: isActivityLevel 
@@ -395,7 +395,7 @@ class ProfileItemWidget extends StatelessWidget {
                       ),
                     if (isCaloriesGoal)
                       Positioned(
-                        left: caloriesAdjustedPosition,
+                        left: caloriesAdjustedPosition + 1.h,
                         top: 0,
                         child: CustomImageView(
                           imagePath: model.icon,
@@ -407,7 +407,7 @@ class ProfileItemWidget extends StatelessWidget {
                       ),
                     if (isGoalWeight)
                       Positioned(
-                        left: goalWeightAdjustedPosition,
+                        left: goalWeightAdjustedPosition + 2.h,
                         top: 2.h,
                         child: CustomImageView(
                           imagePath: model.icon,
@@ -419,7 +419,7 @@ class ProfileItemWidget extends StatelessWidget {
                       ),
                     if (isCurWeight)
                       Positioned(
-                        left: 137.h,
+                        left: caloriesAdjustedPosition - 1.h,
                         top: 3.h,
                         child: CustomImageView(
                           imagePath: model.icon,
@@ -433,12 +433,10 @@ class ProfileItemWidget extends StatelessWidget {
                     if (!isActivityLevel && !isWeeklyGoal && !isGoalWeight && !isCaloriesGoal && !isCurWeight)
                       Positioned(
                         left: model.title == "Fat Goal" 
-                            ? fatGoalPosition 
-                            : model.title == "Diet" 
-                                ? dietPosition 
-                                : model.title == "Carbs Goal"
-                                    ? carbsGoalPosition
-                                    : 135.h,
+                            ? caloriesAdjustedPosition - 11.h  // Fat goal icon position
+                            : model.title == "Diet"
+                                ? caloriesAdjustedPosition + 1.h  // Diet icon moved 2.h right (from -1.h to +1.h)
+                                : caloriesAdjustedPosition - 1.h,  // Other icons remain at the same position
                         top: 0,
                         child: CustomImageView(
                           imagePath: model.icon,

@@ -45,7 +45,7 @@ class ListveganItemWidget extends StatelessWidget {
         }
 
         return Container(
-          width: 174.h,
+          width: 160.h,
           height: 91.h,
           padding: EdgeInsets.symmetric(
             horizontal: 16.h,
