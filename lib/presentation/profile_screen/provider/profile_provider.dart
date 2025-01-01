@@ -77,16 +77,20 @@ class ProfileProvider extends ChangeNotifier {
           formattedNumber = value.toString();
         }
         
-        // Add appropriate unit based on title
-        if (title == "Cur. Weight") {
-          item.value = "$formattedNumber kg";
+        // Add appropriate unit based on title without spaces
+        if (title == "Cur. Weight" || title == "Goal Weight") {
+          item.value = "${formattedNumber}kg";
+        } else if (title == "Carbs Goal" || title == "Protein Goal" || title == "Fat Goal") {
+          item.value = "${formattedNumber}g";
         } else {
           item.value = formattedNumber;
         }
+        
+        // Ensure UI is updated
+        notifyListeners();
         break;
       }
     }
-    notifyListeners();
   }
 
   void updateProfileImage(String imagePath) {
@@ -98,14 +102,17 @@ class ProfileProvider extends ChangeNotifier {
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser?.email != null) {
       try {
+        // Clean the input value
+        String cleanValue = calories.replaceAll(' ', '').replaceAll('kcal', '');
+        
         // Update Firestore with integer value
         await FirebaseFirestore.instance
             .collection('users')
             .doc(currentUser!.email)
-            .update({'dailyCalories': int.parse(calories.replaceAll('kcal', '').trim())});
+            .update({'dailyCalories': int.parse(cleanValue)});
 
-        // Update local UI
-        updateCalories(calories);
+        // Update local UI with no space before kcal
+        updateCalories("${cleanValue}kcal");
       } catch (e) {
         print("Error updating calories in Firebase: $e");
       }
@@ -119,8 +126,9 @@ class ProfileProvider extends ChangeNotifier {
     );
     
     if (caloriesItem != null) {
-      // Make sure we store just the number in Firebase
-      caloriesItem.value = calories.endsWith('kcal') ? calories : "$calories kcal";
+      // Clean the input value
+      String cleanValue = calories.replaceAll(' ', '').replaceAll('kcal', '');
+      caloriesItem.value = "${cleanValue}kcal";
       notifyListeners();
     }
   }

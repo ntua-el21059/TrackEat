@@ -8,6 +8,8 @@ import 'package:activity_ring/activity_ring.dart';
 import '../../../providers/user_provider.dart';
 import 'provider/history_today_tab_provider.dart';
 import '../blur_choose_action_screen_dialog/blur_choose_action_screen_dialog.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class HistoryTodayTabScreen extends StatefulWidget {
   const HistoryTodayTabScreen({Key? key}) : super(key: key);
@@ -244,42 +246,108 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> with Singl
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                "${_calculateRemainingCalories()} Kcal Remaining...",
-                style: CustomTextStyles.titleMediumGray90001Bold,
-              ),
-              Text(
-                "${_calculateDailyCalories()} kcal",
-                style: TextStyle(
-                  color: const Color(0xFFFF0000),
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
+          StreamBuilder<DocumentSnapshot>(
+            stream: FirebaseFirestore.instance
+                .collection('users')
+                .doc(FirebaseAuth.instance.currentUser?.email)
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (snapshot.hasData && snapshot.data != null && snapshot.data!.exists) {
+                final userData = snapshot.data!.data() as Map<String, dynamic>;
+                final dailyCalories = int.tryParse(userData['dailyCalories']?.toString() ?? "2000") ?? 2000;
+                final consumedCalories = 1500; // TODO: Get this from history provider
+                final remainingCalories = dailyCalories - consumedCalories;
+                
+                return Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      "$remainingCalories Kcal Remaining...",
+                      style: CustomTextStyles.titleMediumGray90001Bold,
+                    ),
+                    Text(
+                      "$dailyCalories kcal",
+                      style: TextStyle(
+                        color: const Color(0xFFFF0000),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                );
+              }
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "${_calculateRemainingCalories()} Kcal Remaining...",
+                    style: CustomTextStyles.titleMediumGray90001Bold,
+                  ),
+                  Text(
+                    "${_calculateDailyCalories()} kcal",
+                    style: TextStyle(
+                      color: const Color(0xFFFF0000),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
           SizedBox(height: 6.h),
-          Container(
-            width: double.maxFinite,
-            height: 8.h,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(4.h),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: MediaQuery.of(context).size.width * (_calculateConsumedPercentage() / 100),
+          StreamBuilder<DocumentSnapshot>(
+            stream: FirebaseFirestore.instance
+                .collection('users')
+                .doc(FirebaseAuth.instance.currentUser?.email)
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (snapshot.hasData && snapshot.data != null && snapshot.data!.exists) {
+                final userData = snapshot.data!.data() as Map<String, dynamic>;
+                final dailyCalories = int.tryParse(userData['dailyCalories']?.toString() ?? "2000") ?? 2000;
+                final consumedCalories = 1500; // TODO: Get this from history provider
+                final percentage = (consumedCalories / dailyCalories * 100).clamp(0, 100);
+                
+                return Container(
+                  width: double.maxFinite,
+                  height: 8.h,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF4CD964),
+                    color: Colors.white,
                     borderRadius: BorderRadius.circular(4.h),
                   ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: MediaQuery.of(context).size.width * (percentage / 100),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF4CD964),
+                          borderRadius: BorderRadius.circular(4.h),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }
+              return Container(
+                width: double.maxFinite,
+                height: 8.h,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(4.h),
                 ),
-              ],
-            ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: MediaQuery.of(context).size.width * (_calculateConsumedPercentage() / 100),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF4CD964),
+                        borderRadius: BorderRadius.circular(4.h),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
           ),
           SizedBox(height: 12.h),
           Row(

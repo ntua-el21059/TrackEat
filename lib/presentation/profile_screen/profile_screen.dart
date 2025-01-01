@@ -41,74 +41,48 @@ class ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      if (mounted) {
-        final userInfoProvider = Provider.of<UserInfoProvider>(context, listen: false);
-        await userInfoProvider.fetchCurrentUser();
-      }
-    });
-    _setupFirestoreListener();
+    _fetchUserData();
     _fetchUserDiet();
   }
 
-  void _fetchInitialUserData() async {
-    final currentUser = FirebaseAuth.instance.currentUser;
-    if (currentUser?.email != null) {
-      try {
-        final doc = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(currentUser!.email)
-            .get();
-            
-        if (doc.exists && mounted) {
-          final userData = doc.data()!;
-          final userModel = UserModel(
-            firstName: userData['firstName'] as String? ?? '',
-            lastName: userData['lastName'] as String? ?? '',
-            username: userData['username'] as String? ?? '',
-            email: currentUser.email,
-          );
-          
-          // Set the user model first
-          final userInfoProvider = Provider.of<UserInfoProvider>(context, listen: false);
-          await userInfoProvider.setUser(userModel);
-        }
-      } catch (e) {
-        print("Error fetching user data: $e");
-      }
-    }
-  }
-
-  void _setupFirestoreListener() {
+  void _fetchUserData() {
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser?.email != null) {
       FirebaseFirestore.instance
           .collection('users')
           .doc(currentUser!.email)
           .snapshots()
-          .listen((snapshot) async {
-        if (snapshot.exists && mounted) {
-          final userData = snapshot.data()!;
+          .listen((doc) {
+        if (doc.exists && mounted) {
+          final userData = doc.data()!;
+          final provider = Provider.of<ProfileProvider>(context, listen: false);
           
-          // Listen for calories changes
-          final calories = userData['dailyCalories']?.toString() ?? '0';
-          Provider.of<ProfileProvider>(context, listen: false)
-              .updateCalories(calories);
-            
-          // Listen for diet changes
-          final diet = userData['diet'] as String? ?? 'Balanced';
-          Provider.of<ProfileProvider>(context, listen: false)
-              .updateDiet(diet);
-
-          // Listen for activity level changes
-          final activity = userData['activity'] as String? ?? 'Moderate';
-          Provider.of<ProfileProvider>(context, listen: false)
-              .updateActivityLevel(activity);
-
           // Listen for weight changes
-          final weight = userData['weight']?.toString() ?? '0';
-          Provider.of<ProfileProvider>(context, listen: false)
-              .updateNumericValue('Cur. Weight', double.parse(weight));
+          if (userData['weight'] != null) {
+            final weight = userData['weight'].toString();
+            provider.updateNumericValue('Cur. Weight', double.parse(weight));
+          }
+
+          // Listen for goal weight changes
+          if (userData['weightgoal'] != null) {
+            final goalWeight = userData['weightgoal'].toString();
+            provider.updateNumericValue('Goal Weight', double.parse(goalWeight));
+          }
+
+          // Listen for carbs goal changes
+          if (userData['carbsgoal'] != null) {
+            provider.updateNumericValue('Carbs Goal', userData['carbsgoal'].toDouble());
+          }
+
+          // Listen for protein goal changes
+          if (userData['proteingoal'] != null) {
+            provider.updateNumericValue('Protein Goal', userData['proteingoal'].toDouble());
+          }
+
+          // Listen for fat goal changes
+          if (userData['fatgoal'] != null) {
+            provider.updateNumericValue('Fat Goal', userData['fatgoal'].toDouble());
+          }
 
           // Update user data
           final userModel = UserModel(
@@ -118,8 +92,7 @@ class ProfileScreenState extends State<ProfileScreen> {
             email: currentUser.email,
           );
           
-          final userInfoProvider = Provider.of<UserInfoProvider>(context, listen: false);
-          await userInfoProvider.setUser(userModel);
+          Provider.of<UserInfoProvider>(context, listen: false).setUser(userModel);
         }
       });
     }
@@ -641,23 +614,118 @@ class ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  void _showNumberInputDialog(BuildContext context, String title, String currentValue) {
-    // Get the current value from Firebase first
+  void _showGoalWeightInputDialog(BuildContext context) {
     final currentUser = FirebaseAuth.instance.currentUser;
-    if (currentUser?.email != null && title == "Cur. Weight") {
+    if (currentUser?.email != null) {
+      // First get the current goal weight from Firebase
       FirebaseFirestore.instance
           .collection('users')
-          .doc(currentUser?.email)
+          .doc(currentUser!.email)
           .get()
           .then((doc) {
         if (doc.exists) {
           final userData = doc.data()!;
-          final weight = userData['weight']?.toString() ?? '0';
+          final goalWeight = userData['weightgoal']?.toString() ?? '';
           
-          // Show dialog with current weight from Firebase
-          _showWeightInputDialog(context, weight);
+          final TextEditingController controller = TextEditingController(text: goalWeight);
+
+          showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            backgroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
+            ),
+            builder: (BuildContext context) {
+              return Padding(
+                padding: EdgeInsets.only(
+                  bottom: MediaQuery.of(context).viewInsets.bottom,
+                  left: 16.h,
+                  right: 16.h,
+                  top: 16.h,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      "Goal Weight",
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        color: Colors.black,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(height: 16.h),
+                    TextField(
+                      controller: controller,
+                      autofocus: true,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        hintText: 'Enter goal weight in kg',
+                        suffixText: 'kg',
+                      ),
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: Text('Cancel'),
+                        ),
+                        TextButton(
+                          onPressed: () async {
+                            final newValue = double.tryParse(controller.text);
+                            if (newValue != null) {
+                              try {
+                                // Update Firebase
+                                await FirebaseFirestore.instance
+                                    .collection('users')
+                                    .doc(currentUser.email)
+                                    .update({'weightgoal': newValue});
+
+                                // Update local provider
+                                Provider.of<ProfileProvider>(context, listen: false)
+                                    .updateNumericValue("Goal Weight", newValue);
+                              } catch (e) {
+                                print("Error updating goal weight: $e");
+                              }
+                            }
+                            Navigator.pop(context);
+                          },
+                          child: Text('Save'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            },
+          );
         }
       });
+    }
+  }
+
+  void _showNumberInputDialog(BuildContext context, String title, String currentValue) {
+    if (title == "Goal Weight") {
+      _showGoalWeightInputDialog(context);
+    } else if (title == "Cur. Weight") {
+      // Get the current value from Firebase first
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser?.email != null) {
+        FirebaseFirestore.instance
+            .collection('users')
+            .doc(currentUser?.email)
+            .get()
+            .then((doc) {
+          if (doc.exists) {
+            final userData = doc.data()!;
+            final weight = userData['weight']?.toString() ?? '0';
+            
+            // Show dialog with current weight from Firebase
+            _showWeightInputDialog(context, weight);
+          }
+        });
+      }
     } else {
       // For other numeric fields
       final TextEditingController controller = TextEditingController(text: currentValue);
@@ -777,7 +845,11 @@ class ProfileScreenState extends State<ProfileScreen> {
                 keyboardType: TextInputType.number,
                 decoration: InputDecoration(
                   hintText: 'Enter value',
+                  suffixText: title == "Carbs Goal" || title == "Protein Goal" || title == "Fat Goal" ? "g" : null,
                 ),
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                ],
               ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
@@ -787,11 +859,33 @@ class ProfileScreenState extends State<ProfileScreen> {
                     child: Text('Cancel'),
                   ),
                   TextButton(
-                    onPressed: () {
+                    onPressed: () async {
                       final newValue = double.tryParse(controller.text);
                       if (newValue != null) {
-                        Provider.of<ProfileProvider>(context, listen: false)
-                            .updateNumericValue(title, newValue);
+                        final currentUser = FirebaseAuth.instance.currentUser;
+                        if (currentUser?.email != null) {
+                          try {
+                            // First update Firebase
+                            if (title == "Carbs Goal") {
+                              await FirebaseFirestore.instance
+                                  .collection('users')
+                                  .doc(currentUser!.email)
+                                  .update({'carbsgoal': newValue});
+                            } else if (title == "Protein Goal") {
+                              await FirebaseFirestore.instance
+                                  .collection('users')
+                                  .doc(currentUser!.email)
+                                  .update({'proteingoal': newValue});
+                            } else if (title == "Fat Goal") {
+                              await FirebaseFirestore.instance
+                                  .collection('users')
+                                  .doc(currentUser!.email)
+                                  .update({'fatgoal': newValue});
+                            }
+                          } catch (e) {
+                            print("Error updating goal in Firebase: $e");
+                          }
+                        }
                       }
                       Navigator.pop(context);
                     },

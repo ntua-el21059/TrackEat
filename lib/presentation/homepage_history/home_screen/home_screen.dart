@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../../core/app_export.dart';
+import '../../../providers/user_provider.dart';
+import '../../../theme/custom_text_style.dart';
 import '../../../widgets/custom_bottom_bar.dart';
 import '../../../widgets/app_bar/appbar_subtitle_one.dart';
 import '../../../widgets/app_bar/appbar_title.dart';
@@ -190,13 +195,33 @@ class HomeScreenState extends State<HomeScreen> {
                 "${_calculateRemainingCalories()} Kcal Remaining...",
                 style: CustomTextStyles.titleMediumGray90001Bold,
               ),
-              Text(
-                "${_calculateDailyCalories()} kcal",
-                style: TextStyle(
-                  color: const Color(0xFFFF0000),
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
+              StreamBuilder<DocumentSnapshot>(
+                stream: FirebaseFirestore.instance
+                    .collection('users')
+                    .doc(FirebaseAuth.instance.currentUser?.email)
+                    .snapshots(),
+                builder: (context, snapshot) {
+                  if (snapshot.hasData && snapshot.data != null && snapshot.data!.exists) {
+                    final userData = snapshot.data!.data() as Map<String, dynamic>;
+                    final dailyCalories = userData['dailyCalories']?.toString() ?? "2000";
+                    return Text(
+                      "$dailyCalories kcal",
+                      style: TextStyle(
+                        color: const Color(0xFFFF0000),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    );
+                  }
+                  return Text(
+                    "${_calculateDailyCalories()} kcal",
+                    style: TextStyle(
+                      color: const Color(0xFFFF0000),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  );
+                },
               ),
             ],
           ),

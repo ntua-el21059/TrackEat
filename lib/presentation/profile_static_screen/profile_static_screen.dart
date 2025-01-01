@@ -92,6 +92,12 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> {
                       decoration: InputDecoration(
                         hintText: 'Enter $title',
                       ),
+                      // Add input formatter for name and surname fields
+                      inputFormatters: (title == "Name" || title == "Surname") 
+                          ? [
+                              FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z\s]')),
+                            ]
+                          : null,
                     ),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
@@ -169,29 +175,30 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> {
     }
   }
 
-  void _showDatePicker(BuildContext context, String currentValue) {
-    DateTime initialDate = DateTime.now();
+  void _showDatePicker(BuildContext context, String currentValue) async {
+    DateTime initialDate = DateTime.now().subtract(Duration(days: 365 * 18)); // Default to 18 years ago
     try {
       // Parse the current date if it exists
-      List<String> parts = currentValue.split('/');
-      if (parts.length == 3) {
-        initialDate = DateTime(
-          int.parse(parts[2]),  // year
-          int.parse(parts[1]),  // month
-          int.parse(parts[0]),  // day
-        );
+      if (currentValue.isNotEmpty && currentValue != "Not set") {
+        List<String> parts = currentValue.split('/');
+        if (parts.length == 3) {
+          initialDate = DateTime(
+            int.parse(parts[2]),  // year
+            int.parse(parts[1]),  // month
+            int.parse(parts[0]),  // day
+          );
+        }
       }
     } catch (e) {
-      // Use current date if parsing fails
-      initialDate = DateTime.now();
+      print("Error parsing date: $e");
     }
 
-    showDatePicker(
+    final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: initialDate,
       firstDate: DateTime(1900),
-      lastDate: DateTime.now(),  // Can't select future dates
-      builder: (context, child) {
+      lastDate: DateTime.now(),
+      builder: (BuildContext context, Widget? child) {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: ColorScheme.light(
@@ -204,16 +211,31 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> {
           child: child!,
         );
       },
-    ).then((DateTime? date) {
-      if (date != null) {
-        String formattedDate = '${date.day.toString().padLeft(2, '0')}/'
-            '${date.month.toString().padLeft(2, '0')}/'
-            '${date.year.toString()}';
-        
-        Provider.of<ProfileStaticProvider>(context, listen: false)
-            .updateValue('birthday', formattedDate);
+    );
+
+    if (picked != null) {
+      String formattedDate = '${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}';
+      
+      // Update Firestore
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser?.email != null) {
+        try {
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(currentUser!.email)
+              .update({'birthdate': formattedDate});
+
+          // Update local provider
+          if (context.mounted) {
+            final userInfoProvider = Provider.of<UserInfoProvider>(context, listen: false);
+            await userInfoProvider.updateBirthdate(formattedDate);
+            userInfoProvider.notifyListeners();
+          }
+        } catch (e) {
+          print("Error updating birthdate: $e");
+        }
       }
-    });
+    }
   }
 
   void _showSexSelectionMenu(BuildContext context) {
@@ -277,84 +299,121 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> {
   }
 
   void _showHeightInputDialog(BuildContext context, String currentValue) {
-    _textController.text = currentValue.replaceAll('cm', '');
+    // Get current height from Firebase
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser?.email != null) {
+      FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentUser?.email)
+          .get()
+          .then((doc) {
+        if (doc.exists) {
+          final userData = doc.data()!;
+          String heightValue = userData['height']?.toString() ?? "";
+          
+          // Set the text controller value
+          _textController.text = heightValue.replaceAll(" cm", "").trim();
 
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white.withOpacity(0.9),
-      builder: (BuildContext context) {
-        return Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
-            left: 16.h,
-            right: 16.h,
-            top: 16.h,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                "Height",
-                style: theme.textTheme.titleLarge?.copyWith(
-                  color: Colors.black,
-                  fontWeight: FontWeight.bold,
-                ),
+          showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            backgroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.vertical(
+                top: Radius.circular(12.h),
               ),
-              SizedBox(height: 16.h),
-              TextField(
-                controller: _textController,
-                autofocus: true,
-                keyboardType: TextInputType.number,
-                style: TextStyle(color: Colors.black),
-                decoration: InputDecoration(
-                  hintText: 'Enter height (100-251 cm)',
-                  border: OutlineInputBorder(),
-                  suffixText: 'cm',
+            ),
+            builder: (BuildContext context) {
+              return Padding(
+                padding: EdgeInsets.only(
+                  bottom: MediaQuery.of(context).viewInsets.bottom,
+                  left: 16.h,
+                  right: 16.h,
+                  top: 16.h,
                 ),
-                inputFormatters: [
-                  FilteringTextInputFormatter.digitsOnly,
-                  LengthLimitingTextInputFormatter(3),
-                ],
-              ),
-              SizedBox(height: 16.h),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: Text(
-                      'Cancel',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        color: Colors.grey,
-                      ),
-                    ),
-                  ),
-                  SizedBox(width: 16.h),
-                  TextButton(
-                    onPressed: () {
-                      int? height = int.tryParse(_textController.text);
-                      if (height != null && height >= 100 && height <= 251) {
-                        Provider.of<ProfileStaticProvider>(context, listen: false)
-                            .updateValue('height', '${height.toString()}cm');
-                        Navigator.pop(context);
-                      }
-                    },
-                    child: Text(
-                      'Save',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        color: Colors.blue,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      "Height",
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        color: Colors.black,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        );
-      },
-    );
+                    SizedBox(height: 16.h),
+                    TextField(
+                      controller: _textController,
+                      autofocus: true,
+                      keyboardType: TextInputType.number,
+                      style: TextStyle(color: Colors.black),
+                      decoration: InputDecoration(
+                        hintText: 'Enter height (100-251 cm)',
+                        border: OutlineInputBorder(),
+                        suffixText: 'cm',
+                      ),
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(3),
+                      ],
+                    ),
+                    SizedBox(height: 16.h),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: Text(
+                            'Cancel',
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 16.h),
+                        TextButton(
+                          onPressed: () async {
+                            int? height = int.tryParse(_textController.text);
+                            if (height != null && height >= 100 && height <= 251) {
+                              try {
+                                // Update Firestore
+                                await FirebaseFirestore.instance
+                                    .collection('users')
+                                    .doc(currentUser!.email)
+                                    .update({'height': height.toString()});
+
+                                // Update local provider
+                                if (context.mounted) {
+                                  final userInfoProvider = Provider.of<UserInfoProvider>(context, listen: false);
+                                  await userInfoProvider.updateHeight(height.toString());
+                                  userInfoProvider.notifyListeners();
+                                }
+                              } catch (e) {
+                                print("Error updating height: $e");
+                              }
+                              if (context.mounted) {
+                                Navigator.pop(context);
+                              }
+                            }
+                          },
+                          child: Text(
+                            'Save',
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              color: Colors.blue,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            },
+          );
+        }
+      });
+    }
   }
 
   void _pickImage() async {
@@ -370,7 +429,12 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> {
   void _showGenderSelector(BuildContext context, String currentValue) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white.withOpacity(0.9),
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(12.h),
+        ),
+      ),
       builder: (BuildContext context) {
         return Container(
           padding: EdgeInsets.all(16.h),
@@ -406,6 +470,16 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> {
                 currentValue: currentValue,
               ),
               SizedBox(height: 16.h),
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(
+                  'Cancel',
+                  style: TextStyle(
+                    color: Colors.blue,
+                    fontSize: 16.h,
+                  ),
+                ),
+              ),
             ],
           ),
         );
@@ -419,52 +493,66 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> {
     required String label,
     required String currentValue,
   }) {
-    final isSelected = currentValue == label;
+    bool isSelected = false;
     
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: isSelected ? Colors.blue : Colors.grey[200],
-          padding: EdgeInsets.symmetric(vertical: 12.h),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8.h),
-          ),
-        ),
-        onPressed: () async {
-          // Get current user email
-          final currentUser = FirebaseAuth.instance.currentUser;
-          if (currentUser?.email != null) {
-            try {
-              // Update Firestore
-              await FirebaseFirestore.instance
-                  .collection('users')
-                  .doc(currentUser!.email)
-                  .update({'gender': label});
+    return StreamBuilder<DocumentSnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('users')
+          .doc(FirebaseAuth.instance.currentUser?.email)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.hasData && snapshot.data != null && snapshot.data!.exists) {
+          final userData = snapshot.data!.data() as Map<String, dynamic>;
+          String currentGender = userData['gender']?.toString() ?? '';
+          isSelected = currentGender == label;
+        }
+        
+        return SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: isSelected ? Colors.blue : Colors.grey[200],
+              padding: EdgeInsets.symmetric(vertical: 12.h),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8.h),
+              ),
+            ),
+            onPressed: () async {
+              // Get current user email
+              final currentUser = FirebaseAuth.instance.currentUser;
+              if (currentUser?.email != null) {
+                try {
+                  // Update Firestore
+                  await FirebaseFirestore.instance
+                      .collection('users')
+                      .doc(currentUser!.email)
+                      .update({'gender': label});
 
-              // Update local provider
-              if (context.mounted) {
-                final userInfoProvider = Provider.of<UserInfoProvider>(context, listen: false);
-                await userInfoProvider.updateGender(label);
-                userInfoProvider.notifyListeners();
+                  // Update local provider
+                  if (context.mounted) {
+                    final userInfoProvider = Provider.of<UserInfoProvider>(context, listen: false);
+                    await userInfoProvider.updateGender(label);
+                    userInfoProvider.notifyListeners();
+                  }
+                } catch (e) {
+                  print("Error updating gender: $e");
+                }
               }
-            } catch (e) {
-              print("Error updating gender: $e");
-            }
-          }
-          if (context.mounted) {
-            Navigator.pop(context);
-          }
-        },
-        child: Text(
-          label,
-          style: TextStyle(
-            color: isSelected ? Colors.white : Colors.black,
-            fontSize: 16.h,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              if (context.mounted) {
+                Navigator.pop(context);
+              }
+            },
+            child: Text(
+              label,
+              style: TextStyle(
+                color: isSelected ? Colors.white : Colors.black,
+                fontSize: 16.h,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      }
     );
   }
 
@@ -645,7 +733,14 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> {
                             userInfo.gender,
                           ),
                         ),
-                        _buildHeightSection(context, userInfo),
+                        _buildProfileItem(
+                          label: "Height",
+                          value: userInfo.height,
+                          onTap: () => _showHeightInputDialog(
+                            context,
+                            userInfo.height,
+                          ),
+                        ),
                         _buildProfileItem(
                           label: "Username",
                           value: userInfo.username,
@@ -662,7 +757,7 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> {
                   SizedBox(height: 20.h),
                   // Sign out button
                   Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 10.h),
+                    padding: EdgeInsets.only(left: 20.h, right: 10.h),
                     child: Align(
                       alignment: Alignment.centerLeft,
                       child: GestureDetector(
@@ -730,6 +825,13 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> {
                           displayValue = userData['lastName']?.toString() ?? "Not set";
                         } else if (label == "Username") {
                           displayValue = userData['username']?.toString() ?? "Not set";
+                        } else if (label == "Birthday") {
+                          displayValue = userData['birthdate']?.toString() ?? "Not set";
+                        } else if (label == "Gender") {
+                          displayValue = userData['gender']?.toString() ?? "Not set";
+                        } else if (label == "Height") {
+                          String heightValue = userData['height']?.toString() ?? "";
+                          displayValue = heightValue.isEmpty ? "Not set" : "${heightValue}cm";
                         }
                         return Text(
                           displayValue.isEmpty ? "Not set" : displayValue,
@@ -750,7 +852,17 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> {
                   ),
                   SizedBox(width: 8.h),
                   GestureDetector(
-                    onTap: onTap,
+                    onTap: () {
+                      if (label == "Birthday") {
+                        _showDatePicker(context, value);
+                      } else if (label == "Gender") {
+                        _showGenderSelector(context, value);
+                      } else if (label == "Height") {
+                        _showHeightInputDialog(context, value);
+                      } else {
+                        onTap();
+                      }
+                    },
                     child: CustomImageView(
                       imagePath: ImageConstant.imgArrowRight,
                       height: 14.h,
@@ -769,59 +881,6 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> {
             color: Colors.white,
             margin: EdgeInsets.symmetric(horizontal: 16.h),
           ),
-      ],
-    );
-  }
-
-  Widget _buildHeightSection(BuildContext context, UserInfoProvider userInfo) {
-    return Column(
-      children: [
-        Container(
-          padding: EdgeInsets.symmetric(vertical: 12.h),
-          margin: EdgeInsets.symmetric(horizontal: 16.h),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                "Height",
-                style: theme.textTheme.titleLarge?.copyWith(
-                  color: Colors.white,
-                ),
-              ),
-              GestureDetector(
-                onTap: () => _showTextInputDialog(
-                  context,
-                  "Height",
-                  "${userInfo.height} cm",
-                  false,
-                ),
-                child: Row(
-                  children: [
-                    Text(
-                      userInfo.height.isEmpty ? "Not set" : "${userInfo.height} cm",
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    SizedBox(width: 8.h),
-                    CustomImageView(
-                      imagePath: ImageConstant.imgArrowRight,
-                      height: 14.h,
-                      width: 14.h,
-                      color: Colors.white,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-        Container(
-          height: 1.h,
-          color: Colors.white,
-          margin: EdgeInsets.symmetric(horizontal: 16.h),
-        ),
       ],
     );
   }

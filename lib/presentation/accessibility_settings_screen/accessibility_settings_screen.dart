@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
+import 'dart:io';
 import '../../core/app_export.dart';
 import '../../widgets/app_bar/appbar_leading_image.dart';
 import '../../widgets/app_bar/appbar_subtitle.dart';
@@ -122,21 +123,32 @@ class AccessibilitySettingsScreenState extends State<AccessibilitySettingsScreen
               fontWeight: FontWeight.w600,
             ),
           ),
-          isSwitch 
-            ? CupertinoSwitch(
-                value: value,
-                onChanged: (_) => onChanged(),
-                activeColor: Colors.blue,
-              )
-            : GestureDetector(
-                onTap: onChanged,
-                child: CustomImageView(
-                  imagePath: ImageConstant.imgArrowRight,
-                  height: 14.h,
-                  width: 14.h,
-                  color: Colors.white,
-                ),
+          if (Platform.isIOS && title == "VoiceOver")
+            GestureDetector(
+              onTap: onChanged,
+              child: CustomImageView(
+                imagePath: ImageConstant.imgArrowRight,
+                height: 14.h,
+                width: 14.h,
+                color: Colors.white,
               ),
+            )
+          else if (isSwitch)
+            CupertinoSwitch(
+              value: value,
+              onChanged: (_) => onChanged(),
+              activeColor: Colors.blue,
+            )
+          else
+            GestureDetector(
+              onTap: onChanged,
+              child: CustomImageView(
+                imagePath: ImageConstant.imgArrowRight,
+                height: 14.h,
+                width: 14.h,
+                color: Colors.white,
+              ),
+            ),
         ],
       ),
     );

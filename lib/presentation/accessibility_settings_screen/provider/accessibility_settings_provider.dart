@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import '../models/accessibility_settings_model.dart';
 import '../../../theme/theme_provider.dart' as app_theme;
 import 'package:provider/provider.dart';
+import 'dart:io';
 
 class AccessibilitySettingsProvider extends ChangeNotifier {
   AccessibilitySettingsModel _model = AccessibilitySettingsModel();
@@ -14,11 +15,13 @@ class AccessibilitySettingsProvider extends ChangeNotifier {
     _model.invertColors = themeProvider.invertColors;
     _model.largerText = themeProvider.largerText;
     
-    try {
-      final bool isEnabled = await platform.invokeMethod('isVoiceAssistantEnabled');
-      _model.voiceOver = isEnabled;
-    } catch (e) {
-      print('Failed to get TalkBack status: $e');
+    if (Platform.isIOS) {
+      try {
+        final bool isEnabled = await platform.invokeMethod('isVoiceAssistantEnabled');
+        _model.voiceOver = isEnabled;
+      } catch (e) {
+        print('Failed to get VoiceOver status: $e');
+      }
     }
     
     notifyListeners();
@@ -29,17 +32,17 @@ class AccessibilitySettingsProvider extends ChangeNotifier {
   bool get largerText => _model.largerText;
 
   Future<void> toggleVoiceOver() async {
-    _model.voiceOver = !_model.voiceOver;
-    
-    if (_model.voiceOver) {
+    if (Platform.isIOS) {
       try {
-        await platform.invokeMethod('openAccessibilitySettings');
+        final bool success = await platform.invokeMethod('toggleVoiceOver');
+        if (success) {
+          _model.voiceOver = !_model.voiceOver;
+          notifyListeners();
+        }
       } catch (e) {
-        print('Failed to open accessibility settings: $e');
+        print('Failed to toggle VoiceOver: $e');
       }
     }
-    
-    notifyListeners();
   }
 
   void toggleInvertColors(BuildContext context) {
