@@ -688,19 +688,19 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> with Singl
               _buildMacroColumn(
                 "${meal.macros['protein']?.toInt()}g",
                 "Protein",
-                const Color(0xFF4CD964),
+                const Color(0xFFFA114F),
                 0.7,
               ),
               _buildMacroColumn(
                 "${meal.macros['fats']?.toInt()}g",
                 "Fats",
-                const Color(0xFFFA114F),
+                const Color(0xFFA6FF00),
                 0.5,
               ),
               _buildMacroColumn(
                 "${meal.macros['carbs']?.toInt()}g",
                 "Carbs",
-                const Color(0xFFFFD60A),
+                const Color(0xFF00FFF6),
                 0.3,
               ),
             ],

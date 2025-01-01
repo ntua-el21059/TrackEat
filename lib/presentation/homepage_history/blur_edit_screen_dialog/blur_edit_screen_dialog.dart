@@ -167,9 +167,9 @@ class _BlurEditScreenDialogState extends State<BlurEditScreenDialog> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                _buildMacroItem("${protein.toInt()}g", "Protein", Colors.green),
-                _buildMacroItem("${fats.toInt()}g", "Fats", Colors.orange),
-                _buildMacroItem("${carbs.toInt()}g", "Carbs", Colors.yellow),
+                _buildMacroItem("${protein.toInt()}g", "Protein", const Color(0xFFFA114F)),
+                _buildMacroItem("${fats.toInt()}g", "Fats", const Color(0xFFA6FF00)),
+                _buildMacroItem("${carbs.toInt()}g", "Carbs", const Color(0xFF00FFF6)),
               ],
             ),
             SizedBox(height: 16.h),

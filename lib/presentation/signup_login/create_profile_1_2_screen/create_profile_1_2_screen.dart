@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
+import 'dart:io' show Platform;
 import '../../../core/app_export.dart';
 import '../../../theme/custom_button_style.dart';
 import '../../../widgets/app_bar/appbar_leading_image.dart';
@@ -221,18 +223,52 @@ class CreateProfile12ScreenState extends State<CreateProfile12Screen> {
             hintText: "01/01/2000",
             hintStyle: CustomTextStyles.bodyLargeGray500,
             onTap: () async {
-              DateTime? pickedDate = await showDatePicker(
-                context: context,
-                initialDate: DateTime.now(),
-                firstDate: DateTime(1900),
-                lastDate: DateTime.now(),
-              );
-              
-              if (pickedDate != null) {
-                dateController?.text = 
-                  "${pickedDate.day.toString().padLeft(2, '0')}/"
-                  "${pickedDate.month.toString().padLeft(2, '0')}/"
-                  "${pickedDate.year}";
+              if (Platform.isIOS) {
+                showCupertinoModalPopup(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return Container(
+                      height: 216,
+                      padding: const EdgeInsets.only(top: 6.0),
+                      margin: EdgeInsets.only(
+                        bottom: MediaQuery.of(context).viewInsets.bottom,
+                      ),
+                      color: CupertinoColors.systemBackground.resolveFrom(context),
+                      child: SafeArea(
+                        top: false,
+                        child: CupertinoDatePicker(
+                          initialDateTime: DateTime.now(),
+                          maximumDate: DateTime.now(),
+                          minimumYear: 1900,
+                          maximumYear: DateTime.now().year,
+                          mode: CupertinoDatePickerMode.date,
+                          onDateTimeChanged: (DateTime newDate) {
+                            dateController?.text = 
+                              "${newDate.day.toString().padLeft(2, '0')}/"
+                              "${newDate.month.toString().padLeft(2, '0')}/"
+                              "${newDate.year}";
+                          },
+                          backgroundColor: CupertinoColors.systemBackground,
+                          itemExtent: 44.0,
+                        ),
+                      ),
+                    );
+                  },
+                );
+              } else {
+                DateTime? pickedDate = await showDatePicker(
+                  context: context,
+                  initialDate: DateTime.now(),
+                  firstDate: DateTime(1900),
+                  lastDate: DateTime.now(),
+                );
+                
+                if (pickedDate != null) {
+                  dateController?.text = 
+                    "${pickedDate.day.toString().padLeft(2, '0')}/"
+                    "${pickedDate.month.toString().padLeft(2, '0')}/"
+                    "${pickedDate.year}";
+                }
               }
             },
             contentPadding: EdgeInsets.symmetric(
@@ -247,6 +283,8 @@ class CreateProfile12ScreenState extends State<CreateProfile12Screen> {
 
   /// Gender Field
   Widget _buildGender(BuildContext context) {
+    final genderOptions = ['Male', 'Female', 'Non Binary'];
+
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 8.h),
       child: Consumer<CreateProfile12Provider>(
@@ -267,49 +305,83 @@ class CreateProfile12ScreenState extends State<CreateProfile12Screen> {
               vertical: 12.h,
             ),
             onTap: () {
-              showModalBottomSheet(
-                context: context,
-                builder: (BuildContext context) {
-                  return Container(
-                    padding: EdgeInsets.symmetric(vertical: 20.h),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        ListTile(
-                          title: Text(
-                            'Male',
-                            style: CustomTextStyles.bodyLargeBlack90018,
-                          ),
-                          onTap: () {
-                            provider.gendertwoController.text = 'Male';
-                            Navigator.pop(context);
+              if (Platform.isIOS) {
+                showCupertinoModalPopup(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return Container(
+                      height: 216,
+                      padding: const EdgeInsets.only(top: 6.0),
+                      margin: EdgeInsets.only(
+                        bottom: MediaQuery.of(context).viewInsets.bottom,
+                      ),
+                      color: CupertinoColors.systemBackground.resolveFrom(context),
+                      child: SafeArea(
+                        top: false,
+                        child: CupertinoPicker(
+                          itemExtent: 44.0,
+                          onSelectedItemChanged: (int index) {
+                            provider.gendertwoController.text = genderOptions[index];
                           },
+                          children: genderOptions.map((gender) => 
+                            Text(
+                              gender,
+                              style: TextStyle(
+                                fontSize: 20,
+                                color: CupertinoColors.black,
+                              ),
+                            )
+                          ).toList(),
                         ),
-                        ListTile(
-                          title: Text(
-                            'Female',
-                            style: CustomTextStyles.bodyLargeBlack90018,
+                      ),
+                    );
+                  },
+                );
+              } else {
+                showModalBottomSheet(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return Container(
+                      padding: EdgeInsets.symmetric(vertical: 20.h),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          ListTile(
+                            title: Text(
+                              'Male',
+                              style: CustomTextStyles.bodyLargeBlack90018,
+                            ),
+                            onTap: () {
+                              provider.gendertwoController.text = 'Male';
+                              Navigator.pop(context);
+                            },
                           ),
-                          onTap: () {
-                            provider.gendertwoController.text = 'Female';
-                            Navigator.pop(context);
-                          },
-                        ),
-                        ListTile(
-                          title: Text(
-                            'Non Binary',
-                            style: CustomTextStyles.bodyLargeBlack90018,
+                          ListTile(
+                            title: Text(
+                              'Female',
+                              style: CustomTextStyles.bodyLargeBlack90018,
+                            ),
+                            onTap: () {
+                              provider.gendertwoController.text = 'Female';
+                              Navigator.pop(context);
+                            },
                           ),
-                          onTap: () {
-                            provider.gendertwoController.text = 'Non Binary';
-                            Navigator.pop(context);
-                          },
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              );
+                          ListTile(
+                            title: Text(
+                              'Non Binary',
+                              style: CustomTextStyles.bodyLargeBlack90018,
+                            ),
+                            onTap: () {
+                              provider.gendertwoController.text = 'Non Binary';
+                              Navigator.pop(context);
+                            },
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              }
             },
           );
         },
