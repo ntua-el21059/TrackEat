@@ -46,9 +46,21 @@ post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
 
-    # Fixes for M1/M2 Macs
+    # Fixes for M1/M2 Macs and additional settings
     target.build_configurations.each do |config|
       config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = 'arm64'
+      
+      # Add permissions definitions
+      config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= [
+        '$(inherited)',
+        'PERMISSION_CAMERA=1',
+        'PERMISSION_PHOTOS=1',
+        'PERMISSION_PHOTOS_ADD_ONLY=1',
+        'PERMISSION_MICROPHONE=1',
+      ]
+      
+      # Ensure minimum iOS deployment target
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.6'
     end
   end
 end
