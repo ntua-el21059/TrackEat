@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -32,6 +33,7 @@ class HomeScreen extends StatefulWidget {
 
 class HomeScreenState extends State<HomeScreen> {
   bool _isLoading = true;
+  StreamSubscription<DocumentSnapshot>? _userSubscription;
 
   @override
   void initState() {
@@ -39,6 +41,7 @@ class HomeScreenState extends State<HomeScreen> {
     
     // Fetch current user data immediately
     _fetchInitialUserData();
+    _setupFirestoreListener();
     
     // Update UI loading state after a delay
     Future.delayed(Duration(milliseconds: 500), () {
@@ -50,6 +53,37 @@ class HomeScreenState extends State<HomeScreen> {
         Provider.of<HomeProvider>(context, listen: false).updateSuggestions(context);
       }
     });
+  }
+
+  void _setupFirestoreListener() {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser?.email != null) {
+      _userSubscription = FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentUser?.email)
+          .snapshots()
+          .listen((snapshot) async {
+        if (snapshot.exists && mounted) {
+          final userData = snapshot.data()!;
+          final userInfoProvider = Provider.of<UserInfoProvider>(context, listen: false);
+          
+          // Update provider with fresh Firestore values
+          await userInfoProvider.updateName(
+            userData['firstName']?.toString() ?? '',
+            userData['lastName']?.toString() ?? ''
+          );
+          
+          // Force UI update
+          setState(() {});
+        }
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _userSubscription?.cancel();
+    super.dispose();
   }
 
   void _fetchInitialUserData() async {
@@ -140,10 +174,21 @@ class HomeScreenState extends State<HomeScreen> {
             AppbarSubtitleOne(
               text: "WELCOME".toUpperCase(),
             ),
-            Consumer<UserInfoProvider>(
-              builder: (context, userInfo, _) {
+            StreamBuilder<DocumentSnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('users')
+                  .doc(FirebaseAuth.instance.currentUser?.email)
+                  .snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.hasData && snapshot.data != null && snapshot.data!.exists) {
+                  final userData = snapshot.data!.data() as Map<String, dynamic>;
+                  final firstName = userData['firstName']?.toString() ?? '';
+                  return AppbarTitle(
+                    text: firstName,
+                  );
+                }
                 return AppbarTitle(
-                  text: userInfo.firstName,
+                  text: "",
                 );
               },
             ),
@@ -252,43 +297,123 @@ class HomeScreenState extends State<HomeScreen> {
             ),
           ),
           SizedBox(height: 20.h),
-          Row(
-            children: [
-              Expanded(
-                flex: 3,
-                child: _buildMacronutrients(),
-              ),
-              Expanded(
-                flex: 2,
-                child: Ring(
-                  percent: _isLoading ? 0 : _calculateProteinPercentage(),
-                  color: RingColorScheme(
-                    ringColor: Color(0xFFFA114F),
-                    backgroundColor: Colors.grey.withOpacity(0.2),
-                  ),
-                  radius: 60,
-                  width: 15,
-                  child: Ring(
-                    percent: _isLoading ? 0 : _calculateFatsPercentage(),
-                    color: RingColorScheme(
-                      ringColor: Color(0xFFA6FF00),
-                      backgroundColor: Colors.grey.withOpacity(0.2),
+          StreamBuilder<DocumentSnapshot>(
+            stream: FirebaseFirestore.instance
+                .collection('users')
+                .doc(FirebaseAuth.instance.currentUser?.email)
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (snapshot.hasData && snapshot.data != null && snapshot.data!.exists) {
+                final userData = snapshot.data!.data() as Map<String, dynamic>;
+                final proteinGoal = double.tryParse(userData['proteingoal']?.toString() ?? '0') ?? 98.0;
+                final fatGoal = double.tryParse(userData['fatgoal']?.toString() ?? '0') ?? 70.0;
+                final carbsGoal = double.tryParse(userData['carbsgoal']?.toString() ?? '0') ?? 110.0;
+                
+                // Update the UserProvider with the latest values from Firebase
+                Provider.of<UserProvider>(context, listen: false).setMacronutrientGoals(
+                  proteinGoal: proteinGoal,
+                  fatGoal: fatGoal,
+                  carbsGoal: carbsGoal,
+                );
+                
+                return Row(
+                  children: [
+                    Expanded(
+                      flex: 3,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildMacronutrientText("Protein", 78, proteinGoal, const Color(0xFFFA114F)),
+                          SizedBox(height: 16.h),
+                          _buildMacronutrientText("Fats", 45, fatGoal, const Color(0xFFA6FF00)),
+                          SizedBox(height: 16.h),
+                          _buildMacronutrientText("Carbs", 95, carbsGoal, const Color(0xFF00FFF6)),
+                        ],
+                      ),
                     ),
-                    radius: 45,
-                    width: 15,
+                    Expanded(
+                      flex: 2,
+                      child: Ring(
+                        percent: _isLoading ? 0 : (78.0 / proteinGoal * 100).clamp(0, 100),
+                        color: RingColorScheme(
+                          ringColor: Color(0xFFFA114F),
+                          backgroundColor: Colors.grey.withOpacity(0.2),
+                        ),
+                        radius: 60,
+                        width: 15,
+                        child: Ring(
+                          percent: _isLoading ? 0 : (45.0 / fatGoal * 100).clamp(0, 100),
+                          color: RingColorScheme(
+                            ringColor: Color(0xFFA6FF00),
+                            backgroundColor: Colors.grey.withOpacity(0.2),
+                          ),
+                          radius: 45,
+                          width: 15,
+                          child: Ring(
+                            percent: _isLoading ? 0 : (95.0 / carbsGoal * 100).clamp(0, 100),
+                            color: RingColorScheme(
+                              ringColor: Color(0xFF00FFF6),
+                              backgroundColor: Colors.grey.withOpacity(0.2),
+                            ),
+                            radius: 30,
+                            width: 15,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              }
+              
+              // Fallback values when data is not available
+              return Row(
+                children: [
+                  Expanded(
+                    flex: 3,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildMacronutrientText("Protein", 78, 98.0, const Color(0xFFFA114F)),
+                        SizedBox(height: 16.h),
+                        _buildMacronutrientText("Fats", 45, 70.0, const Color(0xFFA6FF00)),
+                        SizedBox(height: 16.h),
+                        _buildMacronutrientText("Carbs", 95, 110.0, const Color(0xFF00FFF6)),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    flex: 2,
                     child: Ring(
-                      percent: _isLoading ? 0 : _calculateCarbsPercentage(),
+                      percent: _isLoading ? 0 : (78.0 / 98.0 * 100).clamp(0, 100),
                       color: RingColorScheme(
-                        ringColor: Color(0xFF00FFF6),
+                        ringColor: Color(0xFFFA114F),
                         backgroundColor: Colors.grey.withOpacity(0.2),
                       ),
-                      radius: 30,
+                      radius: 60,
                       width: 15,
+                      child: Ring(
+                        percent: _isLoading ? 0 : (45.0 / 70.0 * 100).clamp(0, 100),
+                        color: RingColorScheme(
+                          ringColor: Color(0xFFA6FF00),
+                          backgroundColor: Colors.grey.withOpacity(0.2),
+                        ),
+                        radius: 45,
+                        width: 15,
+                        child: Ring(
+                          percent: _isLoading ? 0 : (95.0 / 110.0 * 100).clamp(0, 100),
+                          color: RingColorScheme(
+                            ringColor: Color(0xFF00FFF6),
+                            backgroundColor: Colors.grey.withOpacity(0.2),
+                          ),
+                          radius: 30,
+                          width: 15,
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ),
-            ],
+                ],
+              );
+            },
           ),
           Align(
             alignment: Alignment.centerRight,
@@ -316,24 +441,6 @@ class HomeScreenState extends State<HomeScreen> {
         ],
       ),
     );
-  }
-
-  double _calculateProteinPercentage() {
-    final consumed = 78.0; // TODO: Get from history provider
-    final total = 98.0;
-    return (consumed / total * 100).clamp(0, 100);
-  }
-
-  double _calculateFatsPercentage() {
-    final consumed = 45.0; // TODO: Get from history provider
-    final total = 70.0;
-    return (consumed / total * 100).clamp(0, 100);
-  }
-
-  double _calculateCarbsPercentage() {
-    final consumed = 95.0; // TODO: Get from history provider
-    final total = 110.0;
-    return (consumed / total * 100).clamp(0, 100);
   }
 
   int _calculateRemainingCalories() {
@@ -439,19 +546,6 @@ class HomeScreenState extends State<HomeScreen> {
             fontWeight: FontWeight.w500,
           ),
         ),
-      ],
-    );
-  }
-
-  Widget _buildMacronutrients() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildMacronutrientText("Protein", 78, 98, const Color(0xFFFA114F)),
-        SizedBox(height: 16.h),
-        _buildMacronutrientText("Fats", 45, 70, const Color(0xFFA6FF00)),
-        SizedBox(height: 16.h),
-        _buildMacronutrientText("Carbs", 95, 110, const Color(0xFF00FFF6)),
       ],
     );
   }

@@ -20,6 +20,11 @@ class UserModel {
   // Profile 3/3
   int? age;
   int? dailyCalories;
+  
+  // Macronutrient goals
+  double? carbsGoal;
+  double? proteinGoal;
+  double? fatGoal;
 
   UserModel({
     this.id,
@@ -37,6 +42,9 @@ class UserModel {
     this.height,
     this.age,
     this.dailyCalories,
+    this.carbsGoal,
+    this.proteinGoal,
+    this.fatGoal,
   });
 
   Map<String, dynamic> toJson() {
@@ -53,6 +61,9 @@ class UserModel {
       'weight': weight,
       'height': height,
       'dailyCalories': dailyCalories,
+      'carbsgoal': carbsGoal,
+      'proteingoal': proteinGoal,
+      'fatgoal': fatGoal,
     };
   }
 
@@ -70,6 +81,9 @@ class UserModel {
       weight: json['weight']?.toDouble(),
       height: json['height']?.toDouble(),
       dailyCalories: json['dailyCalories'],
+      carbsGoal: json['carbsgoal']?.toDouble(),
+      proteinGoal: json['proteingoal']?.toDouble(),
+      fatGoal: json['fatgoal']?.toDouble(),
     );
   }
 
@@ -89,6 +103,9 @@ class UserModel {
     double? height,
     int? age,
     int? dailyCalories,
+    double? carbsGoal,
+    double? proteinGoal,
+    double? fatGoal,
   }) {
     return UserModel(
       id: id ?? this.id,
@@ -106,6 +123,9 @@ class UserModel {
       height: height ?? this.height,
       age: age ?? this.age,
       dailyCalories: dailyCalories ?? this.dailyCalories,
+      carbsGoal: carbsGoal ?? this.carbsGoal,
+      proteinGoal: proteinGoal ?? this.proteinGoal,
+      fatGoal: fatGoal ?? this.fatGoal,
     );
   }
 } 

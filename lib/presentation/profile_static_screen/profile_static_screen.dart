@@ -732,10 +732,10 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> {
                         ),
                         _buildProfileItem(
                           label: "Height",
-                          value: userInfo.height,
+                          value: userInfo.height.toString(),
                           onTap: () => _showHeightInputDialog(
                             context,
-                            userInfo.height,
+                            userInfo.height.toString(),
                           ),
                         ),
                         _buildProfileItem(

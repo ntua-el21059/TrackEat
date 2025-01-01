@@ -262,31 +262,60 @@ class ProfileScreenState extends State<ProfileScreen> {
                       onTap: () {
                         Navigator.pushNamed(context, AppRoutes.profileStaticScreen);
                       },
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Consumer<UserInfoProvider>(
-                            builder: (context, userInfo, _) {
-                              return Text(
-                                userInfo.fullName.isEmpty ? "Add Name" : userInfo.fullName,
+                      child: StreamBuilder<DocumentSnapshot>(
+                        stream: FirebaseFirestore.instance
+                            .collection('users')
+                            .doc(FirebaseAuth.instance.currentUser?.email)
+                            .snapshots(),
+                        builder: (context, snapshot) {
+                          if (snapshot.hasData && snapshot.data != null && snapshot.data!.exists) {
+                            final userData = snapshot.data!.data() as Map<String, dynamic>;
+                            final firstName = userData['firstName']?.toString() ?? '';
+                            final lastName = userData['lastName']?.toString() ?? '';
+                            final username = userData['username']?.toString() ?? '';
+                            
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  "$firstName $lastName",
+                                  style: theme.textTheme.titleLarge?.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                SizedBox(height: 4.h),
+                                Text(
+                                  "@$username",
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ],
+                            );
+                          }
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                "Loading...",
                                 style: theme.textTheme.titleLarge?.copyWith(
                                   color: Colors.white,
                                   fontWeight: FontWeight.w600,
                                 ),
-                              );
-                            },
-                          ),
-                          Consumer<UserInfoProvider>(
-                            builder: (context, userInfo, _) {
-                              return Text(
-                                userInfo.username.isEmpty ? "Add Username" : "@${userInfo.username}",
-                                style: theme.textTheme.titleMedium?.copyWith(
+                              ),
+                              SizedBox(height: 4.h),
+                              Text(
+                                "@...",
+                                style: theme.textTheme.bodyMedium?.copyWith(
                                   color: Colors.white,
                                 ),
-                              );
-                            },
-                          ),
-                        ],
+                              ),
+                            ],
+                          );
+                        },
                       ),
                     ),
                   ),

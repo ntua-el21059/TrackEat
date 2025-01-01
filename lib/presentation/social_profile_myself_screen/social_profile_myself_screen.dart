@@ -15,6 +15,8 @@ import 'widgets/gridvector_one_item_widget.dart';
 import 'widgets/listvegan_item_widget.dart';
 import '../../providers/profile_picture_provider.dart';
 import '../../providers/user_info_provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class SocialProfileMyselfScreen extends StatefulWidget {
   const SocialProfileMyselfScreen({Key? key}) : super(key: key);
@@ -56,7 +58,7 @@ class SocialProfileMyselfScreenState extends State<SocialProfileMyselfScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: _buildAppbar(context),
+      appBar: _buildAppBar(context),
       body: Container(
         width: double.maxFinite,
         height: MediaQuery.of(context).size.height,
@@ -67,36 +69,42 @@ class SocialProfileMyselfScreenState extends State<SocialProfileMyselfScreen> {
             topRight: Radius.circular(54.h),
           ),
         ),
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: EdgeInsets.only(
-              left: 8.h,
-              top: 8.h,
-              right: 8.h,
-              bottom: MediaQuery.of(context).padding.bottom + 18.h,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.max,
-              children: [
-                _buildRowvectorone(context),
-                SizedBox(height: 6.h),
-                _buildWeightgoal(context),
-                SizedBox(height: 22.h),
-                _buildListvegan(context),
-                SizedBox(height: 15.h),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Padding(
-                    padding: EdgeInsets.only(left: 16.h),
-                    child: Text(
-                      "Awards",
-                      style: CustomTextStyles.headlineSmallOnErrorContainerBold,
+        child: ClipRRect(
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(54.h),
+            topRight: Radius.circular(54.h),
+          ),
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: EdgeInsets.only(
+                left: 8.h,
+                top: 8.h,
+                right: 8.h,
+                bottom: MediaQuery.of(context).padding.bottom + 18.h,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.max,
+                children: [
+                  _buildRowvectorone(context),
+                  SizedBox(height: 6.h),
+                  _buildWeightgoal(context),
+                  SizedBox(height: 12.h),
+                  _buildListvegan(context),
+                  SizedBox(height: 8.h),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Padding(
+                      padding: EdgeInsets.only(left: 16.h),
+                      child: Text(
+                        "Awards",
+                        style: CustomTextStyles.headlineSmallOnErrorContainerBold,
+                      ),
                     ),
                   ),
-                ),
-                SizedBox(height: 6.h),
-                _buildGridvectorone(context)
-              ],
+                  SizedBox(height: 6.h),
+                  _buildGridvectorone(context)
+                ],
+              ),
             ),
           ),
         ),
@@ -105,7 +113,7 @@ class SocialProfileMyselfScreenState extends State<SocialProfileMyselfScreen> {
   }
 
   /// Section Widget
-  PreferredSizeWidget _buildAppbar(BuildContext context) {
+  PreferredSizeWidget _buildAppBar(BuildContext context) {
     return CustomAppBar(
       leadingWidth: 23.h,
       leading: AppbarLeadingImage(
@@ -130,157 +138,83 @@ class SocialProfileMyselfScreenState extends State<SocialProfileMyselfScreen> {
   }
 
   /// Section Widget
-  Widget _buildRowvectorone(BuildContext context) {
+  Widget _buildProfileSection(BuildContext context) {
     return Container(
       width: double.maxFinite,
-      margin: EdgeInsets.symmetric(horizontal: 16.h),
-      padding: EdgeInsets.all(16.h),
-      decoration: BoxDecoration(
-        color: const Color(0xFFB2D7FF),
-        borderRadius: BorderRadius.circular(20),
+      padding: EdgeInsets.symmetric(
+        horizontal: 16.h,
+        vertical: 12.h,
       ),
       child: Column(
         children: [
-          Row(
-            children: [
-              Consumer<ProfilePictureProvider>(
-                builder: (context, profilePicProvider, _) {
-                  return ClipOval(
-                    child: CustomImageView(
-                      imagePath: profilePicProvider.profileImagePath,
-                      isFile: !profilePicProvider.profileImagePath.startsWith('assets/'),
-                      height: 80.h,
-                      width: 80.h,
-                      radius: BorderRadius.circular(40.h),
-                    ),
-                  );
-                },
-              ),
-              SizedBox(width: 12.h),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          Consumer<ProfilePictureProvider>(
+            builder: (context, profilePicProvider, _) {
+              return ClipOval(
+                child: CustomImageView(
+                  imagePath: profilePicProvider.profileImagePath,
+                  isFile: !profilePicProvider.profileImagePath.startsWith('assets/'),
+                  height: 72.h,
+                  width: 72.h,
+                  radius: BorderRadius.circular(36.h),
+                ),
+              );
+            },
+          ),
+          SizedBox(height: 8.h),
+          StreamBuilder<DocumentSnapshot>(
+            stream: FirebaseFirestore.instance
+                .collection('users')
+                .doc(FirebaseAuth.instance.currentUser?.email)
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (snapshot.hasData && snapshot.data != null && snapshot.data!.exists) {
+                final userData = snapshot.data!.data() as Map<String, dynamic>;
+                final firstName = userData['firstName']?.toString() ?? '';
+                final lastName = userData['lastName']?.toString() ?? '';
+                final username = userData['username']?.toString() ?? '';
+                
+                return Column(
                   children: [
-                    Consumer<UserInfoProvider>(
-                      builder: (context, userInfo, _) {
-                        return Text(
-                          userInfo.fullName,
-                          style: theme.textTheme.headlineMedium?.copyWith(
-                            color: const Color(0xFF37474F),
-                            fontWeight: FontWeight.w600,
-                          ),
-                        );
-                      },
-                    ),
                     Text(
-                      "@${context.watch<UserInfoProvider>().username}",
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        color: const Color(0xFF37474F),
+                      "$firstName $lastName",
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    SizedBox(height: 4.h),
+                    Text(
+                      "@$username",
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: Colors.white,
                       ),
                     ),
                   ],
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 16.h),
-          Row(
-            children: [
-              Expanded(
-                child: CustomElevatedButton(
-                  text: "Add Friend",
-                  height: 48.h,
-                  rightIcon: Container(
-                    margin: EdgeInsets.only(left: 6.h),
-                    child: CustomImageView(
-                      imagePath: ImageConstant.imgAddFriend,
-                      height: 16.h,
-                      width: 16.h,
-                      fit: BoxFit.contain,
+                );
+              }
+              return Column(
+                children: [
+                  Text(
+                    "Loading...",
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  SizedBox(height: 4.h),
+                  Text(
+                    "@...",
+                    style: theme.textTheme.bodyMedium?.copyWith(
                       color: Colors.white,
                     ),
                   ),
-                  buttonStyle: CustomButtonStyles.fillBlueGrayTL16,
-                  buttonTextStyle: CustomTextStyles.titleSmallSemiBold,
-                ),
-              ),
-              SizedBox(width: 14.h),
-              Expanded(
-                child: CustomElevatedButton(
-                  text: "Message",
-                  height: 48.h,
-                  buttonStyle: CustomButtonStyles.fillBlueGrayTL16,
-                  buttonTextStyle: CustomTextStyles.titleSmallSemiBold,
-                ),
-              )
-            ],
+                ],
+              );
+            },
           ),
+          // ... rest of the profile section content ...
         ],
       ),
-    );
-  }
-
-  /// Section Widget
-  Widget _buildWeightgoal(BuildContext context) {
-    return Consumer<SocialProfileMyselfProvider>(
-      builder: (context, provider, _) {
-        final progress = provider.weightGoalProgress;
-        
-        return Container(
-          width: double.maxFinite,
-          margin: EdgeInsets.symmetric(horizontal: 16.h),
-          padding: EdgeInsets.all(16.h),
-          decoration: BoxDecoration(
-            color: const Color(0xFF8FB8E0).withOpacity(0.3),
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 4,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                "🎉 John has hit ${progress}% of his weight goal!",
-                style: theme.textTheme.bodyLarge?.copyWith(
-                  color: Colors.white,
-                ),
-              ),
-              SizedBox(height: 8.h),
-              Container(
-                height: 8.h,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(4.h),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      flex: progress,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.blue,
-                          borderRadius: BorderRadius.circular(4.h),
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      flex: 100 - progress,
-                      child: const SizedBox(),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        );
-      },
     );
   }
 
@@ -346,6 +280,257 @@ class SocialProfileMyselfScreenState extends State<SocialProfileMyselfScreen> {
           );
         },
       ),
+    );
+  }
+
+  /// Section Widget
+  Widget _buildRowvectorone(BuildContext context) {
+    return Container(
+      width: double.maxFinite,
+      margin: EdgeInsets.symmetric(horizontal: 16.h),
+      padding: EdgeInsets.all(16.h),
+      decoration: null,
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Consumer<ProfilePictureProvider>(
+                builder: (context, profilePicProvider, _) {
+                  return ClipOval(
+                    child: CustomImageView(
+                      imagePath: profilePicProvider.profileImagePath,
+                      isFile: !profilePicProvider.profileImagePath.startsWith('assets/'),
+                      height: 80.h,
+                      width: 80.h,
+                      radius: BorderRadius.circular(40.h),
+                    ),
+                  );
+                },
+              ),
+              SizedBox(width: 12.h),
+              Expanded(
+                child: StreamBuilder<DocumentSnapshot>(
+                  stream: FirebaseFirestore.instance
+                      .collection('users')
+                      .doc(FirebaseAuth.instance.currentUser?.email)
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    if (snapshot.hasData && snapshot.data != null && snapshot.data!.exists) {
+                      final userData = snapshot.data!.data() as Map<String, dynamic>;
+                      final firstName = userData['firstName']?.toString() ?? '';
+                      final lastName = userData['lastName']?.toString() ?? '';
+                      final username = userData['username']?.toString() ?? '';
+                      
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "$firstName $lastName",
+                            style: theme.textTheme.headlineMedium?.copyWith(
+                              color: const Color(0xFF37474F),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          Text(
+                            "@$username",
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              color: const Color(0xFF37474F),
+                            ),
+                          ),
+                        ],
+                      );
+                    }
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Loading...",
+                          style: theme.textTheme.headlineMedium?.copyWith(
+                            color: const Color(0xFF37474F),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        Text(
+                          "@...",
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            color: const Color(0xFF37474F),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 16.h),
+          Row(
+            children: [
+              Expanded(
+                child: CustomElevatedButton(
+                  text: "Add Friend",
+                  height: 48.h,
+                  rightIcon: Container(
+                    margin: EdgeInsets.only(left: 6.h),
+                    child: CustomImageView(
+                      imagePath: ImageConstant.imgAddFriend,
+                      height: 16.h,
+                      width: 16.h,
+                      fit: BoxFit.contain,
+                      color: Colors.white,
+                    ),
+                  ),
+                  buttonStyle: CustomButtonStyles.fillBlueGrayTL16,
+                  buttonTextStyle: CustomTextStyles.titleSmallSemiBold,
+                ),
+              ),
+              SizedBox(width: 14.h),
+              Expanded(
+                child: CustomElevatedButton(
+                  text: "Message",
+                  height: 48.h,
+                  buttonStyle: CustomButtonStyles.fillBlueGrayTL16,
+                  buttonTextStyle: CustomTextStyles.titleSmallSemiBold,
+                ),
+              )
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Section Widget
+  Widget _buildWeightgoal(BuildContext context) {
+    return StreamBuilder<DocumentSnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('users')
+          .doc(FirebaseAuth.instance.currentUser?.email)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.hasData && snapshot.data != null && snapshot.data!.exists) {
+          final userData = snapshot.data!.data() as Map<String, dynamic>;
+          final firstName = userData['firstName']?.toString() ?? '';
+          final currentWeight = double.tryParse(userData['weight']?.toString() ?? '0') ?? 0;
+          final goalWeight = double.tryParse(userData['weightgoal']?.toString() ?? '0') ?? 0;
+          
+          // Calculate progress percentage
+          int progress = 0;
+          if (currentWeight > 0) {
+            double calculation = (1 - ((currentWeight - goalWeight) / currentWeight)) * 100;
+            progress = calculation.round().clamp(0, 100); // Ensure progress is between 0 and 100
+          }
+          
+          return Container(
+            width: double.maxFinite,
+            margin: EdgeInsets.symmetric(horizontal: 16.h),
+            padding: EdgeInsets.all(16.h),
+            decoration: BoxDecoration(
+              color: const Color(0xFF8FB8E0).withOpacity(0.3),
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  "🎉 $firstName has hit $progress% of his weight goal!",
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    color: Colors.white,
+                  ),
+                ),
+                SizedBox(height: 8.h),
+                Container(
+                  height: 8.h,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(4.h),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        flex: progress,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.blue,
+                            borderRadius: BorderRadius.circular(4.h),
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        flex: 100 - progress,
+                        child: const SizedBox(),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+        return Container(
+          width: double.maxFinite,
+          margin: EdgeInsets.symmetric(horizontal: 16.h),
+          padding: EdgeInsets.all(16.h),
+          decoration: BoxDecoration(
+            color: const Color(0xFF8FB8E0).withOpacity(0.3),
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                "Loading...",
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  color: Colors.white,
+                ),
+              ),
+              SizedBox(height: 8.h),
+              Container(
+                height: 8.h,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(4.h),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      flex: 0,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.blue,
+                          borderRadius: BorderRadius.circular(4.h),
+                        ),
+                      ),
+                    ),
+                    const Expanded(
+                      flex: 100,
+                      child: SizedBox(),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

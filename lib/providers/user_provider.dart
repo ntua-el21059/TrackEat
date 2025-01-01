@@ -60,6 +60,18 @@ class UserProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setMacronutrientGoals({
+    double? carbsGoal,
+    double? proteinGoal,
+    double? fatGoal,
+  }) {
+    print('Setting macronutrient goals - carbs: $carbsGoal, protein: $proteinGoal, fat: $fatGoal');
+    if (carbsGoal != null) _user.carbsGoal = carbsGoal;
+    if (proteinGoal != null) _user.proteinGoal = proteinGoal;
+    if (fatGoal != null) _user.fatGoal = fatGoal;
+    notifyListeners();
+  }
+
   // Save to Firestore
   Future<void> saveToFirestore() async {
     print('Attempting to save user to Firestore');
