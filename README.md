@@ -47,7 +47,7 @@ We make food tracking effortless!
    - Open Android Studio
    - Go to Tools > Device Manager
    - Click "Create Device"
-   - Select any phone (Pixel 9 pro recommended)
+   - Select any phone (Pixel 9 Pro recommended)
    - Download and select a system image (Android 13 recommended)
 3. Download and Run:
    - Download APK from [Releases page](https://github.com/ntua-el21059/TrackEat/releases)
