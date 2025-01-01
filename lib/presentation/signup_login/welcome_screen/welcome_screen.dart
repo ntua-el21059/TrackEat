@@ -3,6 +3,7 @@ import '../../../core/app_export.dart';
 import '../../../theme/custom_button_style.dart';
 import '../../../widgets/custom_elevated_button.dart';
 import 'provider/welcome_provider.dart';
+import '../login_screen/provider/login_provider.dart';
 
 class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({Key? key}) : super(key: key);
@@ -22,6 +23,20 @@ class WelcomeScreenState extends State<WelcomeScreen> {
   @override
   void initState() {
     super.initState();
+    _checkLoginState();
+  }
+
+  Future<void> _checkLoginState() async {
+    final isLoggedIn = await LoginProvider.isUserLoggedIn();
+    
+    if (mounted && isLoggedIn) {
+      // User is logged in, go directly to home screen
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        AppRoutes.homeScreen,
+        (route) => false,
+      );
+    }
   }
 
   @override

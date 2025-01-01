@@ -93,7 +93,7 @@ class AppRoutes {
         historyTodayTabScreen: HistoryTodayTabScreen.builder,
         // aiChatSplashScreen: AiChatSplashScreen.builder,
         aiChatMainScreen: AiChatMainScreen.builder,
-        initialRoute: SplashScreen.builder,
+        initialRoute: WelcomeScreen.builder,
         profileScreen: (context) => ProfileScreen(),
         profileStaticScreen: (context) => const ProfileStaticScreen(),
         accessibilitySettingsScreen: (context) => AccessibilitySettingsScreen.builder(context),

@@ -25,7 +25,7 @@ class HomeInitialModel {
   void updateGreens(String firstName) {
     cardsItemList[1] = CardsItemModel(
       thumbsupOne: ImageConstant.imgTicket,
-      cutdownsweets: "Boost your greens, $firstName",
+      cutdownsweets: "Boost your greens",
       yourweekly: "adding even a handful can give you extra energy",
     );
   }

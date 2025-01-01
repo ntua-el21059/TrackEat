@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/app_export.dart';
 import 'models/splash_model.dart';
 import 'provider/splash_provider.dart';
+import '../login_screen/provider/login_provider.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({Key? key}) : super(key: key);
@@ -21,11 +22,21 @@ class SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    Future.delayed(const Duration(milliseconds: 3000), () {
-      NavigatorService.popAndPushNamed(
-        AppRoutes.welcomeScreen,
-      );
-    });
+    _checkLoginState();
+  }
+
+  Future<void> _checkLoginState() async {
+    final isLoggedIn = await LoginProvider.isUserLoggedIn();
+    
+    if (mounted) {
+      if (isLoggedIn) {
+        // User is logged in, go directly to home screen
+        NavigatorService.popAndPushNamed(AppRoutes.homeScreen);
+      } else {
+        // User is not logged in, go to welcome screen
+        NavigatorService.popAndPushNamed(AppRoutes.welcomeScreen);
+      }
+    }
   }
 
   @override

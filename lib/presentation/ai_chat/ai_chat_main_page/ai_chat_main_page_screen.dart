@@ -88,20 +88,11 @@ class AiChatMainScreenState extends State<AiChatMainScreen> {
           // Show visual indicator that we're about to listen
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Row(
-                children: [
-                  Icon(Icons.mic, color: Colors.white),
-                  SizedBox(width: 8),
-                  Text('Listening... Speak now'),
-                ],
-              ),
+              content: Text('Listening...'),
               backgroundColor: Colors.green,
               duration: Duration(seconds: 2),
             ),
           );
-          
-          // Small delay to ensure the user is ready
-          await Future.delayed(Duration(milliseconds: 500));
           
           await _speech.listen(
             onResult: (result) {

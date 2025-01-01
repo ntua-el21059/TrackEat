@@ -169,9 +169,9 @@ Important: Respond with ONLY the JSON object, no other text.""";
       }
 
       notifyListeners();
-      Future.delayed(const Duration(milliseconds: 100), () {
-        onMessageAdded?.call();
-      });
+      if (onMessageAdded != null) {
+        onMessageAdded!();
+      }
 
       messageController.clear();
       removeImage();

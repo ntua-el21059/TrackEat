@@ -170,9 +170,6 @@ class CalorieCalculatorScreenState extends State<CalorieCalculatorScreen> {
                     
                     print('Successfully created Firebase Auth user');
                     
-                    // Wait a moment for Auth to complete
-                    await Future.delayed(Duration(seconds: 1));
-                    
                     // Test Firestore connection
                     final firestoreService = FirestoreService();
                     final isConnected = await firestoreService.testConnection();

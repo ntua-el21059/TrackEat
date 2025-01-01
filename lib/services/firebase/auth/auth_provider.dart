@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import '../../../providers/user_info_provider.dart';
+import '../../../presentation/signup_login/login_screen/provider/login_provider.dart';
 
 class AuthProvider with ChangeNotifier {
   final AuthService _authService = AuthService();
@@ -116,6 +117,9 @@ class AuthProvider with ChangeNotifier {
       
       final userInfoProvider = Provider.of<UserInfoProvider>(context, listen: false);
       await userInfoProvider.clearUserInfo();
+      
+      // Clear login state from shared preferences
+      await LoginProvider.clearLoginState();
       
       notifyListeners();
     } catch (e) {

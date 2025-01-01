@@ -10,6 +10,7 @@ import '../../../services/firebase/auth/auth_provider.dart' as auth;
 import 'models/login_model.dart';
 import 'provider/login_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -245,7 +246,11 @@ class LoginScreenState extends State<LoginScreen> {
               final success = await authProvider.signIn(context, email, password);
 
               if (success && context.mounted) {
-                await Future.delayed(Duration(milliseconds: 100));
+                if (provider.keepmesignedin!) {
+                  final prefs = await SharedPreferences.getInstance();
+                  await prefs.setString('saved_email', email);
+                  await provider.saveLoginState(email);
+                }
                 
                 if (context.mounted) {
                   await Navigator.pushNamedAndRemoveUntil(
