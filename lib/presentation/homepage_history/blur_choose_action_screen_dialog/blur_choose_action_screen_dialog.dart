@@ -1,19 +1,21 @@
 import 'package:flutter/material.dart';
 import '../../../core/app_export.dart';
 import '../blur_edit_screen_dialog/blur_edit_screen_dialog.dart';
-
+import '../../../models/meal.dart';
+import 'package:provider/provider.dart';
+import '../history_today_tab_screen/provider/history_today_tab_provider.dart';
 
 class BlurChooseActionScreenDialog extends StatelessWidget {
   const BlurChooseActionScreenDialog({
     Key? key, 
     required this.mealType,
     required this.onDelete,
-    required this.mealName,
+    required this.meal,
   }) : super(key: key);
   
   final String mealType;
   final VoidCallback onDelete;
-  final String mealName;
+  final Meal meal;
 
   @override
   Widget build(BuildContext context) {
@@ -70,12 +72,15 @@ class BlurChooseActionScreenDialog extends StatelessWidget {
                 minimumSize: Size(double.infinity, 40.h),
                 fixedSize: Size.fromHeight(40.h),
               ),
-              onPressed: () {
+              onPressed: () async {
                 Navigator.pop(context);
-                showDialog(
+                final wasUpdated = await showDialog<bool>(
                   context: context,
-                  builder: (context) => BlurEditScreenDialog.builder(context, mealName),
+                  builder: (context) => BlurEditScreenDialog.builder(context, meal),
                 );
+                if (wasUpdated == true) {
+                  Provider.of<HistoryTodayTabProvider>(context, listen: false).refreshMeals();
+                }
               },
               child: Text(
                 "Edit",
@@ -117,8 +122,8 @@ class BlurChooseActionScreenDialog extends StatelessWidget {
     );
   }
 
-  static Widget builder(BuildContext context, String mealType, VoidCallback onDelete, String mealName) {
-    return BlurChooseActionScreenDialog(mealType: mealType, onDelete: onDelete, mealName: mealName);
+  static Widget builder(BuildContext context, String mealType, VoidCallback onDelete, Meal meal) {
+    return BlurChooseActionScreenDialog(mealType: mealType, onDelete: onDelete, meal: meal);
   }
 }
 

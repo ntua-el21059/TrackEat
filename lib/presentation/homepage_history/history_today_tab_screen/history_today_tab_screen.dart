@@ -671,7 +671,7 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> with Singl
                           () {
                             Provider.of<HistoryTodayTabProvider>(context, listen: false).deleteMeal(meal.id);
                           },
-                          meal.name,
+                          meal,
                         );
                       },
                     );
