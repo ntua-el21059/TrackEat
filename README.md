@@ -91,3 +91,10 @@ We make food tracking effortless!
 
 ## Need Help?
 Report any issues in the GitHub Issues section or contact our support team.
+
+## License
+
+This repository is proprietary. All rights reserved. Unauthorized use, distribution, or modification of the code is strictly prohibited.
+
+
+
