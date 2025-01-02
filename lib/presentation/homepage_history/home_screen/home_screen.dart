@@ -16,6 +16,7 @@ import '../../../presentation/profile_screen/profile_screen.dart';
 import '../../../providers/profile_picture_provider.dart';
 import '../../../providers/user_info_provider.dart';
 import '../../../models/user_model.dart';
+import '../../../services/meal_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -130,10 +131,15 @@ class HomeScreenState extends State<HomeScreen> {
     final fatGoal = double.tryParse(userData['fatgoal']?.toString() ?? '0') ?? 70.0;
     final carbsGoal = double.tryParse(userData['carbsgoal']?.toString() ?? '0') ?? 110.0;
 
-    // Use fixed values for testing
-    final proteinConsumed = 150.0;
-    final fatConsumed = 100.0;
-    final carbsConsumed = 150.0;
+    // Get consumed macros from meal history
+    final userEmail = FirebaseAuth.instance.currentUser?.email;
+    final now = DateTime.now();
+    final mealService = MealService();
+    final macros = await mealService.getTotalMacrosForDate(userEmail!, now);
+    
+    final proteinConsumed = macros['protein'] ?? 0.0;
+    final fatConsumed = macros['fats'] ?? 0.0;
+    final carbsConsumed = macros['carbs'] ?? 0.0;
 
     final proteinPercent = (proteinConsumed / proteinGoal * 100).clamp(0, 100);
     final fatPercent = (fatConsumed / fatGoal * 100).clamp(0, 100);
@@ -276,9 +282,37 @@ class HomeScreenState extends State<HomeScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                "${_calculateRemainingCalories()} Kcal Remaining...",
-                style: CustomTextStyles.titleMediumGray90001Bold,
+              StreamBuilder<DocumentSnapshot>(
+                stream: FirebaseFirestore.instance
+                    .collection('users')
+                    .doc(FirebaseAuth.instance.currentUser?.email)
+                    .snapshots(),
+                builder: (context, userSnapshot) {
+                  if (userSnapshot.hasData && userSnapshot.data != null && userSnapshot.data!.exists) {
+                    final userData = userSnapshot.data!.data() as Map<String, dynamic>;
+                    final dailyCalories = userData['dailyCalories'] as int? ?? 2000;
+                    
+                    return FutureBuilder<int>(
+                      future: MealService().getTotalCaloriesForDate(
+                        FirebaseAuth.instance.currentUser!.email!,
+                        DateTime.now(),
+                      ),
+                      builder: (context, consumedSnapshot) {
+                        final consumedCalories = consumedSnapshot.data ?? 0;
+                        final remainingCalories = dailyCalories - consumedCalories;
+                        
+                        return Text(
+                          "$remainingCalories Kcal Remaining...",
+                          style: CustomTextStyles.titleMediumGray90001Bold,
+                        );
+                      },
+                    );
+                  }
+                  return Text(
+                    "0 Kcal Remaining...",
+                    style: CustomTextStyles.titleMediumGray90001Bold,
+                  );
+                },
               ),
               StreamBuilder<DocumentSnapshot>(
                 stream: FirebaseFirestore.instance
@@ -311,24 +345,56 @@ class HomeScreenState extends State<HomeScreen> {
             ],
           ),
           SizedBox(height: 8.h),
-          Container(
-            width: double.maxFinite,
-            height: 8.h,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(4.h),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: MediaQuery.of(context).size.width * (_calculateConsumedPercentage() / 100),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF4CD964),
-                    borderRadius: BorderRadius.circular(4.h),
+          StreamBuilder<DocumentSnapshot>(
+            stream: FirebaseFirestore.instance
+                .collection('users')
+                .doc(FirebaseAuth.instance.currentUser?.email)
+                .snapshots(),
+            builder: (context, userSnapshot) {
+              if (userSnapshot.hasData && userSnapshot.data != null && userSnapshot.data!.exists) {
+                final userData = userSnapshot.data!.data() as Map<String, dynamic>;
+                final dailyCalories = userData['dailyCalories'] as int? ?? 2000;
+                
+                return FutureBuilder<int>(
+                  future: MealService().getTotalCaloriesForDate(
+                    FirebaseAuth.instance.currentUser!.email!,
+                    DateTime.now(),
                   ),
+                  builder: (context, consumedSnapshot) {
+                    final consumedCalories = consumedSnapshot.data ?? 0;
+                    final percentage = ((consumedCalories / dailyCalories) * 100).clamp(0, 100);
+                    
+                    return Container(
+                      width: double.maxFinite,
+                      height: 8.h,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(4.h),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: MediaQuery.of(context).size.width * (percentage / 100),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF4CD964),
+                              borderRadius: BorderRadius.circular(4.h),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              }
+              return Container(
+                width: double.maxFinite,
+                height: 8.h,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(4.h),
                 ),
-              ],
-            ),
+              );
+            },
           ),
           SizedBox(height: 20.h),
           StreamBuilder<DocumentSnapshot>(
@@ -339,79 +405,84 @@ class HomeScreenState extends State<HomeScreen> {
             builder: (context, snapshot) {
               if (snapshot.hasData && snapshot.data != null && snapshot.data!.exists) {
                 final userData = snapshot.data!.data() as Map<String, dynamic>;
-                _checkRingsAndShowReward(userData);
-                
                 final proteinGoal = double.tryParse(userData['proteingoal']?.toString() ?? '0') ?? 98.0;
                 final fatGoal = double.tryParse(userData['fatgoal']?.toString() ?? '0') ?? 70.0;
                 final carbsGoal = double.tryParse(userData['carbsgoal']?.toString() ?? '0') ?? 110.0;
 
-                // Use fixed values for testing
-                final proteinConsumed = 150.0;
-                final fatConsumed = 100.0;
-                final carbsConsumed = 150.0;
+                return FutureBuilder<Map<String, double>>(
+                  future: MealService().getTotalMacrosForDate(
+                    FirebaseAuth.instance.currentUser!.email!,
+                    DateTime.now(),
+                  ),
+                  builder: (context, macrosSnapshot) {
+                    final proteinConsumed = macrosSnapshot.data?['protein'] ?? 0.0;
+                    final fatConsumed = macrosSnapshot.data?['fats'] ?? 0.0;
+                    final carbsConsumed = macrosSnapshot.data?['carbs'] ?? 0.0;
 
-                final proteinPercent = (proteinConsumed / proteinGoal * 100).clamp(0, 100);
-                final fatPercent = (fatConsumed / fatGoal * 100).clamp(0, 100);
-                final carbsPercent = (carbsConsumed / carbsGoal * 100).clamp(0, 100);
-                
-                // Update the UserProvider with the latest values from Firebase only if they've changed
-                final userProvider = Provider.of<UserProvider>(context, listen: false);
-                if (userProvider.user.carbsGoal != carbsGoal ||
-                    userProvider.user.proteinGoal != proteinGoal ||
-                    userProvider.user.fatGoal != fatGoal) {
-                  userProvider.setMacronutrientGoals(
-                    proteinGoal: proteinGoal,
-                    fatGoal: fatGoal,
-                    carbsGoal: carbsGoal,
-                  );
-                }
-                
-                return Row(
-                  children: [
-                    Expanded(
-                      flex: 3,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildMacronutrientText("Protein", proteinConsumed, proteinGoal, const Color(0xFFFA114F)),
-                          SizedBox(height: 16.h),
-                          _buildMacronutrientText("Fats", fatConsumed, fatGoal, const Color(0xFFA6FF00)),
-                          SizedBox(height: 16.h),
-                          _buildMacronutrientText("Carbs", carbsConsumed, carbsGoal, const Color(0xFF00FFF6)),
-                        ],
-                      ),
-                    ),
-                    Expanded(
-                      flex: 2,
-                      child: Ring(
-                        percent: _isLoading ? 0.0 : proteinPercent.toDouble(),
-                        color: RingColorScheme(
-                          ringColor: Color(0xFFFA114F),
-                          backgroundColor: Colors.grey.withOpacity(0.2),
-                        ),
-                        radius: 60,
-                        width: 15,
-                        child: Ring(
-                          percent: _isLoading ? 0.0 : fatPercent.toDouble(),
-                          color: RingColorScheme(
-                            ringColor: Color(0xFFA6FF00),
-                            backgroundColor: Colors.grey.withOpacity(0.2),
+                    final proteinPercent = (proteinConsumed / proteinGoal * 100).clamp(0, 100);
+                    final fatPercent = (fatConsumed / fatGoal * 100).clamp(0, 100);
+                    final carbsPercent = (carbsConsumed / carbsGoal * 100).clamp(0, 100);
+                    
+                    // Update the UserProvider with the latest values from Firebase only if they've changed
+                    final userProvider = Provider.of<UserProvider>(context, listen: false);
+                    if (userProvider.user.carbsGoal != carbsGoal ||
+                        userProvider.user.proteinGoal != proteinGoal ||
+                        userProvider.user.fatGoal != fatGoal) {
+                      userProvider.setMacronutrientGoals(
+                        proteinGoal: proteinGoal,
+                        fatGoal: fatGoal,
+                        carbsGoal: carbsGoal,
+                      );
+                    }
+                    
+                    return Row(
+                      children: [
+                        Expanded(
+                          flex: 3,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildMacronutrientText("Protein", proteinConsumed, proteinGoal, const Color(0xFFFA114F)),
+                              SizedBox(height: 16.h),
+                              _buildMacronutrientText("Fats", fatConsumed, fatGoal, const Color(0xFFA6FF00)),
+                              SizedBox(height: 16.h),
+                              _buildMacronutrientText("Carbs", carbsConsumed, carbsGoal, const Color(0xFF00FFF6)),
+                            ],
                           ),
-                          radius: 45,
-                          width: 15,
+                        ),
+                        Expanded(
+                          flex: 2,
                           child: Ring(
-                            percent: _isLoading ? 0.0 : carbsPercent.toDouble(),
+                            percent: _isLoading ? 0.0 : proteinPercent.toDouble(),
                             color: RingColorScheme(
-                              ringColor: Color(0xFF00FFF6),
+                              ringColor: Color(0xFFFA114F),
                               backgroundColor: Colors.grey.withOpacity(0.2),
                             ),
-                            radius: 30,
+                            radius: 60,
                             width: 15,
+                            child: Ring(
+                              percent: _isLoading ? 0.0 : fatPercent.toDouble(),
+                              color: RingColorScheme(
+                                ringColor: Color(0xFFA6FF00),
+                                backgroundColor: Colors.grey.withOpacity(0.2),
+                              ),
+                              radius: 45,
+                              width: 15,
+                              child: Ring(
+                                percent: _isLoading ? 0.0 : carbsPercent.toDouble(),
+                                color: RingColorScheme(
+                                  ringColor: Color(0xFF00FFF6),
+                                  backgroundColor: Colors.grey.withOpacity(0.2),
+                                ),
+                                radius: 30,
+                                width: 15,
+                              ),
+                            ),
                           ),
                         ),
-                      ),
-                    ),
-                  ],
+                      ],
+                    );
+                  },
                 );
               }
               
@@ -498,26 +569,9 @@ class HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  int _calculateRemainingCalories() {
-    final userProvider = Provider.of<UserProvider>(context, listen: false);
-    final dailyCalories = userProvider.user.dailyCalories ?? 2000;
-    final consumedCalories = 1500; // TODO: Get this from history provider
-    return dailyCalories - consumedCalories;
-  }
-
   int _calculateDailyCalories() {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     return userProvider.user.dailyCalories ?? 2000;
-  }
-
-  double _calculateConsumedPercentage() {
-    final userProvider = Provider.of<UserProvider>(context, listen: false);
-    final dailyCalories = userProvider.user.dailyCalories ?? 2000;
-    final consumedCalories = 1500; // TODO: Get this from history provider
-    
-    // Calculate percentage of calories consumed
-    final percentage = (consumedCalories / dailyCalories) * 100;
-    return percentage.clamp(0, 100); // Ensure percentage is between 0 and 100
   }
 
   Widget _buildSuggestionsone(BuildContext context) {

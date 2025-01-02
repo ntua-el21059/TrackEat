@@ -10,6 +10,7 @@ import 'provider/history_today_tab_provider.dart';
 import '../blur_choose_action_screen_dialog/blur_choose_action_screen_dialog.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../../../services/meal_service.dart';
 
 class HistoryTodayTabScreen extends StatefulWidget {
   const HistoryTodayTabScreen({Key? key}) : super(key: key);
@@ -251,144 +252,167 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> with Singl
                 .collection('users')
                 .doc(FirebaseAuth.instance.currentUser?.email)
                 .snapshots(),
-            builder: (context, snapshot) {
-              if (snapshot.hasData && snapshot.data != null && snapshot.data!.exists) {
-                final userData = snapshot.data!.data() as Map<String, dynamic>;
+            builder: (context, userSnapshot) {
+              if (userSnapshot.hasData && userSnapshot.data != null && userSnapshot.data!.exists) {
+                final userData = userSnapshot.data!.data() as Map<String, dynamic>;
+                final dailyCalories = userData['dailyCalories'] as int? ?? 2000;
                 final proteinGoal = double.tryParse(userData['proteingoal']?.toString() ?? '0') ?? 98.0;
                 final fatGoal = double.tryParse(userData['fatgoal']?.toString() ?? '0') ?? 70.0;
                 final carbsGoal = double.tryParse(userData['carbsgoal']?.toString() ?? '0') ?? 110.0;
 
-                // Use fixed values for testing
-                final proteinConsumed = 150.0;
-                final fatConsumed = 100.0;
-                final carbsConsumed = 150.0;
+                return Consumer<HistoryTodayTabProvider>(
+                  builder: (context, provider, _) {
+                    return FutureBuilder<Map<String, dynamic>>(
+                      future: Future.wait([
+                        MealService().getTotalCaloriesForDate(
+                          FirebaseAuth.instance.currentUser!.email!,
+                          provider.selectedDate,
+                        ).then((value) => {'calories': value}),
+                        MealService().getTotalMacrosForDate(
+                          FirebaseAuth.instance.currentUser!.email!,
+                          provider.selectedDate,
+                        ),
+                      ]).then((results) => {
+                        ...results[0] as Map<String, dynamic>,
+                        ...results[1],
+                      }),
+                      builder: (context, macrosSnapshot) {
+                        final consumedCalories = macrosSnapshot.data?['calories'] ?? 0;
+                        final proteinConsumed = macrosSnapshot.data?['protein'] ?? 0.0;
+                        final fatConsumed = macrosSnapshot.data?['fats'] ?? 0.0;
+                        final carbsConsumed = macrosSnapshot.data?['carbs'] ?? 0.0;
 
-                final proteinPercent = (proteinConsumed / proteinGoal * 100).clamp(0, 100);
-                final fatPercent = (fatConsumed / fatGoal * 100).clamp(0, 100);
-                final carbsPercent = (carbsConsumed / carbsGoal * 100).clamp(0, 100);
+                        final proteinPercent = (proteinConsumed / proteinGoal * 100).clamp(0, 100);
+                        final fatPercent = (fatConsumed / fatGoal * 100).clamp(0, 100);
+                        final carbsPercent = (carbsConsumed / carbsGoal * 100).clamp(0, 100);
+                        final caloriesPercent = ((consumedCalories / dailyCalories) * 100).clamp(0, 100);
 
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          "${_calculateRemainingCalories()} Kcal Remaining...",
-                          style: CustomTextStyles.titleMediumGray90001Bold,
-                        ),
-                        Text(
-                          "${_calculateDailyCalories()} kcal",
-                          style: TextStyle(
-                            color: const Color(0xFFFF0000),
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 6.h),
-                    Container(
-                      width: double.maxFinite,
-                      height: 8.h,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(4.h),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: MediaQuery.of(context).size.width * (_calculateConsumedPercentage() / 100),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF4CD964),
-                              borderRadius: BorderRadius.circular(4.h),
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  "${dailyCalories - consumedCalories} Kcal Remaining...",
+                                  style: CustomTextStyles.titleMediumGray90001Bold,
+                                ),
+                                Text(
+                                  "$dailyCalories kcal",
+                                  style: TextStyle(
+                                    color: const Color(0xFFFF0000),
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    SizedBox(height: 12.h),
-                    Row(
-                      children: [
-                        Expanded(
-                          flex: 3,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "Protein",
-                                style: CustomTextStyles.bodyLargeBlack90016_2,
+                            SizedBox(height: 6.h),
+                            Container(
+                              width: double.maxFinite,
+                              height: 8.h,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(4.h),
                               ),
-                              Text(
-                                "${proteinConsumed.toInt()}/${proteinGoal.toInt()}g",
-                                style: TextStyle(
-                                  color: const Color(0xFFFA114F),
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              SizedBox(height: 16.h),
-                              Text(
-                                "Fats",
-                                style: CustomTextStyles.bodyLargeBlack90016_2,
-                              ),
-                              Text(
-                                "${fatConsumed.toInt()}/${fatGoal.toInt()}g",
-                                style: TextStyle(
-                                  color: const Color(0xFFA6FF00),
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              SizedBox(height: 16.h),
-                              Text(
-                                "Carbs",
-                                style: CustomTextStyles.bodyLargeBlack90016_2,
-                              ),
-                              Text(
-                                "${carbsConsumed.toInt()}/${carbsGoal.toInt()}g",
-                                style: TextStyle(
-                                  color: const Color(0xFF00FFF6),
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Expanded(
-                          flex: 2,
-                          child: Ring(
-                            percent: _isLoading ? 0.0 : proteinPercent.toDouble(),
-                            color: RingColorScheme(
-                              ringColor: Color(0xFFFA114F),
-                              backgroundColor: Colors.grey.withOpacity(0.2),
-                            ),
-                            radius: 60,
-                            width: 15,
-                            child: Ring(
-                              percent: _isLoading ? 0.0 : fatPercent.toDouble(),
-                              color: RingColorScheme(
-                                ringColor: Color(0xFFA6FF00),
-                                backgroundColor: Colors.grey.withOpacity(0.2),
-                              ),
-                              radius: 45,
-                              width: 15,
-                              child: Ring(
-                                percent: _isLoading ? 0.0 : carbsPercent.toDouble(),
-                                color: RingColorScheme(
-                                  ringColor: Color(0xFF00FFF6),
-                                  backgroundColor: Colors.grey.withOpacity(0.2),
-                                ),
-                                radius: 30,
-                                width: 15,
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: MediaQuery.of(context).size.width * (caloriesPercent / 100),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF4CD964),
+                                      borderRadius: BorderRadius.circular(4.h),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+                            SizedBox(height: 12.h),
+                            Row(
+                              children: [
+                                Expanded(
+                                  flex: 3,
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        "Protein",
+                                        style: CustomTextStyles.bodyLargeBlack90016_2,
+                                      ),
+                                      Text(
+                                        "${proteinConsumed.toInt()}/${proteinGoal.toInt()}g",
+                                        style: TextStyle(
+                                          color: const Color(0xFFFA114F),
+                                          fontSize: 24,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                      SizedBox(height: 16.h),
+                                      Text(
+                                        "Fats",
+                                        style: CustomTextStyles.bodyLargeBlack90016_2,
+                                      ),
+                                      Text(
+                                        "${fatConsumed.toInt()}/${fatGoal.toInt()}g",
+                                        style: TextStyle(
+                                          color: const Color(0xFFA6FF00),
+                                          fontSize: 24,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                      SizedBox(height: 16.h),
+                                      Text(
+                                        "Carbs",
+                                        style: CustomTextStyles.bodyLargeBlack90016_2,
+                                      ),
+                                      Text(
+                                        "${carbsConsumed.toInt()}/${carbsGoal.toInt()}g",
+                                        style: TextStyle(
+                                          color: const Color(0xFF00FFF6),
+                                          fontSize: 24,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Expanded(
+                                  flex: 2,
+                                  child: Ring(
+                                    percent: _isLoading ? 0.0 : proteinPercent.toDouble(),
+                                    color: RingColorScheme(
+                                      ringColor: Color(0xFFFA114F),
+                                      backgroundColor: Colors.grey.withOpacity(0.2),
+                                    ),
+                                    radius: 60,
+                                    width: 15,
+                                    child: Ring(
+                                      percent: _isLoading ? 0.0 : fatPercent.toDouble(),
+                                      color: RingColorScheme(
+                                        ringColor: Color(0xFFA6FF00),
+                                        backgroundColor: Colors.grey.withOpacity(0.2),
+                                      ),
+                                      radius: 45,
+                                      width: 15,
+                                      child: Ring(
+                                        percent: _isLoading ? 0.0 : carbsPercent.toDouble(),
+                                        color: RingColorScheme(
+                                          ringColor: Color(0xFF00FFF6),
+                                          backgroundColor: Colors.grey.withOpacity(0.2),
+                                        ),
+                                        radius: 30,
+                                        width: 15,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                  },
                 );
               }
               return Container(); // Return empty container while loading

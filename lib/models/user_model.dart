@@ -44,12 +44,27 @@ class UserModel {
     this.height,
     this.age,
     this.dailyCalories,
-    this.carbsGoal,
-    this.proteinGoal,
-    this.fatGoal,
-  });
+    double? carbsGoal,
+    double? proteinGoal,
+    double? fatGoal,
+  }) {
+    // Calculate default macronutrient goals based on daily calorie goal if not provided
+    final calories = dailyCalories ?? 2000;
+    
+    // Calculate macros: 30% protein, 45% carbs, 25% fat
+    this.carbsGoal = carbsGoal ?? ((0.45 * calories) / 4).round().toDouble();  // 45% of calories
+    this.proteinGoal = proteinGoal ?? ((0.30 * calories) / 4).round().toDouble(); // 30% of calories
+    this.fatGoal = fatGoal ?? ((0.25 * calories) / 9).round().toDouble();     // 25% of calories
+  }
 
   Map<String, dynamic> toJson() {
+    final dailyCalories = this.dailyCalories ?? 2000;
+    
+    // Calculate macros if they're null
+    final carbsGoal = this.carbsGoal ?? ((0.45 * dailyCalories) / 4).round().toDouble();
+    final proteinGoal = this.proteinGoal ?? ((0.30 * dailyCalories) / 4).round().toDouble();
+    final fatGoal = this.fatGoal ?? ((0.25 * dailyCalories) / 9).round().toDouble();
+    
     return {
       'username': username,
       'email': email,
