@@ -36,18 +36,19 @@ class AiChatMainScreenState extends State<AiChatMainScreen> {
     // Wait for the provider to be available
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final provider = Provider.of<AiChatMainProvider>(context, listen: false);
-      provider.onMessageAdded = _scrollToBottom;
+      provider.onMessageAdded = () {
+        // Add a small delay to ensure the UI is updated
+        Future.delayed(Duration(milliseconds: 100), () {
+          if (_scrollController.hasClients) {
+            _scrollController.animateTo(
+              _scrollController.position.maxScrollExtent,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOut,
+            );
+          }
+        });
+      };
     });
-  }
-
-  void _scrollToBottom() {
-    if (_scrollController.hasClients) {
-      _scrollController.animateTo(
-        _scrollController.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOut,
-      );
-    }
   }
 
   Future<void> _listen() async {
@@ -658,7 +659,10 @@ class AiChatMainScreenState extends State<AiChatMainScreen> {
                                               ),
                                               border: InputBorder.none,
                                             ),
-                                            onSubmitted: (value) => provider.sendMessage(value),
+                                            onSubmitted: (value) {
+                                              // Just unfocus to close keyboard
+                                              FocusScope.of(context).unfocus();
+                                            },
                                           ),
                                         ],
                                       ),

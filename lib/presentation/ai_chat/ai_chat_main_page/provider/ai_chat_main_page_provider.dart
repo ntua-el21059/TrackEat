@@ -83,15 +83,19 @@ class AiChatMainProvider extends ChangeNotifier {
 
       // If an image is selected
       if (selectedImage != null) {
-        // Add user's image message
+        final userText = message.trim();
+        final imageMessage = '📸 Image${userText.isNotEmpty ? "\nUser note: $userText" : ""}\n${selectedImage!.path}';
+        
+        // Add user's image message with any additional text
         messages.add({
           'role': 'user',
-          'content': '📸 Image\n${selectedImage!.path}',
+          'content': imageMessage,
         });
         notifyListeners();
+        if (onMessageAdded != null) onMessageAdded!();
 
         // Prepare image analysis prompt
-        const imagePrompt = """You are a nutrition analysis assistant. Look at this food image and respond ONLY with a valid JSON object in exactly this format, with no additional text or markdown:
+        final imagePrompt = """You are a nutrition analysis assistant. Look at this food image and respond ONLY with a valid JSON object in exactly this format, with no additional text or markdown:
 {
   "food": "name of the food",
   "serving_size": "detected serving size",
@@ -100,6 +104,7 @@ class AiChatMainProvider extends ChangeNotifier {
   "carbs": 34,
   "fat": 56
 }
+${userText.isNotEmpty ? "\nNote from user: $userText\nPlease consider this information when analyzing the image." : ""}
 Important: Respond with ONLY the JSON object, no other text.""";
 
         // Send image to Gemini
@@ -110,7 +115,6 @@ Important: Respond with ONLY the JSON object, no other text.""";
 
         final response = await _model.generateContent([content]);
         final responseText = response.text;
-        print('Raw LLM Response: $responseText');
 
         if (responseText != null) {
           try {
@@ -119,10 +123,8 @@ Important: Respond with ONLY the JSON object, no other text.""";
                 .replaceAll('```json', '')
                 .replaceAll('```', '')
                 .trim();
-            print('Cleaned Response: $cleanedResponse');
             
             Map<String, dynamic> nutritionData = jsonDecode(cleanedResponse);
-            print('Parsed Nutrition Data: $nutritionData');
             lastNutritionData = nutritionData;
             
             String formattedResponse = 'Food: ${nutritionData['food'].toString().split(' ').map((word) => word.substring(0, 1).toUpperCase() + word.substring(1)).join(' ')}\n' +
@@ -131,25 +133,31 @@ Important: Respond with ONLY the JSON object, no other text.""";
                 '💪 Protein: ${nutritionData['protein']}g\n' +
                 '🌾 Carbs: ${nutritionData['carbs']}g\n' +
                 '🥑 Fat: ${nutritionData['fat']}g';
-            
-            print('Formatted Response: $formattedResponse');
 
             // Add the formatted response to messages
             messages.add({
               'role': 'assistant',
               'content': formattedResponse,
             });
+            notifyListeners();
+            if (onMessageAdded != null) onMessageAdded!();
+
+            // Add the image analysis to chat history for context
+            _chat = _model.startChat(history: [
+              Content.text(_systemPrompt),
+              ...messages.map((msg) => Content.text(msg['content']!)),
+            ]);
             
             // Show track dialog after response
             showTrackDialog = true;
-            
-            print('Added message to chat: ${messages.last}');
           } catch (e) {
             print('Error parsing nutrition data: $e');
             messages.add({
               'role': 'assistant',
               'content': 'Sorry, I had trouble analyzing the nutritional information. Please try again.',
             });
+            notifyListeners();
+            if (onMessageAdded != null) onMessageAdded!();
           }
         }
       } else {
@@ -158,6 +166,14 @@ Important: Respond with ONLY the JSON object, no other text.""";
           'role': 'user',
           'content': message,
         });
+        notifyListeners();
+        if (onMessageAdded != null) onMessageAdded!();
+
+        // Restart chat with full history before sending new message
+        _chat = _model.startChat(history: [
+          Content.text(_systemPrompt),
+          ...messages.map((msg) => Content.text(msg['content']!)),
+        ]);
 
         final response = await _chat.sendMessage(Content.text(message));
         if (response.text != null) {
@@ -165,12 +181,9 @@ Important: Respond with ONLY the JSON object, no other text.""";
             'role': 'assistant',
             'content': response.text!.trim(),
           });
+          notifyListeners();
+          if (onMessageAdded != null) onMessageAdded!();
         }
-      }
-
-      notifyListeners();
-      if (onMessageAdded != null) {
-        onMessageAdded!();
       }
 
       messageController.clear();
@@ -183,6 +196,7 @@ Important: Respond with ONLY the JSON object, no other text.""";
         'content': 'Sorry, I encountered an error. Please try again.',
       });
       notifyListeners();
+      if (onMessageAdded != null) onMessageAdded!();
     } finally {
       isLoading = false;
       notifyListeners();
