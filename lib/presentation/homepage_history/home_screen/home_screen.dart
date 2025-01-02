@@ -354,12 +354,17 @@ class HomeScreenState extends State<HomeScreen> {
                 final fatPercent = (fatConsumed / fatGoal * 100).clamp(0, 100);
                 final carbsPercent = (carbsConsumed / carbsGoal * 100).clamp(0, 100);
                 
-                // Update the UserProvider with the latest values from Firebase
-                Provider.of<UserProvider>(context, listen: false).setMacronutrientGoals(
-                  proteinGoal: proteinGoal,
-                  fatGoal: fatGoal,
-                  carbsGoal: carbsGoal,
-                );
+                // Update the UserProvider with the latest values from Firebase only if they've changed
+                final userProvider = Provider.of<UserProvider>(context, listen: false);
+                if (userProvider.user.carbsGoal != carbsGoal ||
+                    userProvider.user.proteinGoal != proteinGoal ||
+                    userProvider.user.fatGoal != fatGoal) {
+                  userProvider.setMacronutrientGoals(
+                    proteinGoal: proteinGoal,
+                    fatGoal: fatGoal,
+                    carbsGoal: carbsGoal,
+                  );
+                }
                 
                 return Row(
                   children: [

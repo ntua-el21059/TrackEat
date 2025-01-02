@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import '../../../../core/app_export.dart';
 import '../../../../theme/custom_button_style.dart';
 import '../../../../widgets/app_bar/appbar_leading_image.dart';
@@ -8,8 +7,6 @@ import '../../../../widgets/custom_elevated_button.dart';
 import '../../../../widgets/custom_text_form_field.dart';
 import '../../../../providers/user_provider.dart';
 import 'provider/create_account_provider.dart';
-import 'package:provider/provider.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 class CreateAccountScreen extends StatefulWidget {
   const CreateAccountScreen({Key? key}) : super(key: key);
@@ -279,33 +276,52 @@ class CreateAccountScreenState extends State<CreateAccountScreen> {
       padding: EdgeInsets.only(left: 2.h),
       child: Consumer<CreateAccountProvider>(
         builder: (context, provider, child) {
-          return CustomTextFormField(
-            controller: provider.passwordtwoController,
-            hintText: "Enter password",
-            textInputType: TextInputType.visiblePassword,
-            textInputAction: TextInputAction.next,
-            suffix: InkWell(
-              onTap: () {
-                provider.changePasswordVisibility();
-              },
-              child: Container(
-                margin: EdgeInsets.fromLTRB(16.h, 8.h, 10.h, 8.h),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12.h),
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              CustomTextFormField(
+                controller: provider.passwordtwoController,
+                hintText: "Enter password",
+                textInputType: TextInputType.visiblePassword,
+                textInputAction: TextInputAction.next,
+                suffix: InkWell(
+                  onTap: () {
+                    provider.changePasswordVisibility();
+                  },
+                  child: Container(
+                    margin: EdgeInsets.fromLTRB(16.h, 8.h, 10.h, 8.h),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12.h),
+                    ),
+                    child: CustomImageView(
+                      imagePath: ImageConstant.imgIconEye,
+                      height: 20.h,
+                      width: 24.h,
+                      fit: BoxFit.contain,
+                    ),
+                  ),
                 ),
-                child: CustomImageView(
-                  imagePath: ImageConstant.imgIconEye,
-                  height: 20.h,
-                  width: 24.h,
-                  fit: BoxFit.contain,
+                suffixConstraints: BoxConstraints(
+                  maxHeight: 48.h,
                 ),
+                obscureText: provider.isShowPassword,
+                contentPadding: EdgeInsets.fromLTRB(16.h, 12.h, 10.h, 12.h),
+                borderDecoration: provider.passwordError != null
+                    ? OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.red),
+                        borderRadius: BorderRadius.circular(8),
+                      )
+                    : null,
               ),
-            ),
-            suffixConstraints: BoxConstraints(
-              maxHeight: 48.h,
-            ),
-            obscureText: provider.isShowPassword,
-            contentPadding: EdgeInsets.fromLTRB(16.h, 12.h, 10.h, 12.h),
+              if (provider.passwordError != null)
+                Padding(
+                  padding: EdgeInsets.only(top: 4.h, left: 4.h),
+                  child: Text(
+                    provider.passwordError!,
+                    style: TextStyle(color: Colors.red, fontSize: 12.h),
+                  ),
+                ),
+            ],
           );
         },
       ),
@@ -318,33 +334,52 @@ class CreateAccountScreenState extends State<CreateAccountScreen> {
       padding: EdgeInsets.only(left: 2.h),
       child: Consumer<CreateAccountProvider>(
         builder: (context, provider, child) {
-          return CustomTextFormField(
-            controller: provider.passwordthreeController,
-            hintText: "Re-enter password",
-            textInputType: TextInputType.visiblePassword,
-            textInputAction: TextInputAction.done,
-            suffix: InkWell(
-              onTap: () {
-                provider.changePasswordVisibility1();
-              },
-              child: Container(
-                margin: EdgeInsets.fromLTRB(16.h, 12.h, 10.h, 12.h),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12.h),
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              CustomTextFormField(
+                controller: provider.passwordthreeController,
+                hintText: "Re-enter password",
+                textInputType: TextInputType.visiblePassword,
+                textInputAction: TextInputAction.done,
+                suffix: InkWell(
+                  onTap: () {
+                    provider.changePasswordVisibility1();
+                  },
+                  child: Container(
+                    margin: EdgeInsets.fromLTRB(16.h, 12.h, 10.h, 12.h),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12.h),
+                    ),
+                    child: CustomImageView(
+                      imagePath: ImageConstant.imgIconEye,
+                      height: 20.h,
+                      width: 24.h,
+                      fit: BoxFit.contain,
+                    ),
+                  ),
                 ),
-                child: CustomImageView(
-                  imagePath: ImageConstant.imgIconEye,
-                  height: 20.h,
-                  width: 24.h,
-                  fit: BoxFit.contain,
+                suffixConstraints: BoxConstraints(
+                  maxHeight: 48.h,
                 ),
+                obscureText: provider.isShowPassword1,
+                contentPadding: EdgeInsets.fromLTRB(16.h, 12.h, 10.h, 12.h),
+                borderDecoration: provider.reenterPasswordError != null
+                    ? OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.red),
+                        borderRadius: BorderRadius.circular(8),
+                      )
+                    : null,
               ),
-            ),
-            suffixConstraints: BoxConstraints(
-              maxHeight: 48.h,
-            ),
-            obscureText: provider.isShowPassword1,
-            contentPadding: EdgeInsets.fromLTRB(16.h, 12.h, 10.h, 12.h),
+              if (provider.reenterPasswordError != null)
+                Padding(
+                  padding: EdgeInsets.only(top: 4.h, left: 4.h),
+                  child: Text(
+                    provider.reenterPasswordError!,
+                    style: TextStyle(color: Colors.red, fontSize: 12.h),
+                  ),
+                ),
+            ],
           );
         },
       ),
@@ -358,7 +393,10 @@ class CreateAccountScreenState extends State<CreateAccountScreen> {
         bool isFormValid = provider.userNameController.text.isNotEmpty &&
             provider.emailtwoController.text.isNotEmpty &&
             provider.passwordtwoController.text.isNotEmpty &&
-            provider.passwordthreeController.text.isNotEmpty;
+            provider.passwordthreeController.text.isNotEmpty &&
+            provider.usernameError == null &&
+            provider.emailError == null &&
+            provider.passwordError == null;
 
         return CustomElevatedButton(
           height: 48.h,
@@ -379,28 +417,6 @@ class CreateAccountScreenState extends State<CreateAccountScreen> {
               return;
             }
 
-            // Check if username exists
-            final usernameQuery = await FirebaseFirestore.instance
-                .collection('users')
-                .where('username', isEqualTo: provider.userNameController.text)
-                .get();
-            
-            if (usernameQuery.docs.isNotEmpty) {
-              provider.setUsernameError("This username already exists!");
-              return;
-            }
-
-            // Check if email exists
-            final emailQuery = await FirebaseFirestore.instance
-                .collection('users')
-                .where('email', isEqualTo: provider.emailtwoController.text)
-                .get();
-            
-            if (emailQuery.docs.isNotEmpty) {
-              provider.setEmailError("This email already exists!");
-              return;
-            }
-            
             // Save to UserProvider
             final userProvider = Provider.of<UserProvider>(context, listen: false);
             userProvider.setAccountInfo(

@@ -39,6 +39,61 @@ class ProfileScreenState extends State<ProfileScreen> {
     super.initState();
     _fetchUserData();
     _fetchUserDiet();
+    _fetchActivityLevel();
+    _fetchDailyCalories();
+  }
+
+  void _fetchActivityLevel() {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser?.email != null) {
+      FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentUser!.email)
+          .get()
+          .then((doc) {
+        if (doc.exists && mounted) {
+          final userData = doc.data()!;
+          final activity = userData['activity'] as String? ?? 'Light';
+          Provider.of<ProfileProvider>(context, listen: false)
+              .updateActivityLevel(activity);
+        }
+      }).catchError((e) {
+        _showErrorSnackBar("Error fetching activity level");
+      });
+    }
+  }
+
+  void _fetchDailyCalories() {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser?.email != null) {
+      FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentUser!.email)
+          .get()
+          .then((doc) {
+        if (doc.exists && mounted) {
+          final userData = doc.data()!;
+          if (userData['dailyCalories'] != null) {
+            Provider.of<ProfileProvider>(context, listen: false)
+                .updateNumericValue('Calories Goal', userData['dailyCalories'].toDouble());
+          }
+        }
+      }).catchError((e) {
+        _showErrorSnackBar("Error fetching daily calories");
+      });
+    }
+  }
+
+  void _showErrorSnackBar(String message) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 3),
+        ),
+      );
+    }
   }
 
   void _fetchUserData() {
@@ -48,49 +103,50 @@ class ProfileScreenState extends State<ProfileScreen> {
           .collection('users')
           .doc(currentUser!.email)
           .snapshots()
-          .listen((doc) {
-        if (doc.exists && mounted) {
-          final userData = doc.data()!;
-          final provider = Provider.of<ProfileProvider>(context, listen: false);
-          
-          // Listen for weight changes
-          if (userData['weight'] != null) {
-            final weight = userData['weight'].toString();
-            provider.updateNumericValue('Cur. Weight', double.parse(weight));
-          }
+          .listen(
+            (doc) {
+              if (doc.exists && mounted) {
+                final userData = doc.data()!;
+                final provider = Provider.of<ProfileProvider>(context, listen: false);
+                
+                try {
+                  // Weight updates
+                  if (userData['weight'] != null) {
+                    provider.updateNumericValue('Cur. Weight', double.parse(userData['weight'].toString()));
+                  }
+                  // Goal weight updates
+                  if (userData['weightgoal'] != null) {
+                    provider.updateNumericValue('Goal Weight', double.parse(userData['weightgoal'].toString()));
+                  }
+                  // Macros updates
+                  if (userData['carbsgoal'] != null) {
+                    provider.updateNumericValue('Carbs Goal', userData['carbsgoal'].toDouble());
+                  }
+                  if (userData['proteingoal'] != null) {
+                    provider.updateNumericValue('Protein Goal', userData['proteingoal'].toDouble());
+                  }
+                  if (userData['fatgoal'] != null) {
+                    provider.updateNumericValue('Fat Goal', userData['fatgoal'].toDouble());
+                  }
 
-          // Listen for goal weight changes
-          if (userData['weightgoal'] != null) {
-            final goalWeight = userData['weightgoal'].toString();
-            provider.updateNumericValue('Goal Weight', double.parse(goalWeight));
-          }
-
-          // Listen for carbs goal changes
-          if (userData['carbsgoal'] != null) {
-            provider.updateNumericValue('Carbs Goal', userData['carbsgoal'].toDouble());
-          }
-
-          // Listen for protein goal changes
-          if (userData['proteingoal'] != null) {
-            provider.updateNumericValue('Protein Goal', userData['proteingoal'].toDouble());
-          }
-
-          // Listen for fat goal changes
-          if (userData['fatgoal'] != null) {
-            provider.updateNumericValue('Fat Goal', userData['fatgoal'].toDouble());
-          }
-
-          // Update user data
-          final userModel = UserModel(
-            firstName: userData['firstName'] as String? ?? '',
-            lastName: userData['lastName'] as String? ?? '',
-            username: userData['username'] as String? ?? '',
-            email: currentUser.email,
+                  // Update user data
+                  final userModel = UserModel(
+                    firstName: userData['firstName'] as String? ?? '',
+                    lastName: userData['lastName'] as String? ?? '',
+                    username: userData['username'] as String? ?? '',
+                    email: currentUser.email,
+                  );
+                  
+                  Provider.of<UserInfoProvider>(context, listen: false).setUser(userModel);
+                } catch (e) {
+                  _showErrorSnackBar("Error updating profile data");
+                }
+              }
+            },
+            onError: (e) {
+              _showErrorSnackBar("Error fetching profile data");
+            },
           );
-          
-          Provider.of<UserInfoProvider>(context, listen: false).setUser(userModel);
-        }
-      });
     }
   }
 
@@ -111,7 +167,7 @@ class ProfileScreenState extends State<ProfileScreen> {
               .updateDiet(diet);
         }
       }).catchError((e) {
-        print("Error fetching diet: $e");
+        _showErrorSnackBar("Error fetching diet information");
       });
     }
   }

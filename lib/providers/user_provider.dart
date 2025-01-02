@@ -14,7 +14,6 @@ class UserProvider extends ChangeNotifier {
     required String email,
     required String password,
   }) {
-    print('Setting account info - username: $username, email: $email');
     _user.username = username;
     _user.email = email;
     _user.password = password;
@@ -28,7 +27,6 @@ class UserProvider extends ChangeNotifier {
     required String birthdate,
     required String gender,
   }) {
-    print('Setting profile 1 info - firstName: $firstName, lastName: $lastName');
     _user.firstName = firstName;
     _user.lastName = lastName;
     _user.birthdate = birthdate;
@@ -44,7 +42,6 @@ class UserProvider extends ChangeNotifier {
     required double height,
     required double weight,
   }) {
-    print('Setting profile 2 info - activity: $activity, goal: $goal');
     _user.activity = activity;
     _user.diet = diet;
     _user.goal = goal;
@@ -55,7 +52,6 @@ class UserProvider extends ChangeNotifier {
 
   // Profile 3/3
   void setDailyCalories(int calories) {
-    print('Setting daily calories: $calories');
     _user.dailyCalories = calories;
     notifyListeners();
   }
@@ -65,7 +61,6 @@ class UserProvider extends ChangeNotifier {
     double? proteinGoal,
     double? fatGoal,
   }) {
-    print('Setting macronutrient goals - carbs: $carbsGoal, protein: $proteinGoal, fat: $fatGoal');
     if (carbsGoal != null) _user.carbsGoal = carbsGoal;
     if (proteinGoal != null) _user.proteinGoal = proteinGoal;
     if (fatGoal != null) _user.fatGoal = fatGoal;
@@ -74,17 +69,12 @@ class UserProvider extends ChangeNotifier {
 
   // Save to Firestore
   Future<void> saveToFirestore() async {
-    print('Attempting to save user to Firestore');
-    print('Current user data: ${_user.toJson()}');
-    
     if (_user.email == null) {
-      print('Error: Cannot save to Firestore - email is null');
       throw Exception('Cannot save to Firestore: email is null');
     }
     
     try {
       await _firestoreService.createUser(_user);
-      print('Successfully saved user to Firestore');
     } catch (e) {
       print('Error saving user to Firestore: $e');
       rethrow;
@@ -92,7 +82,6 @@ class UserProvider extends ChangeNotifier {
   }
 
   void clear() {
-    print('Clearing user data');
     _user = UserModel();
     notifyListeners();
   }

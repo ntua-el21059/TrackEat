@@ -6,24 +6,13 @@ class FirestoreService {
 
   Future<void> createUser(UserModel user) async {
     try {
-      print('Attempting to save user to Firestore with email: ${user.email}');
-      print('User data to save: ${user.toJson()}');
-      
       if (user.email == null) {
         throw Exception('Cannot create user document: email is null');
       }
 
-      // First try to get the collection to verify Firestore connection
       final collection = _firestore.collection('users');
-      print('Successfully accessed users collection');
-
-      // Create the document reference
       final docRef = collection.doc(user.email);
-      print('Created document reference for user: ${user.email}');
-
-      // Convert user data to JSON
       final userData = user.toJson();
-      print('Converted user data to JSON: $userData');
 
       // Check if document exists
       final docSnapshot = await docRef.get();
@@ -36,41 +25,25 @@ class FirestoreService {
           }
         });
         await docRef.update(updateData);
-        print('Successfully updated user data in Firestore');
       } else {
         // Set the document data for new users
         await docRef.set(userData);
-        print('Successfully created new user in Firestore');
       }
     } on FirebaseException catch (e) {
-      print('Firestore Error Code: ${e.code}');
-      print('Firestore Error Message: ${e.message}');
-      print('Firestore Error Stack: ${e.stackTrace}');
+      print('Firestore Error: ${e.code} - ${e.message}');
       rethrow;
-    } catch (e, stackTrace) {
+    } catch (e) {
       print('Error creating user in Firestore: $e');
-      print('Error Stack Trace: $stackTrace');
       rethrow;
     }
   }
 
   Future<UserModel?> getUser(String email) async {
     try {
-      print('Attempting to fetch user from Firestore with email: $email');
-      
-      // First try to get the collection
-      final collection = _firestore.collection('users');
-      print('Successfully accessed users collection');
-
-      // Get the document
-      final doc = await collection.doc(email).get();
-      print('Successfully retrieved document snapshot');
+      final doc = await _firestore.collection('users').doc(email).get();
       
       if (doc.exists) {
-        print('User document found in Firestore');
         final data = doc.data() as Map<String, dynamic>;
-        print('User data from Firestore: $data');
-        
         return UserModel(
           username: data['username'],
           email: data['email'],
@@ -86,16 +59,9 @@ class FirestoreService {
           dailyCalories: data['dailyCalories'],
         );
       }
-      print('No user document found in Firestore for email: $email');
       return null;
-    } on FirebaseException catch (e) {
-      print('Firestore Error Code: ${e.code}');
-      print('Firestore Error Message: ${e.message}');
-      print('Firestore Error Stack: ${e.stackTrace}');
-      rethrow;
-    } catch (e, stackTrace) {
+    } catch (e) {
       print('Error getting user from Firestore: $e');
-      print('Error Stack Trace: $stackTrace');
       rethrow;
     }
   }
@@ -103,10 +69,7 @@ class FirestoreService {
   // Test Firestore connection
   Future<bool> testConnection() async {
     try {
-      print('Testing Firestore connection...');
-      final collection = _firestore.collection('users');
-      await collection.limit(1).get();
-      print('Firestore connection test successful');
+      await _firestore.collection('users').limit(1).get();
       return true;
     } catch (e) {
       print('Firestore connection test failed: $e');
