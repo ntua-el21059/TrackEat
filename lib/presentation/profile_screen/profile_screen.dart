@@ -209,14 +209,16 @@ class ProfileScreenState extends State<ProfileScreen> {
         child: Container(
           width: double.maxFinite,
           padding: EdgeInsets.symmetric(horizontal: 4.h),
-          child: Column(
-            children: [
-              _buildProfileHeader(context),
-              SizedBox(height: 16.h),
-              _buildProfilePreview(context),
-              SizedBox(height: 16.h),
-              _buildActivityLevelSection(context),
-            ],
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                _buildProfileHeader(context),
+                SizedBox(height: 16.h),
+                _buildProfilePreview(context),
+                SizedBox(height: 16.h),
+                _buildActivityLevelSection(context),
+              ],
+            ),
           ),
         ),
       ),
