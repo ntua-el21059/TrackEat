@@ -750,7 +750,7 @@ class ProfileScreenState extends State<ProfileScreen> {
                       keyboardType: TextInputType.number,
                       decoration: InputDecoration(
                         hintText: 'Enter goal weight in kg',
-                        suffixText: 'kg',
+                        suffixText: ' kg',
                       ),
                     ),
                     Row(
@@ -857,7 +857,7 @@ class ProfileScreenState extends State<ProfileScreen> {
                 keyboardType: TextInputType.number,
                 decoration: InputDecoration(
                   hintText: 'Enter weight in kg',
-                  suffixText: 'kg',
+                  suffixText: ' kg',
                 ),
               ),
               Row(
@@ -934,7 +934,7 @@ class ProfileScreenState extends State<ProfileScreen> {
                 keyboardType: TextInputType.number,
                 decoration: InputDecoration(
                   hintText: 'Enter value',
-                  suffixText: title == "Carbs Goal" || title == "Protein Goal" || title == "Fat Goal" ? "g" : null,
+                  suffixText: title == "Carbs Goal" || title == "Protein Goal" || title == "Fat Goal" ? " g" : null,
                 ),
                 inputFormatters: [
                   FilteringTextInputFormatter.digitsOnly,

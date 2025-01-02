@@ -11,12 +11,12 @@ class ProfileModel {
     ),
     ProfileItemModel(
       title: "Weekly Goal",
-      value: "-0.5kg",
+      value: "-0.5 kg",
       icon: ImageConstant.imgWeeklyGoal,
     ),
     ProfileItemModel(
       title: "Goal Weight",
-      value: "70kg",
+      value: "70 kg",
       icon: ImageConstant.imgGoalWeight,
     ),
     ProfileItemModel(

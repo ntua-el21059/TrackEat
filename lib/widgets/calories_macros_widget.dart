@@ -89,7 +89,7 @@ class CaloriesMacrosWidget extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              "$remainingCalories Kcal Remaining...",
+                              "$remainingCalories kcal Remaining...",
                               style: CustomTextStyles.titleMediumGray90001Bold,
                             ),
                             Text(
