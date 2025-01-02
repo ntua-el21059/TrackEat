@@ -16,6 +16,7 @@ import '../../../presentation/profile_screen/profile_screen.dart';
 import '../../../providers/profile_picture_provider.dart';
 import '../../../providers/user_info_provider.dart';
 import '../../../models/user_model.dart';
+import '../../../presentation/reward_screen_rings_closed_screen/reward_screen_rings_closed_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -34,6 +35,9 @@ class HomeScreen extends StatefulWidget {
 class HomeScreenState extends State<HomeScreen> {
   bool _isLoading = true;
   StreamSubscription<DocumentSnapshot>? _userSubscription;
+  double _lastProteinPercent = 0.0;
+  double _lastFatPercent = 0.0;
+  double _lastCarbsPercent = 0.0;
 
   @override
   void initState() {
@@ -121,6 +125,41 @@ class HomeScreenState extends State<HomeScreen> {
             email: email,
           ));
         }
+      }
+    }
+  }
+
+  void _checkRingsAndShowReward(Map<String, dynamic> userData) async {
+    final proteinGoal = double.tryParse(userData['proteingoal']?.toString() ?? '0') ?? 98.0;
+    final fatGoal = double.tryParse(userData['fatgoal']?.toString() ?? '0') ?? 70.0;
+    final carbsGoal = double.tryParse(userData['carbsgoal']?.toString() ?? '0') ?? 110.0;
+
+    // Use fixed values for testing
+    final proteinConsumed = 150.0;
+    final fatConsumed = 100.0;
+    final carbsConsumed = 150.0;
+
+    final proteinPercent = (proteinConsumed / proteinGoal * 100).clamp(0, 100);
+    final fatPercent = (fatConsumed / fatGoal * 100).clamp(0, 100);
+    final carbsPercent = (carbsConsumed / carbsGoal * 100).clamp(0, 100);
+
+    final homeProvider = Provider.of<HomeProvider>(context, listen: false);
+    final bool ringsWereClosed = await homeProvider.areRingsClosed();
+    final bool ringsAreNowClosed = proteinPercent >= 100 && fatPercent >= 100 && carbsPercent >= 100;
+    final bool hasRingChanged = await homeProvider.hasRingChanged();
+
+    // Update rings closed state
+    await homeProvider.setRingsClosed(ringsAreNowClosed);
+
+    // Show reward screen only if:
+    // 1. Rings are now closed AND
+    // 2. Either rings were previously changed (not closed) or not shown yet
+    if (ringsAreNowClosed && hasRingChanged) {
+      // Reset the ring changed state since we're showing the reward
+      await homeProvider.setRingChanged(false);
+      
+      if (mounted) {
+        Navigator.pushNamed(context, AppRoutes.rewardScreenRingsClosedScreen);
       }
     }
   }
@@ -305,9 +344,20 @@ class HomeScreenState extends State<HomeScreen> {
             builder: (context, snapshot) {
               if (snapshot.hasData && snapshot.data != null && snapshot.data!.exists) {
                 final userData = snapshot.data!.data() as Map<String, dynamic>;
+                _checkRingsAndShowReward(userData);
+                
                 final proteinGoal = double.tryParse(userData['proteingoal']?.toString() ?? '0') ?? 98.0;
                 final fatGoal = double.tryParse(userData['fatgoal']?.toString() ?? '0') ?? 70.0;
                 final carbsGoal = double.tryParse(userData['carbsgoal']?.toString() ?? '0') ?? 110.0;
+
+                // Use fixed values for testing
+                final proteinConsumed = 150.0;
+                final fatConsumed = 100.0;
+                final carbsConsumed = 150.0;
+
+                final proteinPercent = (proteinConsumed / proteinGoal * 100).clamp(0, 100);
+                final fatPercent = (fatConsumed / fatGoal * 100).clamp(0, 100);
+                final carbsPercent = (carbsConsumed / carbsGoal * 100).clamp(0, 100);
                 
                 // Update the UserProvider with the latest values from Firebase
                 Provider.of<UserProvider>(context, listen: false).setMacronutrientGoals(
@@ -323,18 +373,18 @@ class HomeScreenState extends State<HomeScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildMacronutrientText("Protein", 78, proteinGoal, const Color(0xFFFA114F)),
+                          _buildMacronutrientText("Protein", proteinConsumed, proteinGoal, const Color(0xFFFA114F)),
                           SizedBox(height: 16.h),
-                          _buildMacronutrientText("Fats", 45, fatGoal, const Color(0xFFA6FF00)),
+                          _buildMacronutrientText("Fats", fatConsumed, fatGoal, const Color(0xFFA6FF00)),
                           SizedBox(height: 16.h),
-                          _buildMacronutrientText("Carbs", 95, carbsGoal, const Color(0xFF00FFF6)),
+                          _buildMacronutrientText("Carbs", carbsConsumed, carbsGoal, const Color(0xFF00FFF6)),
                         ],
                       ),
                     ),
                     Expanded(
                       flex: 2,
                       child: Ring(
-                        percent: _isLoading ? 0 : (78.0 / proteinGoal * 100).clamp(0, 100),
+                        percent: _isLoading ? 0.0 : proteinPercent.toDouble(),
                         color: RingColorScheme(
                           ringColor: Color(0xFFFA114F),
                           backgroundColor: Colors.grey.withOpacity(0.2),
@@ -342,7 +392,7 @@ class HomeScreenState extends State<HomeScreen> {
                         radius: 60,
                         width: 15,
                         child: Ring(
-                          percent: _isLoading ? 0 : (45.0 / fatGoal * 100).clamp(0, 100),
+                          percent: _isLoading ? 0.0 : fatPercent.toDouble(),
                           color: RingColorScheme(
                             ringColor: Color(0xFFA6FF00),
                             backgroundColor: Colors.grey.withOpacity(0.2),
@@ -350,7 +400,7 @@ class HomeScreenState extends State<HomeScreen> {
                           radius: 45,
                           width: 15,
                           child: Ring(
-                            percent: _isLoading ? 0 : (95.0 / carbsGoal * 100).clamp(0, 100),
+                            percent: _isLoading ? 0.0 : carbsPercent.toDouble(),
                             color: RingColorScheme(
                               ringColor: Color(0xFF00FFF6),
                               backgroundColor: Colors.grey.withOpacity(0.2),
@@ -373,18 +423,18 @@ class HomeScreenState extends State<HomeScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildMacronutrientText("Protein", 78, 98.0, const Color(0xFFFA114F)),
+                        _buildMacronutrientText("Protein", 0, 98.0, const Color(0xFFFA114F)),
                         SizedBox(height: 16.h),
-                        _buildMacronutrientText("Fats", 45, 70.0, const Color(0xFFA6FF00)),
+                        _buildMacronutrientText("Fats", 0, 70.0, const Color(0xFFA6FF00)),
                         SizedBox(height: 16.h),
-                        _buildMacronutrientText("Carbs", 95, 110.0, const Color(0xFF00FFF6)),
+                        _buildMacronutrientText("Carbs", 0, 110.0, const Color(0xFF00FFF6)),
                       ],
                     ),
                   ),
                   Expanded(
                     flex: 2,
                     child: Ring(
-                      percent: _isLoading ? 0 : (78.0 / 98.0 * 100).clamp(0, 100),
+                      percent: 0,
                       color: RingColorScheme(
                         ringColor: Color(0xFFFA114F),
                         backgroundColor: Colors.grey.withOpacity(0.2),
@@ -392,7 +442,7 @@ class HomeScreenState extends State<HomeScreen> {
                       radius: 60,
                       width: 15,
                       child: Ring(
-                        percent: _isLoading ? 0 : (45.0 / 70.0 * 100).clamp(0, 100),
+                        percent: 0,
                         color: RingColorScheme(
                           ringColor: Color(0xFFA6FF00),
                           backgroundColor: Colors.grey.withOpacity(0.2),
@@ -400,7 +450,7 @@ class HomeScreenState extends State<HomeScreen> {
                         radius: 45,
                         width: 15,
                         child: Ring(
-                          percent: _isLoading ? 0 : (95.0 / 110.0 * 100).clamp(0, 100),
+                          percent: 0,
                           color: RingColorScheme(
                             ringColor: Color(0xFF00FFF6),
                             backgroundColor: Colors.grey.withOpacity(0.2),
@@ -417,25 +467,30 @@ class HomeScreenState extends State<HomeScreen> {
           ),
           Align(
             alignment: Alignment.centerRight,
-            child: TextButton(
-              onPressed: () {
-                Navigator.pushNamed(context, AppRoutes.historyTodayTabScreen);
-              },
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    "Show History",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 17,
-                      fontWeight: FontWeight.w400,
-                      fontFamily: 'Inter',
-                    ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pushNamed(context, AppRoutes.historyTodayTabScreen);
+                  },
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        "Show History",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 17,
+                          fontWeight: FontWeight.w400,
+                          fontFamily: 'Inter',
+                        ),
+                      ),
+                      Icon(Icons.chevron_right, color: Colors.white),
+                    ],
                   ),
-                  Icon(Icons.chevron_right, color: Colors.white),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ],
