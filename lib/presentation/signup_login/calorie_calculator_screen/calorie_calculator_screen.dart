@@ -190,7 +190,7 @@ class CalorieCalculatorScreenState extends State<CalorieCalculatorScreen> {
                       final formattedDate = "${now.day}/${now.month}/${now.year}";
                       
                       // Add creation date to user data
-                      userProvider.user.created = formattedDate;
+                      userProvider.user.create = formattedDate;
                       
                       await firestoreService.createUser(userProvider.user);
                       print('Successfully saved user data to Firestore');
