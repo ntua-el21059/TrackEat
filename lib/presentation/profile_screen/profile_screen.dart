@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:image_picker/image_picker.dart';
 import '../../core/app_export.dart';
 import '../../widgets/app_bar/appbar_leading_image.dart';
 import '../../widgets/app_bar/appbar_subtitle.dart';
@@ -392,15 +391,6 @@ class ProfileScreenState extends State<ProfileScreen> {
         },
       ),
     );
-  }
-
-  void _pickImage() async {
-    final ImagePicker picker = ImagePicker();
-    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-    
-    if (image != null) {
-      context.read<ProfilePictureProvider>().updateProfilePicture(image.path);
-    }
   }
 
   void _showCaloriesInputDialog(BuildContext context, String currentValue) {

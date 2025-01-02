@@ -1,12 +1,10 @@
 import 'dart:async';
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../core/app_export.dart';
 import '../../widgets/app_bar/appbar_leading_image.dart';
 import '../../widgets/app_bar/appbar_subtitle.dart';
 import '../../widgets/app_bar/custom_app_bar.dart';
-import 'provider/profile_static_provider.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../providers/profile_picture_provider.dart';
 import '../../../providers/user_info_provider.dart';
@@ -24,8 +22,6 @@ class ProfileStaticScreen extends StatefulWidget {
 class ProfileStaticScreenState extends State<ProfileStaticScreen> {
   // Add text controller
   final TextEditingController _textController = TextEditingController();
-  final ImagePicker _picker = ImagePicker();
-  File? _selectedImage;
   StreamSubscription<DocumentSnapshot>? _userSubscription;
 
   void _showTextInputDialog(BuildContext context, String title, String currentValue, bool isNameField) {
@@ -146,8 +142,6 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> {
                                         await userInfoProvider.updateUsername(newValue);
                                         break;
                                     }
-                                    // Force UI update
-                                    userInfoProvider.notifyListeners();
                                   }
                                 } catch (e) {
                                   print("Error updating Firestore: $e");
@@ -226,73 +220,12 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> {
           if (context.mounted) {
             final userInfoProvider = Provider.of<UserInfoProvider>(context, listen: false);
             await userInfoProvider.updateBirthdate(formattedDate);
-            userInfoProvider.notifyListeners();
           }
         } catch (e) {
           print("Error updating birthdate: $e");
         }
       }
     }
-  }
-
-  void _showSexSelectionMenu(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,  // White background
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(12.h),
-        ),
-      ),
-      builder: (BuildContext context) {
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _buildSexOption(context, "Light"),
-            Divider(height: 1, color: Colors.grey[300]),
-            _buildSexOption(context, "Moderate"),
-            Divider(height: 1, color: Colors.grey[300]),
-            _buildSexOption(context, "Vigorous"),
-            Divider(height: 1, color: Colors.grey[300]),
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(
-                'Cancel',
-                style: TextStyle(
-                  color: Colors.blue,
-                  fontSize: 17.h,
-                ),
-              ),
-            ),
-            SizedBox(height: 8.h),  // Bottom padding for safe area
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _buildSexOption(BuildContext context, String option) {
-    final provider = Provider.of<ProfileStaticProvider>(context, listen: false);
-    final isSelected = provider.getValue('sex').toLowerCase() == option.toLowerCase();
-
-    return InkWell(
-      onTap: () {
-        provider.updateValue('sex', option);
-        Navigator.pop(context);
-      },
-      child: Container(
-        width: double.infinity,
-        padding: EdgeInsets.symmetric(vertical: 12.h),
-        child: Text(
-          option,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: isSelected ? Colors.blue : Colors.black,
-            fontSize: 17.h,
-          ),
-        ),
-      ),
-    );
   }
 
   void _showHeightInputDialog(BuildContext context, String currentValue) {
@@ -383,7 +316,6 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> {
                                 if (context.mounted) {
                                   final userInfoProvider = Provider.of<UserInfoProvider>(context, listen: false);
                                   await userInfoProvider.updateHeight(height.toString());
-                                  userInfoProvider.notifyListeners();
                                 }
                               } catch (e) {
                                 print("Error updating height: $e");
@@ -529,7 +461,6 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> {
                   if (context.mounted) {
                     final userInfoProvider = Provider.of<UserInfoProvider>(context, listen: false);
                     await userInfoProvider.updateGender(label);
-                    userInfoProvider.notifyListeners();
                   }
                 } catch (e) {
                   print("Error updating gender: $e");

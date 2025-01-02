@@ -595,23 +595,6 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> with Singl
     );
   }
 
-  double _calculateProteinPercentage() {
-    final consumed = 78.0; // TODO: Get from history provider
-    final total = 98.0;
-    return (consumed / total * 100).clamp(0, 100);
-  }
-
-  double _calculateFatsPercentage() {
-    final consumed = 45.0; // TODO: Get from history provider
-    final total = 70.0;
-    return (consumed / total * 100).clamp(0, 100);
-  }
-
-  double _calculateCarbsPercentage() {
-    final consumed = 95.0; // TODO: Get from history provider
-    final total = 110.0;
-    return (consumed / total * 100).clamp(0, 100);
-  }
 
   int _calculateRemainingCalories() {
     final userProvider = Provider.of<UserProvider>(context, listen: false);

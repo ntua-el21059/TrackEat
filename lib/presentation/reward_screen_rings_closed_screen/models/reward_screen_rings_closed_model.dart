@@ -1,4 +1,4 @@
-import '../../../core/app_export.dart';
+
 
 class RewardScreenRingsClosedModel {
   // Add properties for the reward screen

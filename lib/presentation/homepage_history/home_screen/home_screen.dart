@@ -16,7 +16,6 @@ import '../../../presentation/profile_screen/profile_screen.dart';
 import '../../../providers/profile_picture_provider.dart';
 import '../../../providers/user_info_provider.dart';
 import '../../../models/user_model.dart';
-import '../../../presentation/reward_screen_rings_closed_screen/reward_screen_rings_closed_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -35,9 +34,6 @@ class HomeScreen extends StatefulWidget {
 class HomeScreenState extends State<HomeScreen> {
   bool _isLoading = true;
   StreamSubscription<DocumentSnapshot>? _userSubscription;
-  double _lastProteinPercent = 0.0;
-  double _lastFatPercent = 0.0;
-  double _lastCarbsPercent = 0.0;
 
   @override
   void initState() {
@@ -144,7 +140,6 @@ class HomeScreenState extends State<HomeScreen> {
     final carbsPercent = (carbsConsumed / carbsGoal * 100).clamp(0, 100);
 
     final homeProvider = Provider.of<HomeProvider>(context, listen: false);
-    final bool ringsWereClosed = await homeProvider.areRingsClosed();
     final bool ringsAreNowClosed = proteinPercent >= 100 && fatPercent >= 100 && carbsPercent >= 100;
     final bool hasRingChanged = await homeProvider.hasRingChanged();
 

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../core/app_export.dart';
 import '../models/reward_screen_rings_closed_model.dart';
 
 /// A provider class for the RewardScreenRingsClosedScreen.

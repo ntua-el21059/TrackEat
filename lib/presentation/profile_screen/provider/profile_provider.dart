@@ -47,21 +47,19 @@ class ProfileProvider extends ChangeNotifier {
       orElse: () => ProfileItemModel(),
     );
     
-    if (dietItem != null) {
-      dietItem.value = newDiet;
-      notifyListeners();
+    dietItem.value = newDiet;
+    notifyListeners();
       
-      // Update Firebase
-      final currentUser = FirebaseAuth.instance.currentUser;
-      if (currentUser?.email != null) {
-        try {
-          await FirebaseFirestore.instance
-              .collection('users')
-              .doc(currentUser!.email)
-              .update({'diet': newDiet});
-        } catch (e) {
-          print("Error updating diet in Firebase: $e");
-        }
+    // Update Firebase
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser?.email != null) {
+      try {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(currentUser!.email)
+            .update({'diet': newDiet});
+      } catch (e) {
+        print("Error updating diet in Firebase: $e");
       }
     }
   }
@@ -125,12 +123,10 @@ class ProfileProvider extends ChangeNotifier {
       orElse: () => ProfileItemModel(),
     );
     
-    if (caloriesItem != null) {
-      // Clean the input value
-      String cleanValue = calories.replaceAll(' ', '').replaceAll('kcal', '');
-      caloriesItem.value = "${cleanValue}kcal";
-      notifyListeners();
-    }
+    // Clean the input value
+    String cleanValue = calories.replaceAll(' ', '').replaceAll('kcal', '');
+    caloriesItem.value = "${cleanValue}kcal";
+    notifyListeners();
   }
 
   @override

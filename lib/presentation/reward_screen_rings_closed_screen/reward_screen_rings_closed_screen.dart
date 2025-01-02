@@ -2,18 +2,9 @@ import 'package:flutter/material.dart';
 import 'dart:math';
 import 'dart:ui';
 import '../../core/app_export.dart';
-import '../../routes/app_routes.dart';
-import 'models/reward_screen_rings_closed_model.dart';
 import 'provider/reward_screen_rings_closed_provider.dart';
-import '../../widgets/custom_image_view.dart';
-import '../../theme/app_decoration.dart';
-import '../../theme/custom_text_style.dart';
-import '../../theme/theme_helper.dart';
 import 'package:confetti/confetti.dart';
 import '../homepage_history/home_screen/provider/home_provider.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import '../homepage_history/home_screen/home_screen.dart';
 
 class RewardScreenRingsClosedScreen extends StatefulWidget {
   const RewardScreenRingsClosedScreen({Key? key}) : super(key: key);
@@ -82,7 +73,6 @@ class RewardScreenRingsClosedScreenState
             builder: (context, constraints) {
               final screenHeight = constraints.maxHeight;
               final screenWidth = constraints.maxWidth;
-              final platterWidth = screenWidth - 40.h;
               
               return SingleChildScrollView(
                 physics: NeverScrollableScrollPhysics(),

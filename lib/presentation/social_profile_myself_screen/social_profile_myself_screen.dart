@@ -14,12 +14,11 @@ import 'provider/social_profile_myself_provider.dart';
 import 'widgets/gridvector_one_item_widget.dart';
 import 'widgets/listvegan_item_widget.dart';
 import '../../providers/profile_picture_provider.dart';
-import '../../providers/user_info_provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class SocialProfileMyselfScreen extends StatefulWidget {
-  const SocialProfileMyselfScreen({Key? key}) : super(key: key);
+  const SocialProfileMyselfScreen({super.key});
 
   @override
   SocialProfileMyselfScreenState createState() => SocialProfileMyselfScreenState();
@@ -134,87 +133,6 @@ class SocialProfileMyselfScreenState extends State<SocialProfileMyselfScreen> {
           ),
         )
       ],
-    );
-  }
-
-  /// Section Widget
-  Widget _buildProfileSection(BuildContext context) {
-    return Container(
-      width: double.maxFinite,
-      padding: EdgeInsets.symmetric(
-        horizontal: 16.h,
-        vertical: 12.h,
-      ),
-      child: Column(
-        children: [
-          Consumer<ProfilePictureProvider>(
-            builder: (context, profilePicProvider, _) {
-              return ClipOval(
-                child: CustomImageView(
-                  imagePath: profilePicProvider.profileImagePath,
-                  isFile: !profilePicProvider.profileImagePath.startsWith('assets/'),
-                  height: 72.h,
-                  width: 72.h,
-                  radius: BorderRadius.circular(36.h),
-                ),
-              );
-            },
-          ),
-          SizedBox(height: 8.h),
-          StreamBuilder<DocumentSnapshot>(
-            stream: FirebaseFirestore.instance
-                .collection('users')
-                .doc(FirebaseAuth.instance.currentUser?.email)
-                .snapshots(),
-            builder: (context, snapshot) {
-              if (snapshot.hasData && snapshot.data != null && snapshot.data!.exists) {
-                final userData = snapshot.data!.data() as Map<String, dynamic>;
-                final firstName = userData['firstName']?.toString() ?? '';
-                final lastName = userData['lastName']?.toString() ?? '';
-                final username = userData['username']?.toString() ?? '';
-                
-                return Column(
-                  children: [
-                    Text(
-                      "$firstName $lastName",
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    SizedBox(height: 4.h),
-                    Text(
-                      "@$username",
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
-                );
-              }
-              return Column(
-                children: [
-                  Text(
-                    "Loading...",
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  SizedBox(height: 4.h),
-                  Text(
-                    "@...",
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: Colors.white,
-                    ),
-                  ),
-                ],
-              );
-            },
-          ),
-          // ... rest of the profile section content ...
-        ],
-      ),
     );
   }
 

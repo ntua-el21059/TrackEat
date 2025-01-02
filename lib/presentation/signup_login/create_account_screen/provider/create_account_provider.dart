@@ -18,6 +18,10 @@ class CreateAccountProvider extends ChangeNotifier {
   bool isShowPassword1 = true;
   bool isPasswordVisible = false;
 
+  String? usernameError;
+  String? emailError;
+  String? passwordError;
+
   CreateAccountProvider() {
     userNameController.addListener(_textChanged);
     emailtwoController.addListener(_textChanged);
@@ -27,6 +31,28 @@ class CreateAccountProvider extends ChangeNotifier {
   }
 
   void _textChanged() {
+    notifyListeners();
+  }
+
+  void clearErrors() {
+    usernameError = null;
+    emailError = null;
+    passwordError = null;
+    notifyListeners();
+  }
+
+  void setUsernameError(String error) {
+    usernameError = error;
+    notifyListeners();
+  }
+
+  void setEmailError(String error) {
+    emailError = error;
+    notifyListeners();
+  }
+
+  void setPasswordError(String error) {
+    passwordError = error;
     notifyListeners();
   }
 

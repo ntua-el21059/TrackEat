@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import '../../../../core/app_export.dart';
 import '../../../../theme/custom_button_style.dart';
 import '../../../../widgets/app_bar/appbar_leading_image.dart';
@@ -8,6 +9,7 @@ import '../../../../widgets/custom_text_form_field.dart';
 import '../../../../providers/user_provider.dart';
 import 'provider/create_account_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class CreateAccountScreen extends StatefulWidget {
   const CreateAccountScreen({Key? key}) : super(key: key);
@@ -73,17 +75,20 @@ class CreateAccountScreenState extends State<CreateAccountScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Align(
-                    alignment: Alignment.center,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          "TrackEat",
-                          style: CustomTextStyles.headlineLargeBlack900,
-                        )
-                      ],
+                  Transform.translate(
+                    offset: Offset(0, -10),
+                    child: Align(
+                      alignment: Alignment.center,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            "TrackEat",
+                            style: CustomTextStyles.headlineLargeBlack900,
+                          )
+                        ],
+                      ),
                     ),
                   ),
                   Transform.translate(
@@ -184,20 +189,39 @@ class CreateAccountScreenState extends State<CreateAccountScreen> {
       padding: EdgeInsets.only(left: 2.h),
       child: Consumer<CreateAccountProvider>(
         builder: (context, provider, child) {
-          return CustomTextFormField(
-            focusNode: _usernameFocusNode,
-            controller: provider.userNameController,
-            hintText: "timapple",
-            hintStyle: CustomTextStyles.bodyLargeGray200,
-            textInputType: TextInputType.text,
-            contentPadding: EdgeInsets.symmetric(
-              horizontal: 16.h,
-              vertical: 12.h,
-            ),
-            obscureText: false,
-            onTap: () {
-              FocusScope.of(context).requestFocus(_usernameFocusNode);
-            },
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              CustomTextFormField(
+                focusNode: _usernameFocusNode,
+                controller: provider.userNameController,
+                hintText: "timapple",
+                hintStyle: CustomTextStyles.bodyLargeGray200,
+                textInputType: TextInputType.text,
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 16.h,
+                  vertical: 12.h,
+                ),
+                borderDecoration: provider.usernameError != null
+                    ? OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.red),
+                        borderRadius: BorderRadius.circular(8),
+                      )
+                    : null,
+                obscureText: false,
+                onTap: () {
+                  FocusScope.of(context).requestFocus(_usernameFocusNode);
+                },
+              ),
+              if (provider.usernameError != null)
+                Padding(
+                  padding: EdgeInsets.only(top: 4.h, left: 4.h),
+                  child: Text(
+                    provider.usernameError!,
+                    style: TextStyle(color: Colors.red, fontSize: 12.h),
+                  ),
+                ),
+            ],
           );
         },
       ),
@@ -210,20 +234,39 @@ class CreateAccountScreenState extends State<CreateAccountScreen> {
       padding: EdgeInsets.only(left: 2.h),
       child: Consumer<CreateAccountProvider>(
         builder: (context, provider, child) {
-          return CustomTextFormField(
-            focusNode: _emailFocusNode,
-            controller: provider.emailtwoController,
-            hintText: "Appleseed@mail.com",
-            hintStyle: CustomTextStyles.bodyLargeGray200,
-            textInputType: TextInputType.emailAddress,
-            contentPadding: EdgeInsets.symmetric(
-              horizontal: 16.h,
-              vertical: 12.h,
-            ),
-            obscureText: false,
-            onTap: () {
-              FocusScope.of(context).requestFocus(_emailFocusNode);
-            },
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              CustomTextFormField(
+                focusNode: _emailFocusNode,
+                controller: provider.emailtwoController,
+                hintText: "Appleseed@mail.com",
+                hintStyle: CustomTextStyles.bodyLargeGray200,
+                textInputType: TextInputType.emailAddress,
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 16.h,
+                  vertical: 12.h,
+                ),
+                borderDecoration: provider.emailError != null
+                    ? OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.red),
+                        borderRadius: BorderRadius.circular(8),
+                      )
+                    : null,
+                obscureText: false,
+                onTap: () {
+                  FocusScope.of(context).requestFocus(_emailFocusNode);
+                },
+              ),
+              if (provider.emailError != null)
+                Padding(
+                  padding: EdgeInsets.only(top: 4.h, left: 4.h),
+                  child: Text(
+                    provider.emailError!,
+                    style: TextStyle(color: Colors.red, fontSize: 12.h),
+                  ),
+                ),
+            ],
           );
         },
       ),
@@ -326,12 +369,35 @@ class CreateAccountScreenState extends State<CreateAccountScreen> {
               : CustomButtonStyles.fillGray,
           buttonTextStyle: theme.textTheme.titleMedium!,
           alignment: Alignment.centerRight,
-          onPressed: isFormValid ? () {
+          onPressed: isFormValid ? () async {
+            // Clear previous errors
+            provider.clearErrors();
+
             // Validate passwords match
             if (provider.passwordtwoController.text != provider.passwordthreeController.text) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Passwords do not match')),
-              );
+              provider.setPasswordError("Passwords do not match");
+              return;
+            }
+
+            // Check if username exists
+            final usernameQuery = await FirebaseFirestore.instance
+                .collection('users')
+                .where('username', isEqualTo: provider.userNameController.text)
+                .get();
+            
+            if (usernameQuery.docs.isNotEmpty) {
+              provider.setUsernameError("This username already exists!");
+              return;
+            }
+
+            // Check if email exists
+            final emailQuery = await FirebaseFirestore.instance
+                .collection('users')
+                .where('email', isEqualTo: provider.emailtwoController.text)
+                .get();
+            
+            if (emailQuery.docs.isNotEmpty) {
+              provider.setEmailError("This email already exists!");
               return;
             }
             
