@@ -52,8 +52,7 @@ class CustomTextStyles {
         color: appTheme.blueGray700,
       );
 
-  static TextStyle get bodyLargeGray900 =>
-      theme.textTheme.bodyLarge!.copyWith(
+  static TextStyle get bodyLargeGray900 => theme.textTheme.bodyLarge!.copyWith(
         color: appTheme.gray900,
         fontSize: 16.fSize,
         fontWeight: FontWeight.w300,
@@ -70,8 +69,7 @@ class CustomTextStyles {
         fontSize: 19.fSize,
       );
 
-  static TextStyle get bodyLargeGray500 =>
-      theme.textTheme.bodyLarge!.copyWith(
+  static TextStyle get bodyLargeGray500 => theme.textTheme.bodyLarge!.copyWith(
         color: appTheme.gray500,
         fontSize: 16.fSize,
       );
@@ -82,15 +80,13 @@ class CustomTextStyles {
         fontSize: 16.fSize,
       );
 
-  static TextStyle get bodyLargeGray200 =>
-      theme.textTheme.bodyLarge!.copyWith(
+  static TextStyle get bodyLargeGray200 => theme.textTheme.bodyLarge!.copyWith(
         color: appTheme.gray500.withAlpha(153),
         fontSize: 16.fSize,
       );
 
   // Body Medium
-  static TextStyle get bodyMediumBlack =>
-      theme.textTheme.bodyMedium!.copyWith(
+  static TextStyle get bodyMediumBlack => theme.textTheme.bodyMedium!.copyWith(
         color: appTheme.black900,
       );
 
@@ -166,7 +162,8 @@ class CustomTextStyles {
         fontWeight: FontWeight.w700,
       );
 
-  static TextStyle get headlineLargeLight => theme.textTheme.headlineLarge!.copyWith(
+  static TextStyle get headlineLargeLight =>
+      theme.textTheme.headlineLarge!.copyWith(
         fontWeight: FontWeight.w300,
         color: Colors.white,
       );
@@ -259,15 +256,18 @@ class CustomTextStyles {
         color: theme.colorScheme.onErrorContainer,
       );
 
-  static TextStyle get titleLargeSemiBold => theme.textTheme.titleLarge!.copyWith(
+  static TextStyle get titleLargeSemiBold =>
+      theme.textTheme.titleLarge!.copyWith(
         fontWeight: FontWeight.w600,
       );
 
-  static TextStyle get labelLargeSemiBold => theme.textTheme.labelLarge!.copyWith(
+  static TextStyle get labelLargeSemiBold =>
+      theme.textTheme.labelLarge!.copyWith(
         fontWeight: FontWeight.w600,
       );
 
-  static TextStyle get labelMediumOnErrorContainer => theme.textTheme.labelMedium!.copyWith(
+  static TextStyle get labelMediumOnErrorContainer =>
+      theme.textTheme.labelMedium!.copyWith(
         color: theme.colorScheme.onErrorContainer,
       );
 
@@ -286,5 +286,9 @@ class CustomTextStyles {
       theme.textTheme.bodyLarge!.copyWith(
         color: theme.colorScheme.onErrorContainer,
         fontSize: 16.fSize,
+      );
+
+  static TextStyle get titleLarge20 => theme.textTheme.titleLarge!.copyWith(
+        fontSize: 20,
       );
 }

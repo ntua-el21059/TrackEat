@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../core/app_export.dart';
-import 'models/avocado_challenge_model.dart';
+import '../../../../../core/app_export.dart';
 import 'provider/avocado_challenge_provider.dart';
 
 // ignore_for_file: must_be_immutable

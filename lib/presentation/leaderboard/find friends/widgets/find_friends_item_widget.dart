@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../core/app_export.dart';
+import '../../../../../core/app_export.dart';
 import '../models/find_friends_item_model.dart';
 
 // This widget creates an individual friend suggestion item that appears in the Find Friends list.
@@ -11,7 +11,7 @@ class FindFriendsItemWidget extends StatelessWidget {
         );
 
   // The model containing the friend's data to be displayed
-  FindFriendsItemModel findFriendsItemModelObj;
+  final FindFriendsItemModel findFriendsItemModelObj;
 
   @override
   Widget build(BuildContext context) {

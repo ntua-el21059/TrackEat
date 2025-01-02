@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../core/app_export.dart';
+import '../../../../../core/app_export.dart';
 import '../models/wrap_challenge_model.dart';
 
 /// A provider class for the WrapChallengeDialog.
