@@ -68,7 +68,6 @@ class FirestoreService {
           carbsGoal: data['carbsgoal']?.toDouble(),
           proteinGoal: data['proteingoal']?.toDouble(),
           fatGoal: data['fatgoal']?.toDouble(),
-          created: data['created'],
         );
       }
       return null;
