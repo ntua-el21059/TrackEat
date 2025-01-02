@@ -11,11 +11,8 @@ import '../../../widgets/app_bar/custom_app_bar.dart';
 import 'models/cards_item_model.dart';
 import 'provider/home_provider.dart';
 import 'widgets/cards_item_widget.dart';
-import 'package:activity_ring/activity_ring.dart';
 import '../../../presentation/profile_screen/profile_screen.dart';
 import '../../../providers/profile_picture_provider.dart';
-import '../../../providers/user_info_provider.dart';
-import '../../../models/user_model.dart';
 import '../../../services/meal_service.dart';
 import '../../../widgets/calories_macros_widget.dart';
 
@@ -118,7 +115,7 @@ class HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  void _checkRingsAndShowReward(Map<String, dynamic> userData) async {
+  void checkRingsAndShowReward(Map<String, dynamic> userData) async {
     final proteinGoal = double.tryParse(userData['proteingoal']?.toString() ?? '0') ?? 0.0;
     final fatGoal = double.tryParse(userData['fatgoal']?.toString() ?? '0') ?? 0.0;
     final carbsGoal = double.tryParse(userData['carbsgoal']?.toString() ?? '0') ?? 0.0;
@@ -272,11 +269,6 @@ class HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  int _calculateDailyCalories() {
-    final userProvider = Provider.of<UserProvider>(context, listen: false);
-    return userProvider.user.dailyCalories ?? 2000;
-  }
-
   Widget _buildSuggestionsone(BuildContext context) {
     return Container(
       width: double.maxFinite,
@@ -339,26 +331,6 @@ class HomeScreenState extends State<HomeScreen> {
           }
         },
       ),
-    );
-  }
-
-  Widget _buildMacronutrientText(String label, double consumed, double total, Color color) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: CustomTextStyles.bodyLargeBlack90016_2,
-        ),
-        Text(
-          "${consumed.toInt()}/${total.toInt()}g",
-          style: TextStyle(
-            color: color,
-            fontSize: 24,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ],
     );
   }
 }

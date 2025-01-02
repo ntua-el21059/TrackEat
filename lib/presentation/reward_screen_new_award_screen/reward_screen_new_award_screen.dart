@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../core/app_export.dart';
-import 'models/reward_screen_new_award_model.dart';
 import 'provider/reward_screen_new_award_provider.dart';
 
 class RewardScreenNewAwardScreen extends StatefulWidget {
@@ -76,7 +75,7 @@ class RewardScreenNewAwardScreenState
               padding: EdgeInsets.only(top: 174.h),
               child: Text(
                 "New award unlocked!",
-                style: CustomTextStyles.headlineSmallSFPro,
+                style: theme.textTheme.headlineSmall,
               ),
             ),
           ),

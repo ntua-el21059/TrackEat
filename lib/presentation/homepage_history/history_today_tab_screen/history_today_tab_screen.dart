@@ -4,13 +4,8 @@ import '../../../widgets/app_bar/appbar_leading_image.dart';
 import '../../../widgets/app_bar/appbar_subtitle.dart';
 import '../../../widgets/app_bar/custom_app_bar.dart';
 import '../../../models/meal.dart';
-import 'package:activity_ring/activity_ring.dart';
-import '../../../providers/user_provider.dart';
 import 'provider/history_today_tab_provider.dart';
 import '../blur_choose_action_screen_dialog/blur_choose_action_screen_dialog.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import '../../../services/meal_service.dart';
 import '../../../widgets/calories_macros_widget.dart';
 
 class HistoryTodayTabScreen extends StatefulWidget {
@@ -446,29 +441,6 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> with Singl
         ],
       ),
     );
-  }
-
-
-  int _calculateRemainingCalories() {
-    final userProvider = Provider.of<UserProvider>(context, listen: false);
-    final dailyCalories = userProvider.user.dailyCalories ?? 2000;
-    final consumedCalories = 1500; // TODO: Get this from history provider
-    return dailyCalories - consumedCalories;
-  }
-
-  int _calculateDailyCalories() {
-    final userProvider = Provider.of<UserProvider>(context, listen: false);
-    return userProvider.user.dailyCalories ?? 2000;
-  }
-
-  double _calculateConsumedPercentage() {
-    final userProvider = Provider.of<UserProvider>(context, listen: false);
-    final dailyCalories = userProvider.user.dailyCalories ?? 2000;
-    final consumedCalories = 1500; // TODO: Get this from history provider
-    
-    // Calculate percentage of calories consumed
-    final percentage = (consumedCalories / dailyCalories) * 100;
-    return percentage.clamp(0, 100); // Ensure percentage is between 0 and 100
   }
 
 

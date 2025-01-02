@@ -5,6 +5,7 @@ import 'package:activity_ring/activity_ring.dart';
 import 'package:rxdart/rxdart.dart';
 import '../core/app_export.dart';
 import '../services/meal_service.dart';
+import '../presentation/homepage_history/home_screen/home_screen.dart';
 
 class CaloriesMacrosWidget extends StatelessWidget {
   final bool isHomeScreen;
@@ -75,6 +76,11 @@ class CaloriesMacrosWidget extends StatelessWidget {
                     final carbsPercent = (carbsConsumed / carbsGoal * 100).clamp(0, 100);
                     final caloriesPercent = ((consumedCalories / dailyCalories) * 100).clamp(0, 100);
                     final remainingCalories = (dailyCalories - consumedCalories).clamp(0, dailyCalories);
+
+                    if (isHomeScreen) {
+                      (context as Element).findAncestorStateOfType<HomeScreenState>()
+                          ?.checkRingsAndShowReward(userData);
+                    }
 
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
