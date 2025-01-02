@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../core/app_export.dart';
+import '../../../../../core/app_export.dart';
 import '../models/challenges2two_item_model.dart';
 
 // Widget that displays an individual challenge card in the challenge carousel
@@ -10,7 +10,7 @@ class Challenges2twoItemWidget extends StatelessWidget {
         );
 
   // Model containing the challenge data to display
-  Challenges2twoItemModel challenges2twoItemModelObj;
+  final Challenges2twoItemModel challenges2twoItemModelObj;
 
   @override
   Widget build(BuildContext context) {

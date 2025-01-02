@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import '../../core/app_export.dart';
-import '../../theme/custom_button_style.dart';
-import '../../widgets/app_bar/appbar_leading_image.dart';
-import '../../widgets/app_bar/appbar_subtitle.dart';
-import '../../widgets/app_bar/custom_app_bar.dart';
-import '../../widgets/custom_elevated_button.dart';
-import '../../widgets/custom_text_form_field.dart';
+import '../../../../../core/app_export.dart';
+import '../../../../../theme/custom_button_style.dart';
+import '../../../../../widgets/app_bar/appbar_leading_image.dart';
+import '../../../../../widgets/app_bar/appbar_subtitle.dart';
+import '../../../../../widgets/app_bar/custom_app_bar.dart';
+import '../../../../../widgets/custom_elevated_button.dart';
+import '../../../../../widgets/custom_text_form_field.dart';
 import 'models/notifications_read_model.dart';
 import 'models/read_two_item_model.dart';
 import 'provider/notifications_read_provider.dart';
@@ -62,7 +62,7 @@ class NotificationsReadScreenState extends State<NotificationsReadScreen> {
                     ),
                   ),
                   SizedBox(height: 12.h),
-                  
+
                   // Unread notifications section
                   Padding(
                     padding: EdgeInsets.only(left: 10.h),
@@ -72,17 +72,17 @@ class NotificationsReadScreenState extends State<NotificationsReadScreen> {
                     ),
                   ),
                   SizedBox(height: 16.h),
-                  
+
                   // "All caught up" message
                   Align(
                     alignment: Alignment.center,
                     child: Text(
                       "You are all caught up!",
-                      style: CustomTextStyles.titleLargeGray40002,
+                      style: theme.textTheme.titleLarge,
                     ),
                   ),
                   SizedBox(height: 16.h),
-                  
+
                   // Read notifications section
                   Padding(
                     padding: EdgeInsets.only(left: 14.h),
@@ -92,7 +92,7 @@ class NotificationsReadScreenState extends State<NotificationsReadScreen> {
                     ),
                   ),
                   SizedBox(height: 10.h),
-                  
+
                   // Stack of notification items
                   _buildStackfirstone(context),
                   SizedBox(height: 6.h),
@@ -107,7 +107,7 @@ class NotificationsReadScreenState extends State<NotificationsReadScreen> {
                       ],
                     ),
                   ),
-                  
+
                   // Clear notifications button at the bottom
                   SizedBox(height: 14.h),
                   _buildClear(context),
@@ -120,3 +120,116 @@ class NotificationsReadScreenState extends State<NotificationsReadScreen> {
       ),
     );
   }
+
+  PreferredSizeWidget _buildAppbar(BuildContext context) {
+    return CustomAppBar(
+      leadingWidth: 20.h,
+      leading: AppbarLeadingImage(
+        imagePath: ImageConstant.imgArrowLeftPrimary,
+        margin: EdgeInsets.only(left: 4.h),
+      ),
+      title: AppbarSubtitle(
+        text: "Notifications",
+        margin: EdgeInsets.only(left: 7.h),
+      ),
+    );
+  }
+
+  Widget _buildStackfirstone(BuildContext context) {
+    return Container(
+      width: double.maxFinite,
+      padding: EdgeInsets.symmetric(
+        horizontal: 16.h,
+        vertical: 12.h,
+      ),
+      decoration: AppDecoration.lightBlueLayoutPadding.copyWith(
+        borderRadius: BorderRadiusStyle.roundedBorder10,
+      ),
+      child: Consumer<NotificationsReadProvider>(
+        builder: (context, provider, child) {
+          return ListView.separated(
+            physics: NeverScrollableScrollPhysics(),
+            shrinkWrap: true,
+            separatorBuilder: (context, index) => SizedBox(height: 8.h),
+            itemCount:
+                provider.notificationsReadModelObj.readTwoItemList.length,
+            itemBuilder: (context, index) {
+              ReadTwoItemModel model =
+                  provider.notificationsReadModelObj.readTwoItemList[index];
+              return ReadTwoItemWidget(model);
+            },
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildStackfirst(BuildContext context) {
+    return Container(
+      width: double.maxFinite,
+      padding: EdgeInsets.symmetric(
+        horizontal: 16.h,
+        vertical: 12.h,
+      ),
+      decoration: AppDecoration.lightBlueLayoutPadding.copyWith(
+        borderRadius: BorderRadiusStyle.roundedBorder10,
+      ),
+      child: Consumer<NotificationsReadProvider>(
+        builder: (context, provider, child) {
+          return ListView.separated(
+            physics: NeverScrollableScrollPhysics(),
+            shrinkWrap: true,
+            separatorBuilder: (context, index) => SizedBox(height: 8.h),
+            itemCount:
+                provider.notificationsReadModelObj.readTwoItemList.length,
+            itemBuilder: (context, index) {
+              ReadTwoItemModel model =
+                  provider.notificationsReadModelObj.readTwoItemList[index];
+              return ReadTwoItemWidget(model);
+            },
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildReadtwo(BuildContext context) {
+    return Container(
+      width: double.maxFinite,
+      padding: EdgeInsets.symmetric(
+        horizontal: 16.h,
+        vertical: 12.h,
+      ),
+      decoration: AppDecoration.lightBlueLayoutPadding.copyWith(
+        borderRadius: BorderRadiusStyle.roundedBorder10,
+      ),
+      child: Consumer<NotificationsReadProvider>(
+        builder: (context, provider, child) {
+          return ListView.separated(
+            physics: NeverScrollableScrollPhysics(),
+            shrinkWrap: true,
+            separatorBuilder: (context, index) => SizedBox(height: 8.h),
+            itemCount:
+                provider.notificationsReadModelObj.readTwoItemList.length,
+            itemBuilder: (context, index) {
+              ReadTwoItemModel model =
+                  provider.notificationsReadModelObj.readTwoItemList[index];
+              return ReadTwoItemWidget(model);
+            },
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildClear(BuildContext context) {
+    return CustomElevatedButton(
+      text: "Clear all notifications",
+      margin: EdgeInsets.symmetric(horizontal: 16.h),
+      buttonStyle: CustomButtonStyles.fillGray,
+      onPressed: () {
+        // Add clear notifications logic here
+      },
+    );
+  }
+}

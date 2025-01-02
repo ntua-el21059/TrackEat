@@ -107,6 +107,10 @@ class CustomTextStyles {
         fontWeight: FontWeight.w300,
       );
 
+  static TextStyle get bodyMedium13 => theme.textTheme.bodyMedium!.copyWith(
+        fontSize: 13.fSize,
+      );
+
   // Body Small
   static TextStyle get bodySmallBlack900 => theme.textTheme.bodySmall!.copyWith(
         color: appTheme.black900.withAlpha(64),
@@ -290,5 +294,29 @@ class CustomTextStyles {
 
   static TextStyle get titleLarge20 => theme.textTheme.titleLarge!.copyWith(
         fontSize: 20,
+      );
+
+  static TextStyle get bodySmallOnErrorContainer =>
+      theme.textTheme.bodySmall!.copyWith(
+        color: theme.colorScheme.onErrorContainer,
+      );
+
+  static TextStyle get labelLargeBluegray400 =>
+      theme.textTheme.labelLarge!.copyWith(
+        color: appTheme.blueGray400,
+      );
+
+  static TextStyle get titleLargeGray40002 =>
+      theme.textTheme.titleLarge!.copyWith(
+        color: appTheme.gray40002,
+      );
+
+  static TextStyle get titleSmallBold => theme.textTheme.titleSmall!.copyWith(
+        fontWeight: FontWeight.w700,
+      );
+
+  static TextStyle get labelLargeSFProTextBluegray400 =>
+      theme.textTheme.labelLarge!.sFProText.copyWith(
+        color: appTheme.blueGray400,
       );
 }

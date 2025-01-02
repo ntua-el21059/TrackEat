@@ -1,12 +1,19 @@
+import 'package:flutter/material.dart';
+import '../../../../../core/app_export.dart';
+import '../models/read_two_item_model.dart';
+import '../../../../../theme/custom_text_style.dart';
+import '../../../../../widgets/custom_elevated_button.dart';
+import '../../../../../theme/custom_button_style.dart';
+
 class ReadTwoItemWidget extends StatelessWidget {
   // The constructor takes a model object that contains the notification data
   ReadTwoItemWidget(this.readTwoItemModelObj, {Key? key})
       : super(
           key: key,
         );
-        
+
   // This holds the data for the notification being displayed
-  ReadTwoItemModel readTwoItemModelObj;
+  final ReadTwoItemModel readTwoItemModelObj;
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +36,8 @@ class ReadTwoItemWidget extends StatelessWidget {
             padding: EdgeInsets.only(left: 10.h),
             child: Text(
               readTwoItemModelObj.miabrooksier!,
-              style: CustomTextStyles.titleSmallBold,
+              style: theme.textTheme.titleSmall
+                  ?.copyWith(fontWeight: FontWeight.bold),
             ),
           ),
           // The Add button (built by a separate method)
@@ -38,3 +46,16 @@ class ReadTwoItemWidget extends StatelessWidget {
       ),
     );
   }
+
+  Widget _buildAdd(BuildContext context) {
+    return CustomElevatedButton(
+      height: 24.h,
+      width: 60.h,
+      text: "Add",
+      buttonStyle: CustomButtonStyles.fillPrimary,
+      onPressed: () {
+        // Add button action here
+      },
+    );
+  }
+}

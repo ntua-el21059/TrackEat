@@ -1,4 +1,4 @@
-import '../../../core/app_export.dart';
+import '../../../../../core/app_export.dart';
 
 // Model class for a challenge item in the challenges widget
 class Challenges2twoItemModel {

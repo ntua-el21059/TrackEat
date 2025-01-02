@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:carousel_slider_plus/carousel_slider_plus.dart';
+import 'package:carousel_slider/carousel_slider.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 // Additional imports for app-specific widgets and styles
-import '../../core/app_export.dart';
-import '../../theme/custom_button_style.dart';
-import '../../widgets/app_bar/appbar_title.dart';
-import '../../widgets/app_bar/appbar_trailing_image.dart';
-import '../../widgets/app_bar/custom_app_bar.dart';
-import '../../widgets/custom_bottom_bar.dart';
-import '../../widgets/custom_elevated_button.dart';
+import '../../../../../core/app_export.dart';
+import '../../../../../theme/custom_button_style.dart';
+import '../../../../../widgets/app_bar/appbar_title.dart';
+import '../../../../../widgets/app_bar/appbar_trailing_image.dart';
+import '../../../../../widgets/app_bar/custom_app_bar.dart';
+import '../../../../../widgets/custom_bottom_bar.dart';
+import '../../../../../widgets/custom_elevated_button.dart';
 // Imports for models and widgets used in this screen
 import 'models/challenges2two_item_model.dart';
 import 'models/leaderboard_2_2_model.dart';
@@ -83,7 +83,7 @@ class Leaderboard22ScreenState extends State<Leaderboard22Screen> {
                   ),
                 ),
                 buttonStyle: CustomButtonStyles.fillPrimaryTL10,
-                buttonTextStyle: CustomTextStyles.bodySmallOnErrorContainer,
+                buttonTextStyle: theme.textTheme.bodySmall,
                 alignment: Alignment.centerRight,
               ),
               SizedBox(height: 10.h),
@@ -111,7 +111,7 @@ class Leaderboard22ScreenState extends State<Leaderboard22Screen> {
                       count: provider
                           .leaderboard22ModelObj.challenges2twoItemList.length,
                       axisDirection: Axis.horizontal,
-                      effect: ScrollingDotsEffect(
+                      effect: ExpandingDotsEffect(
                         spacing: 8,
                         activeDotColor: appTheme.black900.withOpacity(0.3),
                         dotColor: appTheme.black900,

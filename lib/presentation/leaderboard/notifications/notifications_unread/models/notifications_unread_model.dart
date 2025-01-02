@@ -1,4 +1,4 @@
-import '../../../core/app_export.dart';
+import '../../../../../core/app_export.dart';
 import 'read_two_item_model.dart';
 
 // This class represents the model for unread notifications

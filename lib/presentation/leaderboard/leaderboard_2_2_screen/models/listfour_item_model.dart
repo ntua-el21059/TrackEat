@@ -1,4 +1,4 @@
-import '../../../core/app_export.dart';
+import '../../../../../core/app_export.dart';
 
 // Model class for each entry in the leaderboard list, containing user ranking details
 class ListfourItemModel {

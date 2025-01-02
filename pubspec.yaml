@@ -9,7 +9,7 @@ version: 1.0.0+1
 
 # Flutter SDK environment
 environment:
-  sdk: ">=3.2.0 <4.0.0"  # Updated to latest stable Flutter SDK
+  sdk: '>=3.2.0 <4.0.0'  # Updated to latest stable Flutter SDK
 
 # Dependencies required for the application
 dependencies:
@@ -30,6 +30,7 @@ dependencies:
   path_provider: ^2.1.2
   path: ^1.8.3
   confetti: ^0.7.0
+  smooth_page_indicator: ^1.1.0
 
   # State Management
   provider: ^6.1.1

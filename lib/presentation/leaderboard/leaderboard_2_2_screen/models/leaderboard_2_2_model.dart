@@ -1,4 +1,4 @@
-import '../../../core/app_export.dart';
+import '../../../../../core/app_export.dart';
 import 'challenges2two_item_model.dart';
 import 'listfour_item_model.dart';
 

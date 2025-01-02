@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../core/app_export.dart';
+import '../../../../../core/app_export.dart';
 import '../models/notifications_empty_notifications_model.dart';
 
 // Provider class for managing the empty notifications screen state

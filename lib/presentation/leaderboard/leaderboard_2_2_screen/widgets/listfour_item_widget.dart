@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../core/app_export.dart';
+import '../../../../../core/app_export.dart';
 import '../models/listfour_item_model.dart';
 
 // This widget represents an individual entry in the leaderboard list, displaying
@@ -11,7 +11,7 @@ class ListfourItemWidget extends StatelessWidget {
         );
 
   // Model containing the leaderboard entry data to display
-  ListfourItemModel listfourItemModelObj;
+  final ListfourItemModel listfourItemModelObj;
 
   @override
   Widget build(BuildContext context) {
