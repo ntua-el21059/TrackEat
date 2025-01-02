@@ -1,18 +1,18 @@
 // Core Flutter and third-party package imports
 import 'package:flutter/material.dart';
-import 'package:carousel_slider_plus/carousel_slider_plus.dart';
+import 'package:carousel_slider/carousel_slider.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
-import '../../core/app_export.dart';
-import '../../theme/custom_button_style.dart';
-import '../../widgets/app_bar/appbar_title.dart';
-import '../../widgets/app_bar/appbar_trailing_image.dart';
-import '../../widgets/app_bar/custom_app_bar.dart';
-import '../../widgets/custom_bottom_bar.dart';
-import '../../widgets/custom_elevated_button.dart';
+import '../../../../../core/app_export.dart';
+import '../../../../../theme/custom_button_style.dart';
+import '../../../../../widgets/app_bar/appbar_title.dart';
+import '../../../../../widgets/app_bar/appbar_trailing_image.dart';
+import '../../../../../widgets/app_bar/custom_app_bar.dart';
+import '../../../../../widgets/custom_bottom_bar.dart';
+import '../../../../../widgets/custom_elevated_button.dart';
 import 'models/challenges1two_item_model.dart';
 import 'models/leaderboard_1_2_model.dart';
 import 'models/listfour_item_model.dart';
-import 'provider/leaderboard_1_2_provider.dart';
+import 'provider/leaderboard_provider.dart';
 import 'widgets/challenges1two_item_widget.dart';
 import 'widgets/listfour_item_widget.dart';
 
