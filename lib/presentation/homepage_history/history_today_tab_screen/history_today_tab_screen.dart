@@ -24,8 +24,9 @@ class HistoryTodayTabScreen extends StatefulWidget {
 
 class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> with SingleTickerProviderStateMixin {
   bool _isLoading = true;
-  late AnimationController _slideController;
+  late AnimationController _animationController;
   late Animation<Offset> _slideAnimation;
+  late Animation<double> _fadeAnimation;
   
   // Add PageControllers for each meal type
   final PageController _breakfastController = PageController();
@@ -35,16 +36,25 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> with Singl
   @override
   void initState() {
     super.initState();
-    _slideController = AnimationController(
+    _animationController = AnimationController(
       vsync: this,
-      duration: Duration(milliseconds: 400),
+      duration: Duration(milliseconds: 300),
     );
+    
     _slideAnimation = Tween<Offset>(
       begin: Offset.zero,
       end: Offset.zero,
     ).animate(CurvedAnimation(
-      parent: _slideController,
-      curve: Curves.easeOutCubic,
+      parent: _animationController,
+      curve: Curves.easeInOutCubic,
+    ));
+
+    _fadeAnimation = Tween<double>(
+      begin: 1.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOut,
     ));
 
     // Simulate loading delay
@@ -61,23 +71,38 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> with Singl
     final provider = Provider.of<HistoryTodayTabProvider>(context, listen: false);
     
     setState(() {
+      // Set up slide animation
       _slideAnimation = Tween<Offset>(
-        begin: Offset(goingBack ? 1 : -1, 0),
+        begin: Offset(goingBack ? -1 : 1, 0),
         end: Offset.zero,
       ).animate(CurvedAnimation(
-        parent: _slideController,
-        curve: Curves.easeOutCubic,
+        parent: _animationController,
+        curve: Curves.easeInOutCubic,
       ));
+
+      // Set up fade animation
+      _fadeAnimation = TweenSequence<double>([
+        TweenSequenceItem(
+          tween: Tween<double>(begin: 1.0, end: 0.5)
+              .chain(CurveTween(curve: Curves.easeOut)),
+          weight: 1,
+        ),
+        TweenSequenceItem(
+          tween: Tween<double>(begin: 0.5, end: 1.0)
+              .chain(CurveTween(curve: Curves.easeIn)),
+          weight: 1,
+        ),
+      ]).animate(_animationController);
     });
 
     // Reset to start position
-    _slideController.value = 0;
+    _animationController.value = 0;
     
     // Start animation
-    _slideController.forward();
+    _animationController.forward();
 
     // Update the date after a small delay to allow animation to start
-    Future.delayed(Duration(milliseconds: 200), () {
+    Future.delayed(Duration(milliseconds: 100), () {
       if (goingBack) {
         provider.goToPreviousDay();
       } else if (provider.canGoForward()) {
@@ -88,7 +113,7 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> with Singl
 
   @override
   void dispose() {
-    _slideController.dispose();
+    _animationController.dispose();
     _breakfastController.dispose();
     _lunchController.dispose();
     _dinnerController.dispose();
@@ -182,7 +207,7 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> with Singl
         child: GestureDetector(
           onHorizontalDragEnd: (details) {
             // Require minimum velocity and distance for swipe
-            if (details.primaryVelocity!.abs() < 800) {  // Minimum velocity threshold
+            if (details.primaryVelocity!.abs() < 500) {  // Lowered threshold for smoother experience
               return;
             }
             
@@ -198,9 +223,12 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> with Singl
           },
           child: Stack(
             children: [
-              SlideTransition(
-                position: _slideAnimation,
-                child: _buildMainContent(),
+              FadeTransition(
+                opacity: _fadeAnimation,
+                child: SlideTransition(
+                  position: _slideAnimation,
+                  child: _buildMainContent(),
+                ),
               ),
             ],
           ),
