@@ -76,5 +76,11 @@ flutter:
     - assets/images/fat_goal.svg
     - assets/images/activity_level2.svg
     - assets/images/accessibility.fill.svg
+    - assets/images/avocado_challenge.png
+    - assets/images/banana_challenge.png
+    - assets/images/carrots_challenge.png
+    - assets/images/berries_challenge.png
+    - assets/images/broccoli_challenge.png
+    - assets/images/cabbage_challenge.png
     
     
