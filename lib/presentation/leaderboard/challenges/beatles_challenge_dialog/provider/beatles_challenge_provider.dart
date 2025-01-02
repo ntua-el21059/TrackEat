@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../core/app_export.dart';
+import '../../../../../core/app_export.dart';
 import '../models/beatles_challenge_model.dart';
 
 /// A provider class for the BeatlesChallengeDialog.

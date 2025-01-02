@@ -1,3 +1,4 @@
+export 'package:flutter/material.dart';
 export 'package:connectivity_plus/connectivity_plus.dart';
 export 'package:trackeat/core/utils/image_constant.dart';
 export 'package:trackeat/core/network/network_info.dart';

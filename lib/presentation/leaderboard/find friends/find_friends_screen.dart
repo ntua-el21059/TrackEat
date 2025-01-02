@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../core/app_export.dart';
-import '../../widgets/app_bar/appbar_leading_image.dart';
-import '../../widgets/app_bar/appbar_subtitle.dart';
-import '../../widgets/app_bar/custom_app_bar.dart';
-import '../../widgets/custom_search_view.dart';
+import '../../../../../core/app_export.dart';
+import '../../../../../widgets/app_bar/appbar_leading_image.dart';
+import '../../../../../widgets/app_bar/appbar_subtitle.dart';
+import '../../../../../widgets/app_bar/custom_app_bar.dart';
+import '../../../../../widgets/custom_search_view.dart';
 import 'models/find_friends_item_model.dart';
 import 'models/find_friends_model.dart';
 import 'provider/find_friends_provider.dart';
@@ -86,7 +86,7 @@ class FindFriendsScreenState extends State<FindFriendsScreen> {
                    children: [
                      Text(
                        "People you may know",
-                       style: CustomTextStyles.titleLarge20,
+                       style: theme.textTheme.titleLarge,
                      ),
                      SizedBox(height: 18.h),
                      _buildFindfriends(context)

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../core/app_export.dart';
-import '../models/find_friends_item_model.dart';
+import '../../../../../core/app_export.dart';
 import '../models/find_friends_model.dart';
 
 // This provider class manages the state and data for the Find Friends screen.

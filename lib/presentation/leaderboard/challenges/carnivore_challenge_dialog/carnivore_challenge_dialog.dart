@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../core/app_export.dart';
-import 'models/carnivore_challenge_model.dart';
+import '../../../../../core/app_export.dart';
 import 'provider/carnivore_challenge_provider.dart';
 
 // This directive indicates that we intentionally want this widget to be mutable

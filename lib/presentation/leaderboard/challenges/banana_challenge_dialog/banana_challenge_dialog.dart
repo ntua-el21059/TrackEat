@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../core/app_export.dart';
-import 'models/banana_challenge_model.dart';
+import '../../../../../core/app_export.dart';
 import 'provider/banana_challenge_provider.dart';
 
 // This directive indicates that we intentionally want this widget to be mutable

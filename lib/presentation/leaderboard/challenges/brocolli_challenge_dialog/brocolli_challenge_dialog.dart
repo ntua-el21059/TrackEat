@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../core/app_export.dart';
-import 'models/brocolli_challenge_model.dart';
+import '../../../../../core/app_export.dart';
 import 'provider/brocolli_challenge_provider.dart';
 
 // This directive is used because the widget needs to be mutable to manage its state

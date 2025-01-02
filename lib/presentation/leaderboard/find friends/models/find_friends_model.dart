@@ -1,4 +1,4 @@
-import '../../../core/app_export.dart';
+import '../../../../../core/app_export.dart';
 import 'find_friends_item_model.dart';
 
 // This model class manages a list of suggested friends to be displayed in the Find Friends feature.
