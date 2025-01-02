@@ -209,14 +209,16 @@ class ProfileScreenState extends State<ProfileScreen> {
         child: Container(
           width: double.maxFinite,
           padding: EdgeInsets.symmetric(horizontal: 4.h),
-          child: Column(
-            children: [
-              _buildProfileHeader(context),
-              SizedBox(height: 16.h),
-              _buildProfilePreview(context),
-              SizedBox(height: 16.h),
-              _buildActivityLevelSection(context),
-            ],
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                _buildProfileHeader(context),
+                SizedBox(height: 16.h),
+                _buildProfilePreview(context),
+                SizedBox(height: 16.h),
+                _buildActivityLevelSection(context),
+              ],
+            ),
           ),
         ),
       ),
@@ -748,7 +750,7 @@ class ProfileScreenState extends State<ProfileScreen> {
                       keyboardType: TextInputType.number,
                       decoration: InputDecoration(
                         hintText: 'Enter goal weight in kg',
-                        suffixText: 'kg',
+                        suffixText: ' kg',
                       ),
                     ),
                     Row(
@@ -855,7 +857,7 @@ class ProfileScreenState extends State<ProfileScreen> {
                 keyboardType: TextInputType.number,
                 decoration: InputDecoration(
                   hintText: 'Enter weight in kg',
-                  suffixText: 'kg',
+                  suffixText: ' kg',
                 ),
               ),
               Row(
@@ -932,7 +934,7 @@ class ProfileScreenState extends State<ProfileScreen> {
                 keyboardType: TextInputType.number,
                 decoration: InputDecoration(
                   hintText: 'Enter value',
-                  suffixText: title == "Carbs Goal" || title == "Protein Goal" || title == "Fat Goal" ? "g" : null,
+                  suffixText: title == "Carbs Goal" || title == "Protein Goal" || title == "Fat Goal" ? " g" : null,
                 ),
                 inputFormatters: [
                   FilteringTextInputFormatter.digitsOnly,

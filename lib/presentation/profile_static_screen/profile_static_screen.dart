@@ -759,13 +759,26 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> {
                           displayValue = userData['gender']?.toString() ?? "Not set";
                         } else if (label == "Height") {
                           String heightValue = userData['height']?.toString() ?? "";
-                          displayValue = heightValue.isEmpty ? "Not set" : "${heightValue}cm";
+                          displayValue = heightValue.isEmpty ? "Not set" : "${heightValue} cm";
                         }
-                        return Text(
-                          displayValue.isEmpty ? "Not set" : displayValue,
-                          style: theme.textTheme.titleLarge?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
+                        return GestureDetector(
+                          onTap: () {
+                            if (label == "Birthday") {
+                              _showDatePicker(context, value);
+                            } else if (label == "Gender") {
+                              _showGenderSelector(context, value);
+                            } else if (label == "Height") {
+                              _showHeightInputDialog(context, value);
+                            } else {
+                              onTap();
+                            }
+                          },
+                          child: Text(
+                            displayValue.isEmpty ? "Not set" : displayValue,
+                            style: theme.textTheme.titleLarge?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         );
                       }

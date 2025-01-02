@@ -75,11 +75,11 @@ class ProfileProvider extends ChangeNotifier {
           formattedNumber = value.toString();
         }
         
-        // Add appropriate unit based on title without spaces
+        // Add appropriate unit based on title with spaces
         if (title == "Cur. Weight" || title == "Goal Weight") {
-          item.value = "${formattedNumber}kg";
+          item.value = "$formattedNumber kg";
         } else if (title == "Carbs Goal" || title == "Protein Goal" || title == "Fat Goal") {
-          item.value = "${formattedNumber}g";
+          item.value = "$formattedNumber g";
         } else {
           item.value = formattedNumber;
         }
@@ -109,8 +109,8 @@ class ProfileProvider extends ChangeNotifier {
             .doc(currentUser!.email)
             .update({'dailyCalories': int.parse(cleanValue)});
 
-        // Update local UI with no space before kcal
-        updateCalories("${cleanValue}kcal");
+        // Update local UI with space before kcal
+        updateCalories("$cleanValue kcal");
       } catch (e) {
         print("Error updating calories in Firebase: $e");
       }
@@ -125,7 +125,7 @@ class ProfileProvider extends ChangeNotifier {
     
     // Clean the input value
     String cleanValue = calories.replaceAll(' ', '').replaceAll('kcal', '');
-    caloriesItem.value = "${cleanValue}kcal";
+    caloriesItem.value = "$cleanValue kcal";
     notifyListeners();
   }
 
@@ -153,12 +153,12 @@ class ProfileProvider extends ChangeNotifier {
       ),
       ProfileItemModel(
         title: "Calories Goal",
-        value: "3000kcal",
+        value: "3000 kcal",
         icon: ImageConstant.imgCurrentWeight,
       ),
       ProfileItemModel(
         title: "Cur. Weight",
-        value: "100g",
+        value: "100 g",
         icon: ImageConstant.imgDiet,
       ),
       ProfileItemModel(
@@ -168,17 +168,17 @@ class ProfileProvider extends ChangeNotifier {
       ),
       ProfileItemModel(
         title: "Carbs Goal",
-        value: "350g",
+        value: "350 g",
         icon: ImageConstant.imgProteinGoal,
       ),
       ProfileItemModel(
         title: "Protein Goal",
-        value: "140g",
+        value: "140 g",
         icon: ImageConstant.imgFatGoal,
       ),
       ProfileItemModel(
         title: "Fat Goal",
-        value: "93g",
+        value: "93 g",
         icon: ImageConstant.imgFatGoal,
       ),
     ];
