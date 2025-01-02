@@ -66,12 +66,14 @@ class HomeScreenState extends State<HomeScreen> {
           .listen((snapshot) async {
         if (snapshot.exists && mounted) {
           final userData = snapshot.data()!;
-          final userInfoProvider = Provider.of<UserInfoProvider>(context, listen: false);
+          final userProvider = Provider.of<UserProvider>(context, listen: false);
           
           // Update provider with fresh Firestore values
-          await userInfoProvider.updateName(
-            userData['firstName']?.toString() ?? '',
-            userData['lastName']?.toString() ?? ''
+          userProvider.setDailyCalories(userData['dailyCalories'] as int? ?? 2000);
+          userProvider.setMacronutrientGoals(
+            carbsGoal: double.tryParse(userData['carbsgoal']?.toString() ?? '0'),
+            proteinGoal: double.tryParse(userData['proteingoal']?.toString() ?? '0'),
+            fatGoal: double.tryParse(userData['fatgoal']?.toString() ?? '0'),
           );
           
           // Force UI update
@@ -99,29 +101,18 @@ class HomeScreenState extends State<HomeScreen> {
             
         if (doc.exists && mounted) {
           final userData = doc.data()!;
-          final userModel = UserModel(
-            firstName: userData['firstName']?.toString() ?? 'User',
-            lastName: userData['lastName']?.toString() ?? '',
-            username: userData['username']?.toString() ?? '',
-            email: email,
-          );
+          final userProvider = Provider.of<UserProvider>(context, listen: false);
           
-          // Set the user model first
-          final userInfoProvider = Provider.of<UserInfoProvider>(context, listen: false);
-          await userInfoProvider.setUser(userModel);
+          // Update provider with fresh Firestore values
+          userProvider.setDailyCalories(userData['dailyCalories'] as int? ?? 2000);
+          userProvider.setMacronutrientGoals(
+            carbsGoal: double.tryParse(userData['carbsgoal']?.toString() ?? '0'),
+            proteinGoal: double.tryParse(userData['proteingoal']?.toString() ?? '0'),
+            fatGoal: double.tryParse(userData['fatgoal']?.toString() ?? '0'),
+          );
         }
       } catch (e) {
         print("Error fetching user data: $e");
-        // Set a default user model if there's an error
-        if (mounted) {
-          final userInfoProvider = Provider.of<UserInfoProvider>(context, listen: false);
-          await userInfoProvider.setUser(UserModel(
-            firstName: 'User',
-            lastName: '',
-            username: '',
-            email: email,
-          ));
-        }
       }
     }
   }
@@ -299,7 +290,7 @@ class HomeScreenState extends State<HomeScreen> {
                       ),
                       builder: (context, consumedSnapshot) {
                         final consumedCalories = consumedSnapshot.data ?? 0;
-                        final remainingCalories = dailyCalories - consumedCalories;
+                        final remainingCalories = (dailyCalories - consumedCalories).clamp(0, dailyCalories);
                         
                         return Text(
                           "$remainingCalories Kcal Remaining...",
@@ -355,13 +346,20 @@ class HomeScreenState extends State<HomeScreen> {
                 final userData = userSnapshot.data!.data() as Map<String, dynamic>;
                 final dailyCalories = userData['dailyCalories'] as int? ?? 2000;
                 
-                return FutureBuilder<int>(
-                  future: MealService().getTotalCaloriesForDate(
-                    FirebaseAuth.instance.currentUser!.email!,
-                    DateTime.now(),
-                  ),
-                  builder: (context, consumedSnapshot) {
-                    final consumedCalories = consumedSnapshot.data ?? 0;
+                return StreamBuilder<QuerySnapshot>(
+                  stream: FirebaseFirestore.instance
+                      .collection('meals')
+                      .where('userEmail', isEqualTo: FirebaseAuth.instance.currentUser?.email)
+                      .where('date', isGreaterThanOrEqualTo: DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day))
+                      .where('date', isLessThan: DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day + 1))
+                      .snapshots(),
+                  builder: (context, mealsSnapshot) {
+                    int consumedCalories = 0;
+                    if (mealsSnapshot.hasData) {
+                      for (var doc in mealsSnapshot.data!.docs) {
+                        consumedCalories += (doc.data() as Map<String, dynamic>)['calories'] as int;
+                      }
+                    }
                     final percentage = ((consumedCalories / dailyCalories) * 100).clamp(0, 100);
                     
                     return Container(
@@ -371,16 +369,22 @@ class HomeScreenState extends State<HomeScreen> {
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(4.h),
                       ),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: MediaQuery.of(context).size.width * (percentage / 100),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF4CD964),
-                              borderRadius: BorderRadius.circular(4.h),
-                            ),
-                          ),
-                        ],
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(4.h),
+                        child: LayoutBuilder(
+                          builder: (context, constraints) {
+                            return Row(
+                              children: [
+                                Container(
+                                  width: (constraints.maxWidth * (percentage / 100)).clamp(0, constraints.maxWidth),
+                                  decoration: BoxDecoration(
+                                    color: consumedCalories > dailyCalories ? Colors.red : const Color(0xFF4CD964),
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
+                        ),
                       ),
                     );
                   },
@@ -409,15 +413,27 @@ class HomeScreenState extends State<HomeScreen> {
                 final fatGoal = double.tryParse(userData['fatgoal']?.toString() ?? '0') ?? 70.0;
                 final carbsGoal = double.tryParse(userData['carbsgoal']?.toString() ?? '0') ?? 110.0;
 
-                return FutureBuilder<Map<String, double>>(
-                  future: MealService().getTotalMacrosForDate(
-                    FirebaseAuth.instance.currentUser!.email!,
-                    DateTime.now(),
-                  ),
-                  builder: (context, macrosSnapshot) {
-                    final proteinConsumed = macrosSnapshot.data?['protein'] ?? 0.0;
-                    final fatConsumed = macrosSnapshot.data?['fats'] ?? 0.0;
-                    final carbsConsumed = macrosSnapshot.data?['carbs'] ?? 0.0;
+                return StreamBuilder<QuerySnapshot>(
+                  stream: FirebaseFirestore.instance
+                      .collection('meals')
+                      .where('userEmail', isEqualTo: FirebaseAuth.instance.currentUser?.email)
+                      .where('date', isGreaterThanOrEqualTo: DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day))
+                      .where('date', isLessThan: DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day + 1))
+                      .snapshots(),
+                  builder: (context, mealsSnapshot) {
+                    double proteinConsumed = 0.0;
+                    double fatConsumed = 0.0;
+                    double carbsConsumed = 0.0;
+
+                    if (mealsSnapshot.hasData) {
+                      for (var doc in mealsSnapshot.data!.docs) {
+                        final data = doc.data() as Map<String, dynamic>;
+                        final macros = data['macros'] as Map<String, dynamic>;
+                        proteinConsumed += (macros['protein'] as num).toDouble();
+                        fatConsumed += (macros['fats'] as num).toDouble();
+                        carbsConsumed += (macros['carbs'] as num).toDouble();
+                      }
+                    }
 
                     final proteinPercent = (proteinConsumed / proteinGoal * 100).clamp(0, 100);
                     final fatPercent = (fatConsumed / fatGoal * 100).clamp(0, 100);

@@ -52,8 +52,12 @@ class UserProvider extends ChangeNotifier {
 
   // Profile 3/3
   void setDailyCalories(int calories) {
-    _user.dailyCalories = calories;
-    notifyListeners();
+    if (_user.dailyCalories != calories) {
+      _user.dailyCalories = calories;
+      notifyListeners();
+      // Save to Firestore
+      saveToFirestore();
+    }
   }
 
   void setMacronutrientGoals({
@@ -61,10 +65,24 @@ class UserProvider extends ChangeNotifier {
     double? proteinGoal,
     double? fatGoal,
   }) {
-    if (carbsGoal != null) _user.carbsGoal = carbsGoal;
-    if (proteinGoal != null) _user.proteinGoal = proteinGoal;
-    if (fatGoal != null) _user.fatGoal = fatGoal;
-    notifyListeners();
+    bool changed = false;
+    if (carbsGoal != null && _user.carbsGoal != carbsGoal) {
+      _user.carbsGoal = carbsGoal;
+      changed = true;
+    }
+    if (proteinGoal != null && _user.proteinGoal != proteinGoal) {
+      _user.proteinGoal = proteinGoal;
+      changed = true;
+    }
+    if (fatGoal != null && _user.fatGoal != fatGoal) {
+      _user.fatGoal = fatGoal;
+      changed = true;
+    }
+    if (changed) {
+      notifyListeners();
+      // Save to Firestore
+      saveToFirestore();
+    }
   }
 
   // Save to Firestore

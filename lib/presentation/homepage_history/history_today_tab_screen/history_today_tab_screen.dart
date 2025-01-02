@@ -286,6 +286,7 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> with Singl
                         final fatPercent = (fatConsumed / fatGoal * 100).clamp(0, 100);
                         final carbsPercent = (carbsConsumed / carbsGoal * 100).clamp(0, 100);
                         final caloriesPercent = ((consumedCalories / dailyCalories) * 100).clamp(0, 100);
+                        final remainingCalories = (dailyCalories - consumedCalories).clamp(0, dailyCalories);
 
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -294,7 +295,7 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> with Singl
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
-                                  "${dailyCalories - consumedCalories} Kcal Remaining...",
+                                  "$remainingCalories Kcal Remaining...",
                                   style: CustomTextStyles.titleMediumGray90001Bold,
                                 ),
                                 Text(
@@ -315,16 +316,22 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> with Singl
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(4.h),
                               ),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    width: MediaQuery.of(context).size.width * (caloriesPercent / 100),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFF4CD964),
-                                      borderRadius: BorderRadius.circular(4.h),
-                                    ),
-                                  ),
-                                ],
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(4.h),
+                                child: LayoutBuilder(
+                                  builder: (context, constraints) {
+                                    return Row(
+                                      children: [
+                                        Container(
+                                          width: (constraints.maxWidth * (caloriesPercent / 100)).clamp(0, constraints.maxWidth),
+                                          decoration: BoxDecoration(
+                                            color: consumedCalories > dailyCalories ? Colors.red : const Color(0xFF4CD964),
+                                          ),
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                ),
                               ),
                             ),
                             SizedBox(height: 12.h),

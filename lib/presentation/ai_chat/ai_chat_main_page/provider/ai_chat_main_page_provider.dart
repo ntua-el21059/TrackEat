@@ -248,7 +248,7 @@ Important: Respond with ONLY the JSON object, no other text.""";
         name: lastNutritionData!['food'],
         mealType: mealType.toLowerCase(),
         calories: lastNutritionData!['calories'],
-        servingSize: double.parse(lastNutritionData!['serving_size'].replaceAll(RegExp(r'[^0-9.]'), '')),
+        servingSize: _parseServingSize(lastNutritionData!['serving_size']),
         macros: {
           'protein': lastNutritionData!['protein'].toDouble(),
           'fats': lastNutritionData!['fat'].toDouble(),
@@ -281,6 +281,17 @@ Important: Respond with ONLY the JSON object, no other text.""";
       selectedMealType = null;
       notifyListeners();
     }
+  }
+
+  // Helper method to parse serving size
+  double _parseServingSize(String servingSize) {
+    // Extract numbers from the string
+    final numbers = RegExp(r'[0-9]+\.?[0-9]*').firstMatch(servingSize);
+    if (numbers != null) {
+      return double.tryParse(numbers.group(0)!) ?? 100.0;
+    }
+    // If no numbers found, return default serving size
+    return 100.0;
   }
 
   @override
