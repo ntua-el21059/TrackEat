@@ -7,7 +7,7 @@ class SocialProfileMyselfModel {
   List<ListveganItemModel> listveganItemList = [
     ListveganItemModel(title: "Carnivore🥩", count: ""),
     ListveganItemModel(
-      title: "Tim's been thriving \nwith us for a year!",
+      title: "'s been thriving \nwith us for a year!",
       count: "⭐️",
     ),
   ];

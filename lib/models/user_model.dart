@@ -3,6 +3,7 @@ class UserModel {
   String? username;
   String? email;
   String? password;
+  String? created;
   
   // Profile 1/3
   String? firstName;
@@ -31,6 +32,7 @@ class UserModel {
     this.username,
     this.email,
     this.password,
+    this.created,
     this.firstName,
     this.lastName,
     this.birthdate,
@@ -51,6 +53,7 @@ class UserModel {
     return {
       'username': username,
       'email': email,
+      'created': created,
       'firstName': firstName,
       'lastName': lastName,
       'birthdate': birthdate,
@@ -71,6 +74,7 @@ class UserModel {
     return UserModel(
       username: json['username'],
       email: json['email'],
+      created: json['created'],
       firstName: json['firstName'],
       lastName: json['lastName'],
       birthdate: json['birthdate'],
@@ -92,6 +96,7 @@ class UserModel {
     String? username,
     String? email,
     String? password,
+    String? created,
     String? firstName,
     String? lastName,
     String? birthdate,
@@ -112,6 +117,7 @@ class UserModel {
       username: username ?? this.username,
       email: email ?? this.email,
       password: password ?? this.password,
+      created: created ?? this.created,
       firstName: firstName ?? this.firstName,
       lastName: lastName ?? this.lastName,
       birthdate: birthdate ?? this.birthdate,

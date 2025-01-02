@@ -185,6 +185,13 @@ class CalorieCalculatorScreenState extends State<CalorieCalculatorScreen> {
                     
                     // Try to save directly using FirestoreService instead of UserProvider
                     try {
+                      // Get current date in D/M/YEAR format
+                      final now = DateTime.now();
+                      final formattedDate = "${now.day}/${now.month}/${now.year}";
+                      
+                      // Add creation date to user data
+                      userProvider.user.created = formattedDate;
+                      
                       await firestoreService.createUser(userProvider.user);
                       print('Successfully saved user data to Firestore');
                       

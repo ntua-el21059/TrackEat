@@ -3,11 +3,62 @@ import 'package:provider/provider.dart';
 import '../../../core/app_export.dart';
 import '../models/listvegan_item_model.dart';
 import '../provider/social_profile_myself_provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class ListveganItemWidget extends StatelessWidget {
   final ListveganItemModel model;
 
   const ListveganItemWidget(this.model, {Key? key}) : super(key: key);
+
+  String _calculateTimeDifference(String createdDate) {
+    try {
+      print('Calculating time difference for date: $createdDate');
+      // Parse the creation date (D/M/YEAR format)
+      final parts = createdDate.split('/');
+      print('Date parts: $parts');
+      
+      if (parts.length != 3) {
+        print('Invalid date format. Expected D/M/YEAR but got: $createdDate');
+        return "some time";
+      }
+
+      final createdDateTime = DateTime(
+        int.parse(parts[2]), // year
+        int.parse(parts[1]), // month
+        int.parse(parts[0]), // day
+      );
+      print('Created DateTime: $createdDateTime');
+      
+      final now = DateTime.now();
+      print('Current DateTime: $now');
+      
+      final difference = now.difference(createdDateTime);
+      final days = difference.inDays;
+      print('Difference in days: $days');
+      
+      // Calculate years more accurately by checking actual days
+      final years = days ~/ 365;
+      // Calculate remaining days after years
+      final remainingDays = days % 365;
+      // Calculate months from remaining days
+      final months = remainingDays ~/ 30;
+      
+      print('Calculated - Years: $years, Months: $months, Days: $days');
+      
+      if (days >= 365) {
+        return "$years year${years > 1 ? 's' : ''}";
+      } else if (days >= 30) {
+        final adjustedMonths = (days / 30.44).floor(); // Average days in a month
+        return "$adjustedMonths month${adjustedMonths > 1 ? 's' : ''}";
+      } else {
+        return "$days day${days > 1 ? 's' : ''}";
+      }
+    } catch (e) {
+      print('Error calculating time difference: $e');
+      return "some time";
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -16,9 +67,50 @@ class ListveganItemWidget extends StatelessWidget {
         String? dietText = model.title;
         Color boxColor;
 
-        // Determine box color based on diet
-        if (dietText?.contains("Tim's been thriving") == true) {
-          boxColor = const Color(0xFFFFD700); // Yellow for Tim's message
+        if (dietText?.contains("been thriving") == true || dietText?.contains("'s been thriving") == true || dietText?.contains("thriving") == true) {
+          boxColor = const Color(0xFFFFD700); // Yellow for user's message
+          return StreamBuilder<DocumentSnapshot>(
+            stream: FirebaseFirestore.instance
+                .collection('users')
+                .doc(FirebaseAuth.instance.currentUser?.email)
+                .snapshots(),
+            builder: (context, snapshot) {
+              // Print when we receive updates
+              print('Received Firebase update: ${DateTime.now()}');
+              
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                print('Waiting for connection...');
+                return _buildContainer(context, "Loading...", const Color(0xFFFFD700));
+              }
+
+              if (snapshot.hasError) {
+                print('Error in stream: ${snapshot.error}');
+                return _buildContainer(context, "Error loading data", const Color(0xFFFFD700));
+              }
+
+              if (snapshot.hasData && snapshot.data != null && snapshot.data!.exists) {
+                final userData = snapshot.data!.data() as Map<String, dynamic>;
+                print('Full user data from Firebase: $userData');
+                final firstName = userData['firstName']?.toString() ?? '';
+                final createdDate = userData['create']?.toString();
+                
+                print('Extracted - First Name: $firstName, Created Date: $createdDate');
+                
+                if (createdDate != null && createdDate.isNotEmpty) {
+                  final timeDifference = _calculateTimeDifference(createdDate);
+                  dietText = "$firstName's been thriving with us for $timeDifference! ⭐️";
+                  print('Final text with time: $dietText');
+                } else {
+                  print('Created date is null or empty');
+                  dietText = "$firstName's been thriving with us! ⭐️";
+                }
+              } else {
+                print('No data in snapshot or snapshot does not exist');
+                dietText = "Loading...";
+              }
+              return _buildContainer(context, dietText ?? "", const Color(0xFFFFD700));
+            },
+          );
         } else {
           switch (dietText) {
             case 'Vegan🌱':
@@ -42,34 +134,38 @@ class ListveganItemWidget extends StatelessWidget {
             default:
               boxColor = const Color(0xFFFFD700); // Yellow for default/unknown diet
           }
+          return _buildContainer(context, dietText ?? "", boxColor);
         }
-
-        return Container(
-          width: 160.h,
-          height: 91.h,
-          padding: EdgeInsets.symmetric(
-            horizontal: 16.h,
-            vertical: 12.h,
-          ),
-          decoration: BoxDecoration(
-            color: boxColor,
-            borderRadius: BorderRadius.circular(21),
-          ),
-          child: Center(
-            child: Text(
-              model.title ?? "",
-              style: theme.textTheme.titleMedium?.copyWith(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-              ),
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.visible,
-            ),
-          ),
-        );
       },
+    );
+  }
+
+  Widget _buildContainer(BuildContext context, String text, Color color) {
+    return Container(
+      width: 160.h,
+      height: 100.h,
+      padding: EdgeInsets.symmetric(
+        horizontal: 10.h,
+        vertical: 8.h,
+      ),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(21),
+      ),
+      child: Center(
+        child: Text(
+          text,
+          style: theme.textTheme.titleMedium?.copyWith(
+            color: Colors.white,
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            height: 1.1,
+          ),
+          textAlign: TextAlign.center,
+          maxLines: 4,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ),
     );
   }
 }
