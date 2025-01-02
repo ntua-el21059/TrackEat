@@ -81,6 +81,26 @@ class MealService {
     }
   }
 
+  // Get total calories stream for a user on a specific date
+  Stream<int> getTotalCaloriesStreamForDate(String userId, DateTime date) {
+    final startOfDay = DateTime(date.year, date.month, date.day);
+    final endOfDay = startOfDay.add(Duration(days: 1));
+
+    return _firestore
+        .collection(_collection)
+        .where('userEmail', isEqualTo: userId)
+        .where('date', isGreaterThanOrEqualTo: startOfDay)
+        .where('date', isLessThan: endOfDay)
+        .snapshots()
+        .map((snapshot) {
+          int totalCalories = 0;
+          for (var doc in snapshot.docs) {
+            totalCalories += (doc.data()['calories'] as int);
+          }
+          return totalCalories;
+        });
+  }
+
   // Get total macros for a user on a specific date
   Future<Map<String, double>> getTotalMacrosForDate(String userId, DateTime date) async {
     final startOfDay = DateTime(date.year, date.month, date.day);
@@ -111,5 +131,33 @@ class MealService {
       print('Error getting total macros: $e');
       throw e;
     }
+  }
+
+  // Get total macros stream for a user on a specific date
+  Stream<Map<String, double>> getTotalMacrosStreamForDate(String userId, DateTime date) {
+    final startOfDay = DateTime(date.year, date.month, date.day);
+    final endOfDay = startOfDay.add(Duration(days: 1));
+
+    return _firestore
+        .collection(_collection)
+        .where('userEmail', isEqualTo: userId)
+        .where('date', isGreaterThanOrEqualTo: startOfDay)
+        .where('date', isLessThan: endOfDay)
+        .snapshots()
+        .map((snapshot) {
+          Map<String, double> totalMacros = {
+            'protein': 0.0,
+            'fats': 0.0,
+            'carbs': 0.0,
+          };
+
+          for (var doc in snapshot.docs) {
+            Map<String, dynamic> macros = doc.data()['macros'];
+            totalMacros['protein'] = (totalMacros['protein'] ?? 0) + (macros['protein'] ?? 0);
+            totalMacros['fats'] = (totalMacros['fats'] ?? 0) + (macros['fats'] ?? 0);
+            totalMacros['carbs'] = (totalMacros['carbs'] ?? 0) + (macros['carbs'] ?? 0);
+          }
+          return totalMacros;
+        });
   }
 } 

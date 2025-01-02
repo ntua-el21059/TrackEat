@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../services/meal_service.dart';
 import '../../../../models/meal.dart';
 
@@ -12,12 +13,23 @@ import '../../../../models/meal.dart';
 class HistoryTodayTabProvider extends ChangeNotifier {
   final MealService _mealService = MealService();
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   DateTime selectedDate = DateTime.now();
   List<Meal> _meals = [];
   bool _isLoading = true;
+  
+  // User data
+  double _proteinGoal = 0.0;
+  double _fatGoal = 0.0;
+  double _carbsGoal = 0.0;
+  int _dailyCalories = 0;
 
   bool get isLoading => _isLoading;
   List<Meal> get meals => _meals;
+  double get proteinGoal => _proteinGoal;
+  double get fatGoal => _fatGoal;
+  double get carbsGoal => _carbsGoal;
+  int get dailyCalories => _dailyCalories;
 
   bool get hasBreakfast {
     return _meals.any((meal) => 
@@ -41,7 +53,28 @@ class HistoryTodayTabProvider extends ChangeNotifier {
   }
 
   HistoryTodayTabProvider() {
+    _initializeUserData();
     _initializeMeals();
+  }
+
+  void _initializeUserData() {
+    final userEmail = _auth.currentUser?.email;
+    if (userEmail != null) {
+      _firestore
+          .collection('users')
+          .doc(userEmail)
+          .snapshots()
+          .listen((snapshot) {
+        if (snapshot.exists) {
+          final userData = snapshot.data()!;
+          _proteinGoal = double.tryParse(userData['proteingoal']?.toString() ?? '0') ?? 0.0;
+          _fatGoal = double.tryParse(userData['fatgoal']?.toString() ?? '0') ?? 0.0;
+          _carbsGoal = double.tryParse(userData['carbsgoal']?.toString() ?? '0') ?? 0.0;
+          _dailyCalories = userData['dailyCalories'] as int? ?? 0;
+          notifyListeners();
+        }
+      });
+    }
   }
 
   void _initializeMeals() {

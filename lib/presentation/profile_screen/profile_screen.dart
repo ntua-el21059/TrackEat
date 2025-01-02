@@ -108,6 +108,7 @@ class ProfileScreenState extends State<ProfileScreen> {
               if (doc.exists && mounted) {
                 final userData = doc.data()!;
                 final provider = Provider.of<ProfileProvider>(context, listen: false);
+                final userProvider = Provider.of<UserInfoProvider>(context, listen: false);
                 
                 try {
                   // Weight updates
@@ -135,9 +136,20 @@ class ProfileScreenState extends State<ProfileScreen> {
                     lastName: userData['lastName'] as String? ?? '',
                     username: userData['username'] as String? ?? '',
                     email: currentUser.email,
+                    dailyCalories: userData['dailyCalories'] as int? ?? 0,
+                    carbsGoal: double.tryParse(userData['carbsgoal']?.toString() ?? '0'),
+                    proteinGoal: double.tryParse(userData['proteingoal']?.toString() ?? '0'),
+                    fatGoal: double.tryParse(userData['fatgoal']?.toString() ?? '0'),
+                    activity: userData['activity'] as String?,
+                    diet: userData['diet'] as String?,
+                    goal: userData['goal'] as String?,
+                    height: double.tryParse(userData['height']?.toString() ?? '0'),
+                    weight: double.tryParse(userData['weight']?.toString() ?? '0'),
+                    birthdate: userData['birthdate'] as String?,
+                    gender: userData['gender'] as String?,
                   );
                   
-                  Provider.of<UserInfoProvider>(context, listen: false).setUser(userModel);
+                  userProvider.setUser(userModel);
                 } catch (e) {
                   _showErrorSnackBar("Error updating profile data");
                 }

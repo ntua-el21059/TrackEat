@@ -11,6 +11,7 @@ import '../blur_choose_action_screen_dialog/blur_choose_action_screen_dialog.dar
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../services/meal_service.dart';
+import '../../../widgets/calories_macros_widget.dart';
 
 class HistoryTodayTabScreen extends StatefulWidget {
   const HistoryTodayTabScreen({Key? key}) : super(key: key);
@@ -234,202 +235,23 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> with Singl
 
   /// Section Widget
   Widget _buildCalories(BuildContext context) {
-    return Container(
-      width: double.maxFinite,
-      padding: EdgeInsets.symmetric(
-        horizontal: 8.h,
-        vertical: 12.h,
-      ),
-      decoration: BoxDecoration(
-        color: const Color(0xFFB2D7FF),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          StreamBuilder<DocumentSnapshot>(
-            stream: FirebaseFirestore.instance
-                .collection('users')
-                .doc(FirebaseAuth.instance.currentUser?.email)
-                .snapshots(),
-            builder: (context, userSnapshot) {
-              if (userSnapshot.hasData && userSnapshot.data != null && userSnapshot.data!.exists) {
-                final userData = userSnapshot.data!.data() as Map<String, dynamic>;
-                final dailyCalories = userData['dailyCalories'] as int? ?? 2000;
-                final proteinGoal = double.tryParse(userData['proteingoal']?.toString() ?? '0') ?? 98.0;
-                final fatGoal = double.tryParse(userData['fatgoal']?.toString() ?? '0') ?? 70.0;
-                final carbsGoal = double.tryParse(userData['carbsgoal']?.toString() ?? '0') ?? 110.0;
-
-                return Consumer<HistoryTodayTabProvider>(
-                  builder: (context, provider, _) {
-                    return FutureBuilder<Map<String, dynamic>>(
-                      future: Future.wait([
-                        MealService().getTotalCaloriesForDate(
-                          FirebaseAuth.instance.currentUser!.email!,
-                          provider.selectedDate,
-                        ).then((value) => {'calories': value}),
-                        MealService().getTotalMacrosForDate(
-                          FirebaseAuth.instance.currentUser!.email!,
-                          provider.selectedDate,
-                        ),
-                      ]).then((results) => {
-                        ...results[0] as Map<String, dynamic>,
-                        ...results[1],
-                      }),
-                      builder: (context, macrosSnapshot) {
-                        final consumedCalories = macrosSnapshot.data?['calories'] ?? 0;
-                        final proteinConsumed = macrosSnapshot.data?['protein'] ?? 0.0;
-                        final fatConsumed = macrosSnapshot.data?['fats'] ?? 0.0;
-                        final carbsConsumed = macrosSnapshot.data?['carbs'] ?? 0.0;
-
-                        final proteinPercent = (proteinConsumed / proteinGoal * 100).clamp(0, 100);
-                        final fatPercent = (fatConsumed / fatGoal * 100).clamp(0, 100);
-                        final carbsPercent = (carbsConsumed / carbsGoal * 100).clamp(0, 100);
-                        final caloriesPercent = ((consumedCalories / dailyCalories) * 100).clamp(0, 100);
-                        final remainingCalories = (dailyCalories - consumedCalories).clamp(0, dailyCalories);
-
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  "$remainingCalories Kcal Remaining...",
-                                  style: CustomTextStyles.titleMediumGray90001Bold,
-                                ),
-                                Text(
-                                  "$dailyCalories kcal",
-                                  style: TextStyle(
-                                    color: const Color(0xFFFF0000),
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            SizedBox(height: 6.h),
-                            Container(
-                              width: double.maxFinite,
-                              height: 8.h,
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(4.h),
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(4.h),
-                                child: LayoutBuilder(
-                                  builder: (context, constraints) {
-                                    return Row(
-                                      children: [
-                                        Container(
-                                          width: (constraints.maxWidth * (caloriesPercent / 100)).clamp(0, constraints.maxWidth),
-                                          decoration: BoxDecoration(
-                                            color: consumedCalories > dailyCalories ? Colors.red : const Color(0xFF4CD964),
-                                          ),
-                                        ),
-                                      ],
-                                    );
-                                  },
-                                ),
-                              ),
-                            ),
-                            SizedBox(height: 12.h),
-                            Row(
-                              children: [
-                                Expanded(
-                                  flex: 3,
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        "Protein",
-                                        style: CustomTextStyles.bodyLargeBlack90016_2,
-                                      ),
-                                      Text(
-                                        "${proteinConsumed.toInt()}/${proteinGoal.toInt()}g",
-                                        style: TextStyle(
-                                          color: const Color(0xFFFA114F),
-                                          fontSize: 24,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                      SizedBox(height: 16.h),
-                                      Text(
-                                        "Fats",
-                                        style: CustomTextStyles.bodyLargeBlack90016_2,
-                                      ),
-                                      Text(
-                                        "${fatConsumed.toInt()}/${fatGoal.toInt()}g",
-                                        style: TextStyle(
-                                          color: const Color(0xFFA6FF00),
-                                          fontSize: 24,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                      SizedBox(height: 16.h),
-                                      Text(
-                                        "Carbs",
-                                        style: CustomTextStyles.bodyLargeBlack90016_2,
-                                      ),
-                                      Text(
-                                        "${carbsConsumed.toInt()}/${carbsGoal.toInt()}g",
-                                        style: TextStyle(
-                                          color: const Color(0xFF00FFF6),
-                                          fontSize: 24,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Expanded(
-                                  flex: 2,
-                                  child: Ring(
-                                    percent: _isLoading ? 0.0 : proteinPercent.toDouble(),
-                                    color: RingColorScheme(
-                                      ringColor: Color(0xFFFA114F),
-                                      backgroundColor: Colors.grey.withOpacity(0.2),
-                                    ),
-                                    radius: 60,
-                                    width: 15,
-                                    child: Ring(
-                                      percent: _isLoading ? 0.0 : fatPercent.toDouble(),
-                                      color: RingColorScheme(
-                                        ringColor: Color(0xFFA6FF00),
-                                        backgroundColor: Colors.grey.withOpacity(0.2),
-                                      ),
-                                      radius: 45,
-                                      width: 15,
-                                      child: Ring(
-                                        percent: _isLoading ? 0.0 : carbsPercent.toDouble(),
-                                        color: RingColorScheme(
-                                          ringColor: Color(0xFF00FFF6),
-                                          backgroundColor: Colors.grey.withOpacity(0.2),
-                                        ),
-                                        radius: 30,
-                                        width: 15,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        );
-                      },
-                    );
-                  },
-                );
-              }
-              return Container(); // Return empty container while loading
-            },
+    return Consumer<HistoryTodayTabProvider>(
+      builder: (context, provider, _) {
+        return CaloriesMacrosWidget(
+          selectedDate: provider.selectedDate,
+          isLoading: _isLoading,
+          isHomeScreen: false,
+          showHistoryButton: false,
+          ringRadius: 60,
+          ringWidth: 15,
+          padding: EdgeInsets.symmetric(
+            horizontal: 8.h,
+            vertical: 12.h,
           ),
-        ],
-      ),
+        );
+      },
     );
   }
-
 
   Widget _buildMacroColumn(String value, String label, Color color, double progress) {
     return Row(
