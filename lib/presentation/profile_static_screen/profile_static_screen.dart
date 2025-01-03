@@ -2,7 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/cupertino.dart';
-import 'dart:io' show Platform;
+import 'dart:io';
+import 'dart:convert';
 import '../../core/app_export.dart';
 import '../../widgets/app_bar/appbar_leading_image.dart';
 import '../../widgets/app_bar/appbar_subtitle.dart';
@@ -13,6 +14,7 @@ import '../../../providers/user_info_provider.dart';
 import '../../services/firebase/auth/auth_provider.dart' as auth;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../../services/storage_service.dart';
 
 class ProfileStaticScreen extends StatefulWidget {
   const ProfileStaticScreen({Key? key}) : super(key: key);
@@ -25,6 +27,7 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> {
   // Add text controller
   final TextEditingController _textController = TextEditingController();
   StreamSubscription<DocumentSnapshot>? _userSubscription;
+  Widget? _currentProfileImage;
 
   void _showTextInputDialog(BuildContext context, String title, String currentValue, bool isNameField) {
     // Get the current value from Firebase first
@@ -352,8 +355,61 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> {
     final XFile? image = await picker.pickImage(source: ImageSource.gallery);
     
     if (image != null) {
-      // Update the profile picture using the provider
-      context.read<ProfilePictureProvider>().updateProfilePicture(image.path);
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser?.email != null) {
+        try {
+          // Update the UI and get the result of cropping
+          bool success = await context.read<ProfilePictureProvider>().updateProfilePicture(image.path);
+          
+          if (success && mounted) {
+            // Show loading indicator
+            showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (context) => Center(
+                child: CircularProgressIndicator(),
+              ),
+            );
+
+            // Upload the cropped image to Firebase
+            final profileService = ProfilePictureService();
+            final base64Image = await profileService.uploadProfilePicture(
+              currentUser!.email!,
+              File(context.read<ProfilePictureProvider>().profileImagePath),
+            );
+
+            if (mounted) {
+              // Hide loading indicator
+              Navigator.pop(context);
+
+              if (base64Image != null) {
+                // Show success message
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Profile picture updated successfully'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              }
+            }
+          }
+        } catch (e) {
+          // Hide loading indicator if it's showing
+          if (mounted && Navigator.canPop(context)) {
+            Navigator.pop(context);
+          }
+          // Show error message
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Failed to update profile picture'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+          print('Error uploading profile picture: $e');
+        }
+      }
     }
   }
 
@@ -488,13 +544,44 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> {
   void initState() {
     super.initState();
     
-    // Fetch fresh data when screen loads
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      if (mounted) {
-        final userInfoProvider = Provider.of<UserInfoProvider>(context, listen: false);
-        await userInfoProvider.fetchCurrentUser();
-      }
-    });
+    // Initialize with default image
+    _currentProfileImage = ClipOval(
+      child: CustomImageView(
+        imagePath: ImageConstant.imgVector80x84,
+        height: 72.h,
+        width: 72.h,
+      ),
+    );
+    
+    // Fetch initial profile picture
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser?.email != null) {
+      FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentUser?.email)
+          .get()
+          .then((snapshot) {
+        if (snapshot.exists && mounted) {
+          final userData = snapshot.data()!;
+          final profilePicture = userData['profilePicture'] as String?;
+          
+          if (profilePicture != null && profilePicture.isNotEmpty) {
+            setState(() {
+              _currentProfileImage = ClipOval(
+                child: Image.memory(
+                  base64Decode(profilePicture),
+                  height: 72.h,
+                  width: 72.h,
+                  fit: BoxFit.cover,
+                ),
+              );
+            });
+          }
+        }
+      });
+    }
+    
+    // Setup Firebase listener for changes
     _setupFirestoreListener();
   }
 
@@ -508,9 +595,33 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> {
           .listen((snapshot) async {
         if (snapshot.exists && mounted) {
           final userData = snapshot.data()!;
-          final userInfoProvider = Provider.of<UserInfoProvider>(context, listen: false);
+          final profilePicture = userData['profilePicture'] as String?;
           
-          // Update provider with fresh Firestore values
+          if (profilePicture != null && profilePicture.isNotEmpty) {
+            setState(() {
+              _currentProfileImage = ClipOval(
+                child: Image.memory(
+                  base64Decode(profilePicture),
+                  height: 72.h,
+                  width: 72.h,
+                  fit: BoxFit.cover,
+                ),
+              );
+            });
+          } else {
+            setState(() {
+              _currentProfileImage = ClipOval(
+                child: CustomImageView(
+                  imagePath: ImageConstant.imgVector80x84,
+                  height: 72.h,
+                  width: 72.h,
+                ),
+              );
+            });
+          }
+          
+          // Update other user info
+          final userInfoProvider = Provider.of<UserInfoProvider>(context, listen: false);
           await userInfoProvider.updateName(
             userData['firstName']?.toString() ?? '',
             userData['lastName']?.toString() ?? ''
@@ -521,9 +632,6 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> {
           userInfoProvider.updateGender(userData['gender']?.toString() ?? '');
           userInfoProvider.updateHeight(userData['height']?.toString() ?? '');
           userInfoProvider.updateDailyCalories(userData['dailyCalories']?.toString() ?? '');
-          
-          // Force UI update
-          setState(() {});
         }
       });
     }
@@ -593,33 +701,28 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> {
                     child: Column(
                       children: [
                         // Profile Picture Section
-                        Consumer<ProfilePictureProvider>(
-                          builder: (context, profilePicProvider, _) {
-                            return Column(
-                              children: [
-                                ClipOval(
-                                  child: CustomImageView(
-                                    imagePath: profilePicProvider.profileImagePath,
-                                    isFile: !profilePicProvider.profileImagePath.startsWith('assets/'),
-                                    height: 72.h,
-                                    width: 72.h,
-                                    radius: BorderRadius.circular(36.h),
-                                  ),
+                        Column(
+                          children: [
+                            Container(
+                              height: 72.h,
+                              width: 72.h,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                              ),
+                              child: _currentProfileImage,
+                            ),
+                            SizedBox(height: 8.h),
+                            GestureDetector(
+                              onTap: _pickImage,
+                              child: Text(
+                                "Edit",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16.h,
                                 ),
-                                SizedBox(height: 8.h),
-                                GestureDetector(
-                                  onTap: _pickImage,
-                                  child: Text(
-                                    "Edit",
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 16.h,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            );
-                          },
+                              ),
+                            ),
+                          ],
                         ),
                         SizedBox(height: 16.h),
                         // Profile Details

@@ -4,6 +4,7 @@ class UserModel {
   String? email;
   String? password;
   String? create;
+  String? profilePicture;  // Base64 encoded image data
   
   // Profile 1/3
   String? firstName;
@@ -33,6 +34,7 @@ class UserModel {
     this.email,
     this.password,
     this.create,
+    this.profilePicture,
     this.firstName,
     this.lastName,
     this.birthdate,
@@ -69,6 +71,7 @@ class UserModel {
       'username': username,
       'email': email,
       'create': create,
+      'profilePicture': profilePicture,
       'firstName': firstName,
       'lastName': lastName,
       'birthdate': birthdate,
@@ -90,6 +93,7 @@ class UserModel {
       username: json['username'],
       email: json['email'],
       create: json['create'],
+      profilePicture: json['profilePicture'],
       firstName: json['firstName'],
       lastName: json['lastName'],
       birthdate: json['birthdate'],
@@ -112,6 +116,7 @@ class UserModel {
     String? email,
     String? password,
     String? create,
+    String? profilePicture,
     String? firstName,
     String? lastName,
     String? birthdate,
@@ -133,6 +138,7 @@ class UserModel {
       email: email ?? this.email,
       password: password ?? this.password,
       create: create ?? this.create,
+      profilePicture: profilePicture ?? this.profilePicture,
       firstName: firstName ?? this.firstName,
       lastName: lastName ?? this.lastName,
       birthdate: birthdate ?? this.birthdate,

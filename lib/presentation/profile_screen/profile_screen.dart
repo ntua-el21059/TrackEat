@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'dart:io' show Platform;
+import 'dart:convert';
 import '../../core/app_export.dart';
 import '../../widgets/app_bar/appbar_leading_image.dart';
 import '../../widgets/app_bar/appbar_subtitle.dart';
@@ -334,12 +335,32 @@ class ProfileScreenState extends State<ProfileScreen> {
             child: Consumer<ProfilePictureProvider>(
               builder: (context, profilePicProvider, _) {
                 return ClipOval(
-                  child: CustomImageView(
-                    imagePath: profilePicProvider.profileImagePath,
-                    isFile: !profilePicProvider.profileImagePath.startsWith('assets/'),
-                    height: 56.h,
-                    width: 56.h,
-                    radius: BorderRadius.circular(28.h),
+                  child: StreamBuilder<DocumentSnapshot>(
+                    stream: FirebaseFirestore.instance
+                        .collection('users')
+                        .doc(FirebaseAuth.instance.currentUser?.email)
+                        .snapshots(),
+                    builder: (context, snapshot) {
+                      if (snapshot.hasData && snapshot.data != null && snapshot.data!.exists) {
+                        final userData = snapshot.data!.data() as Map<String, dynamic>;
+                        final profilePicture = userData['profilePicture'] as String?;
+                        
+                        if (profilePicture != null && profilePicture.isNotEmpty) {
+                          return Image.memory(
+                            base64Decode(profilePicture),
+                            height: 56.h,
+                            width: 56.h,
+                            fit: BoxFit.cover,
+                          );
+                        }
+                      }
+                      
+                      return CustomImageView(
+                        imagePath: ImageConstant.imgVector80x84,
+                        height: 56.h,
+                        width: 56.h,
+                      );
+                    },
                   ),
                 );
               },
@@ -379,11 +400,13 @@ class ProfileScreenState extends State<ProfileScreen> {
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
-                                SizedBox(height: 4.h),
-                                Text(
-                                  "@$username",
-                                  style: theme.textTheme.bodyMedium?.copyWith(
-                                    color: Colors.white,
+                                Transform.translate(
+                                  offset: Offset(0, -6.h),
+                                  child: Text(
+                                    "@$username",
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      color: Colors.white,
+                                    ),
                                   ),
                                 ),
                               ],

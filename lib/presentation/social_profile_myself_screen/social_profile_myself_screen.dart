@@ -16,6 +16,7 @@ import 'widgets/listvegan_item_widget.dart';
 import '../../providers/profile_picture_provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:convert';
 
 class SocialProfileMyselfScreen extends StatefulWidget {
   const SocialProfileMyselfScreen({super.key});
@@ -215,12 +216,32 @@ class SocialProfileMyselfScreenState extends State<SocialProfileMyselfScreen> {
               Consumer<ProfilePictureProvider>(
                 builder: (context, profilePicProvider, _) {
                   return ClipOval(
-                    child: CustomImageView(
-                      imagePath: profilePicProvider.profileImagePath,
-                      isFile: !profilePicProvider.profileImagePath.startsWith('assets/'),
-                      height: 80.h,
-                      width: 80.h,
-                      radius: BorderRadius.circular(40.h),
+                    child: StreamBuilder<DocumentSnapshot>(
+                      stream: FirebaseFirestore.instance
+                          .collection('users')
+                          .doc(FirebaseAuth.instance.currentUser?.email)
+                          .snapshots(),
+                      builder: (context, snapshot) {
+                        if (snapshot.hasData && snapshot.data != null && snapshot.data!.exists) {
+                          final userData = snapshot.data!.data() as Map<String, dynamic>;
+                          final profilePicture = userData['profilePicture'] as String?;
+                          
+                          if (profilePicture != null && profilePicture.isNotEmpty) {
+                            return Image.memory(
+                              base64Decode(profilePicture),
+                              height: 80.h,
+                              width: 80.h,
+                              fit: BoxFit.cover,
+                            );
+                          }
+                        }
+                        
+                        return CustomImageView(
+                          imagePath: ImageConstant.imgVector80x84,
+                          height: 80.h,
+                          width: 80.h,
+                        );
+                      },
                     ),
                   );
                 },

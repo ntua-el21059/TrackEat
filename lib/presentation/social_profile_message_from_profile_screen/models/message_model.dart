@@ -30,7 +30,7 @@ class Message {
       senderId: map['senderId'] ?? '',
       receiverId: map['receiverId'] ?? '',
       content: map['content'] ?? '',
-      timestamp: map['timestamp'] ?? Timestamp.now(),
+      timestamp: map['timestamp'] as Timestamp,
       isRead: map['isRead'] ?? false,
     );
   }

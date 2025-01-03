@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:convert';
 import '../../../core/app_export.dart';
 import '../../../providers/user_provider.dart';
 import '../../../widgets/custom_bottom_bar.dart';
@@ -240,12 +241,34 @@ class HomeScreenState extends State<HomeScreen> {
             },
             child: Consumer<ProfilePictureProvider>(
               builder: (context, profilePicProvider, _) {
-                return CustomImageView(
-                  imagePath: profilePicProvider.profileImagePath,
-                  isFile: !profilePicProvider.profileImagePath.startsWith('assets/'),
-                  height: 40.h,
-                  width: 40.h,
-                  radius: BorderRadius.circular(20.h),
+                return ClipOval(
+                  child: StreamBuilder<DocumentSnapshot>(
+                    stream: FirebaseFirestore.instance
+                        .collection('users')
+                        .doc(FirebaseAuth.instance.currentUser?.email)
+                        .snapshots(),
+                    builder: (context, snapshot) {
+                      if (snapshot.hasData && snapshot.data != null && snapshot.data!.exists) {
+                        final userData = snapshot.data!.data() as Map<String, dynamic>;
+                        final profilePicture = userData['profilePicture'] as String?;
+                        
+                        if (profilePicture != null && profilePicture.isNotEmpty) {
+                          return Image.memory(
+                            base64Decode(profilePicture),
+                            height: 40.h,
+                            width: 40.h,
+                            fit: BoxFit.cover,
+                          );
+                        }
+                      }
+                      
+                      return CustomImageView(
+                        imagePath: ImageConstant.imgVector80x84,
+                        height: 40.h,
+                        width: 40.h,
+                      );
+                    },
+                  ),
                 );
               },
             ),

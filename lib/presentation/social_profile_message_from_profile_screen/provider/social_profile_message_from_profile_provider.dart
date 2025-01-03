@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../models/message_model.dart';
+import 'dart:async';
 
 /// A provider class for the SocialProfileMessageFromProfileScreen.
 ///
@@ -13,12 +14,73 @@ class SocialProfileMessageFromProfileProvider extends ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   
   String? receiverId;
+  String recipientName = '';
+  String recipientSurname = '';
+  String recipientUsername = '';
   List<Message> messages = [];
   bool isLoading = false;
+  StreamSubscription<DocumentSnapshot>? _userSubscription;
 
-  void setReceiverId(String id) {
-    receiverId = id;
-    notifyListeners();
+  // Initialize provider and set receiver based on current user
+  SocialProfileMessageFromProfileProvider() {
+    _initializeReceiver();
+  }
+
+  void _initializeReceiver() {
+    final currentUser = _auth.currentUser;
+    if (currentUser != null) {
+      // Set receiver based on who is logged in
+      if (currentUser.email == 'vchristou32@gmail.com') {
+        receiverId = 'admin@admin.com';
+      } else if (currentUser.email == 'admin@admin.com') {
+        receiverId = 'vchristou32@gmail.com';
+      }
+      _listenToRecipientInfo();
+      notifyListeners();
+    }
+  }
+
+  void _listenToRecipientInfo() {
+    if (receiverId == null) return;
+
+    // Cancel any existing subscription
+    _userSubscription?.cancel();
+
+    // Start listening to real-time updates
+    _userSubscription = _firestore
+        .collection('users')
+        .doc(receiverId)
+        .snapshots()
+        .listen((doc) {
+      if (doc.exists) {
+        final data = doc.data();
+        final newName = data?['firstName'] ?? '';
+        final newSurname = data?['lastName'] ?? '';
+        final newUsername = data?['username'] ?? '';
+        
+        bool shouldNotify = false;
+        
+        // Only update if values are different and not empty
+        if (newName.isNotEmpty && recipientName != newName) {
+          recipientName = newName;
+          shouldNotify = true;
+        }
+        if (newSurname.isNotEmpty && recipientSurname != newSurname) {
+          recipientSurname = newSurname;
+          shouldNotify = true;
+        }
+        if (newUsername.isNotEmpty && recipientUsername != newUsername) {
+          recipientUsername = newUsername;
+          shouldNotify = true;
+        }
+        
+        if (shouldNotify) {
+          notifyListeners();
+        }
+      }
+    }, onError: (e) {
+      print('Error listening to recipient info: $e');
+    });
   }
 
   // Send a message
@@ -46,6 +108,16 @@ class SocialProfileMessageFromProfileProvider extends ChangeNotifier {
           .collection('messages')
           .add(message.toMap());
 
+      // Update chat room info
+      await _firestore.collection('chats').doc(chatRoomId).set({
+        'lastMessage': content,
+        'lastMessageTime': Timestamp.now(),
+        'participants': [currentUser.email!, receiverId!],
+        'unreadCount': {
+          receiverId!: FieldValue.increment(1),
+        }
+      }, SetOptions(merge: true));
+
       // Clear the input field
       messageoneController.clear();
       notifyListeners();
@@ -56,10 +128,8 @@ class SocialProfileMessageFromProfileProvider extends ChangeNotifier {
 
   // Stream of messages for the current chat
   Stream<List<Message>> getMessages() {
-    if (receiverId == null) return Stream.value([]);
-
     final currentUser = _auth.currentUser;
-    if (currentUser == null) return Stream.value([]);
+    if (currentUser == null || receiverId == null) return Stream.value([]);
 
     final List<String> ids = [currentUser.email!, receiverId!]..sort();
     final String chatRoomId = ids.join('_');
@@ -68,8 +138,9 @@ class SocialProfileMessageFromProfileProvider extends ChangeNotifier {
         .collection('chats')
         .doc(chatRoomId)
         .collection('messages')
-        .orderBy('timestamp', descending: true)
+        .orderBy('timestamp', descending: false)
         .snapshots()
+        .distinct()
         .map((snapshot) {
           return snapshot.docs
               .map((doc) => Message.fromMap(doc.data()))
@@ -79,10 +150,8 @@ class SocialProfileMessageFromProfileProvider extends ChangeNotifier {
 
   // Mark messages as read
   Future<void> markMessagesAsRead() async {
-    if (receiverId == null) return;
-
     final currentUser = _auth.currentUser;
-    if (currentUser == null) return;
+    if (currentUser == null || receiverId == null) return;
 
     final List<String> ids = [currentUser.email!, receiverId!]..sort();
     final String chatRoomId = ids.join('_');
@@ -105,6 +174,7 @@ class SocialProfileMessageFromProfileProvider extends ChangeNotifier {
   @override
   void dispose() {
     messageoneController.dispose();
+    _userSubscription?.cancel();
     super.dispose();
   }
 }

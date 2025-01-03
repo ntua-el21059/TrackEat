@@ -25,12 +25,15 @@ class ProfilePictureProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> updateProfilePicture(String imagePath) async {
+  Future<bool> updateProfilePicture(String imagePath) async {
     try {
       // Crop the image
       final croppedFile = await ImageCropper().cropImage(
         sourcePath: imagePath,
         aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
+        compressQuality: 100,
+        cropStyle: CropStyle.circle,
+        compressFormat: ImageCompressFormat.png,
         uiSettings: [
           AndroidUiSettings(
             toolbarTitle: 'Crop Image',
@@ -38,12 +41,22 @@ class ProfilePictureProvider extends ChangeNotifier {
             toolbarWidgetColor: Colors.white,
             initAspectRatio: CropAspectRatioPreset.square,
             lockAspectRatio: true,
+            showCropGrid: true,
+            hideBottomControls: false,
+            cropFrameColor: Colors.blue,
+            cropGridColor: Colors.blue,
+            activeControlsWidgetColor: Colors.blue,
           ),
           IOSUiSettings(
             title: 'Crop Image',
             aspectRatioLockEnabled: true,
             resetAspectRatioEnabled: false,
             aspectRatioPickerButtonHidden: true,
+            rotateButtonsHidden: false,
+            resetButtonHidden: false,
+            aspectRatioLockDimensionSwapEnabled: false,
+            showActivitySheetOnDone: false,
+            showCancelConfirmationDialog: true,
           ),
         ],
       );
@@ -66,9 +79,12 @@ class ProfilePictureProvider extends ChangeNotifier {
         _profileImagePath = localPath;
         await _prefs.setString('profile_picture_path', localPath);
         notifyListeners();
+        return true;
       }
+      return false;
     } catch (e) {
       print('Error updating profile picture: $e');
+      return false;
     }
   }
 } 
