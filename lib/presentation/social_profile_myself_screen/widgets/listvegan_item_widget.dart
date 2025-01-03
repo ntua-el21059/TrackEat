@@ -141,6 +141,24 @@ class ListveganItemWidget extends StatelessWidget {
   }
 
   Widget _buildContainer(BuildContext context, String text, Color color) {
+    // Check if this is a diet box with emoji or thriving box with star
+    bool hasDietEmoji = text.contains('🌱') || text.contains('🥩') || 
+                       text.contains('🥗') || text.contains('🐟') || 
+                       text.contains('🥑') || text.contains('🍎');
+    bool hasStarEmoji = text.contains('⭐️');
+    bool hasEmoji = hasDietEmoji || hasStarEmoji;
+    
+    // Split text into text and emoji
+    String displayText = text;
+    String? emoji;
+    if (hasDietEmoji) {
+      displayText = text.substring(0, text.length - 2); // Remove emoji from text
+      emoji = text.substring(text.length - 2); // Get emoji
+    } else if (hasStarEmoji) {
+      displayText = text.substring(0, text.length - 3); // Remove star emoji (it's 3 characters)
+      emoji = text.substring(text.length - 3); // Get star emoji
+    }
+
     return Container(
       width: 160.h,
       height: 100.h,
@@ -153,18 +171,51 @@ class ListveganItemWidget extends StatelessWidget {
         borderRadius: BorderRadius.circular(21),
       ),
       child: Center(
-        child: Text(
-          text,
-          style: theme.textTheme.titleMedium?.copyWith(
-            color: Colors.white,
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            height: 1.1,
-          ),
-          textAlign: TextAlign.center,
-          maxLines: 4,
-          overflow: TextOverflow.ellipsis,
-        ),
+        child: hasEmoji
+          ? RichText(
+              textAlign: TextAlign.center,
+              text: TextSpan(
+                children: [
+                  TextSpan(
+                    text: displayText,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      height: 1.1,
+                    ),
+                  ),
+                  TextSpan(
+                    text: emoji,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      height: 1.1,
+                      shadows: [
+                        Shadow(
+                          blurRadius: 3.0,
+                          color: Colors.black.withOpacity(0.3),
+                          offset: Offset(1, 1),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            )
+          : Text(
+              text,
+              style: theme.textTheme.titleMedium?.copyWith(
+                color: Colors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                height: 1.1,
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 4,
+              overflow: TextOverflow.ellipsis,
+            ),
       ),
     );
   }
