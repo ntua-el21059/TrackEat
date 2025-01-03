@@ -15,6 +15,7 @@ import '../../../presentation/profile_screen/profile_screen.dart';
 import '../../../providers/profile_picture_provider.dart';
 import '../../../services/meal_service.dart';
 import '../../../widgets/calories_macros_widget.dart';
+import '../../alkis/leaderboard_screen/leaderboard_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -37,11 +38,11 @@ class HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    
+
     // Fetch current user data immediately
     _fetchInitialUserData();
     _setupFirestoreListener();
-    
+
     // Update UI loading state after a delay
     Future.delayed(Duration(milliseconds: 500), () {
       if (mounted) {
@@ -49,7 +50,8 @@ class HomeScreenState extends State<HomeScreen> {
           _isLoading = false;
         });
         // Update suggestions with user's name
-        Provider.of<HomeProvider>(context, listen: false).updateSuggestions(context);
+        Provider.of<HomeProvider>(context, listen: false)
+            .updateSuggestions(context);
       }
     });
   }
@@ -64,16 +66,20 @@ class HomeScreenState extends State<HomeScreen> {
           .listen((snapshot) async {
         if (snapshot.exists && mounted) {
           final userData = snapshot.data()!;
-          final userProvider = Provider.of<UserProvider>(context, listen: false);
-          
+          final userProvider =
+              Provider.of<UserProvider>(context, listen: false);
+
           // Update provider with fresh Firestore values
-          userProvider.setDailyCalories(userData['dailyCalories'] as int? ?? 2000);
+          userProvider
+              .setDailyCalories(userData['dailyCalories'] as int? ?? 2000);
           userProvider.setMacronutrientGoals(
-            carbsGoal: double.tryParse(userData['carbsgoal']?.toString() ?? '0'),
-            proteinGoal: double.tryParse(userData['proteingoal']?.toString() ?? '0'),
+            carbsGoal:
+                double.tryParse(userData['carbsgoal']?.toString() ?? '0'),
+            proteinGoal:
+                double.tryParse(userData['proteingoal']?.toString() ?? '0'),
             fatGoal: double.tryParse(userData['fatgoal']?.toString() ?? '0'),
           );
-          
+
           // Force UI update
           setState(() {});
         }
@@ -96,16 +102,20 @@ class HomeScreenState extends State<HomeScreen> {
             .collection('users')
             .doc(email)
             .get();
-            
+
         if (doc.exists && mounted) {
           final userData = doc.data()!;
-          final userProvider = Provider.of<UserProvider>(context, listen: false);
-          
+          final userProvider =
+              Provider.of<UserProvider>(context, listen: false);
+
           // Update provider with fresh Firestore values
-          userProvider.setDailyCalories(userData['dailyCalories'] as int? ?? 2000);
+          userProvider
+              .setDailyCalories(userData['dailyCalories'] as int? ?? 2000);
           userProvider.setMacronutrientGoals(
-            carbsGoal: double.tryParse(userData['carbsgoal']?.toString() ?? '0'),
-            proteinGoal: double.tryParse(userData['proteingoal']?.toString() ?? '0'),
+            carbsGoal:
+                double.tryParse(userData['carbsgoal']?.toString() ?? '0'),
+            proteinGoal:
+                double.tryParse(userData['proteingoal']?.toString() ?? '0'),
             fatGoal: double.tryParse(userData['fatgoal']?.toString() ?? '0'),
           );
         }
@@ -116,16 +126,19 @@ class HomeScreenState extends State<HomeScreen> {
   }
 
   void checkRingsAndShowReward(Map<String, dynamic> userData) async {
-    final proteinGoal = double.tryParse(userData['proteingoal']?.toString() ?? '0') ?? 0.0;
-    final fatGoal = double.tryParse(userData['fatgoal']?.toString() ?? '0') ?? 0.0;
-    final carbsGoal = double.tryParse(userData['carbsgoal']?.toString() ?? '0') ?? 0.0;
+    final proteinGoal =
+        double.tryParse(userData['proteingoal']?.toString() ?? '0') ?? 0.0;
+    final fatGoal =
+        double.tryParse(userData['fatgoal']?.toString() ?? '0') ?? 0.0;
+    final carbsGoal =
+        double.tryParse(userData['carbsgoal']?.toString() ?? '0') ?? 0.0;
 
     // Get consumed macros from meal history
     final userEmail = FirebaseAuth.instance.currentUser?.email;
     final now = DateTime.now();
     final mealService = MealService();
     final macros = await mealService.getTotalMacrosForDate(userEmail!, now);
-    
+
     final proteinConsumed = macros['protein'] ?? 0.0;
     final fatConsumed = macros['fats'] ?? 0.0;
     final carbsConsumed = macros['carbs'] ?? 0.0;
@@ -135,7 +148,8 @@ class HomeScreenState extends State<HomeScreen> {
     final carbsPercent = (carbsConsumed / carbsGoal * 100).clamp(0, 100);
 
     final homeProvider = Provider.of<HomeProvider>(context, listen: false);
-    final bool ringsAreNowClosed = proteinPercent >= 100 && fatPercent >= 100 && carbsPercent >= 100;
+    final bool ringsAreNowClosed =
+        proteinPercent >= 100 && fatPercent >= 100 && carbsPercent >= 100;
     final bool hasRingChanged = await homeProvider.hasRingChanged();
 
     // Update rings closed state
@@ -147,7 +161,7 @@ class HomeScreenState extends State<HomeScreen> {
     if (ringsAreNowClosed && hasRingChanged) {
       // Reset the ring changed state since we're showing the reward
       await homeProvider.setRingChanged(false);
-      
+
       if (mounted) {
         Navigator.pushNamed(context, AppRoutes.rewardScreenRingsClosedScreen);
       }
@@ -209,8 +223,11 @@ class HomeScreenState extends State<HomeScreen> {
                   .doc(FirebaseAuth.instance.currentUser?.email)
                   .snapshots(),
               builder: (context, snapshot) {
-                if (snapshot.hasData && snapshot.data != null && snapshot.data!.exists) {
-                  final userData = snapshot.data!.data() as Map<String, dynamic>;
+                if (snapshot.hasData &&
+                    snapshot.data != null &&
+                    snapshot.data!.exists) {
+                  final userData =
+                      snapshot.data!.data() as Map<String, dynamic>;
                   final firstName = userData['firstName']?.toString() ?? '';
                   return AppbarTitle(
                     text: firstName,
@@ -244,7 +261,8 @@ class HomeScreenState extends State<HomeScreen> {
                 return ClipOval(
                   child: profilePicProvider.cachedProfilePicture != null
                       ? Image.memory(
-                          base64Decode(profilePicProvider.cachedProfilePicture!),
+                          base64Decode(
+                              profilePicProvider.cachedProfilePicture!),
                           height: 40.h,
                           width: 40.h,
                           fit: BoxFit.cover,
@@ -311,7 +329,8 @@ class HomeScreenState extends State<HomeScreen> {
                 },
                 itemCount: provider.homeInitialModelObj.cardsItemList.length,
                 itemBuilder: (context, index) {
-                  CardsItemModel model = provider.homeInitialModelObj.cardsItemList[index];
+                  CardsItemModel model =
+                      provider.homeInitialModelObj.cardsItemList[index];
                   return CardsItemWidget(model);
                 },
               );
@@ -331,7 +350,14 @@ class HomeScreenState extends State<HomeScreen> {
             case BottomBarEnum.Home:
               break;
             case BottomBarEnum.Leaderboard:
-              Navigator.pushNamed(context, "/leaderboard");
+              if (mounted) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => LeaderboardScreen(),
+                  ),
+                );
+              }
               break;
             case BottomBarEnum.AI:
               Navigator.pushNamed(context, AppRoutes.aiChatMainScreen);
