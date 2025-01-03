@@ -12,23 +12,24 @@ import 'theme/theme_provider.dart' as app_theme;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'providers/profile_picture_provider.dart';
 import 'providers/user_info_provider.dart';
+import 'presentation/alkis/leaderboard_screen/provider/leaderboard_provider.dart';
 
 var globalMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final SharedPreferences prefs = await SharedPreferences.getInstance();
-  
+
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  
+
   // Set status bar to be visible and transparent
   SystemChrome.setEnabledSystemUIMode(
     SystemUiMode.manual,
     overlays: [SystemUiOverlay.top, SystemUiOverlay.bottom],
   );
-  
+
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
     statusBarIconBrightness: Brightness.dark,
@@ -37,12 +38,12 @@ void main() async {
     systemNavigationBarDividerColor: Colors.transparent,
     systemNavigationBarIconBrightness: Brightness.dark,
   ));
-  
+
   await Future.wait([
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]),
     PrefUtils().init()
   ]);
-  
+
   runApp(
     MultiProvider(
       providers: [
@@ -63,6 +64,9 @@ void main() async {
         ChangeNotifierProvider(
           create: (_) => UserInfoProvider(),
         ),
+        ChangeNotifierProvider<LeaderboardProvider>(
+          create: (_) => LeaderboardProvider(),
+        ),
       ],
       child: MyApp(),
     ),
@@ -76,19 +80,51 @@ class MyApp extends StatelessWidget {
       builder: (context, themeProvider, _) {
         return ColorFiltered(
           colorFilter: ColorFilter.matrix(
-            themeProvider.invertColors ? 
-            [
-              -1, 0, 0, 0, 255,
-              0, -1, 0, 0, 255,
-              0, 0, -1, 0, 255,
-              0, 0, 0, 1, 0,
-            ] : 
-            [
-              1, 0, 0, 0, 0,
-              0, 1, 0, 0, 0,
-              0, 0, 1, 0, 0,
-              0, 0, 0, 1, 0,
-            ],
+            themeProvider.invertColors
+                ? [
+                    -1,
+                    0,
+                    0,
+                    0,
+                    255,
+                    0,
+                    -1,
+                    0,
+                    0,
+                    255,
+                    0,
+                    0,
+                    -1,
+                    0,
+                    255,
+                    0,
+                    0,
+                    0,
+                    1,
+                    0,
+                  ]
+                : [
+                    1,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    1,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    1,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    1,
+                    0,
+                  ],
           ),
           child: MaterialApp(
             title: 'trackeat',

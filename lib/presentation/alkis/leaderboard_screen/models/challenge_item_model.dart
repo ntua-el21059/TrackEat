@@ -1,15 +1,13 @@
-import '../../../../core/constants/image_constants.dart';
+import 'package:flutter/material.dart';
 
 class ChallengeItemModel {
   final String imageUrl;
   final String title;
-  final String id;
+  final Color backgroundColor;
 
   ChallengeItemModel({
-    String? imageUrl,
-    String? title,
-    String? id,
-  })  : this.imageUrl = imageUrl ?? ImageConstant.imgVector76x86,
-        this.title = title ?? "Challenge",
-        this.id = id ?? "";
+    required this.imageUrl,
+    required this.title,
+    required this.backgroundColor,
+  });
 }
