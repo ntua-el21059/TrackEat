@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../core/app_export.dart';
