@@ -1,11 +1,8 @@
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../core/app_export.dart';
 import '../../widgets/app_bar/appbar_leading_image.dart';
 import '../../widgets/app_bar/appbar_subtitle.dart';
 import '../../widgets/app_bar/custom_app_bar.dart';
-import '../../widgets/custom_text_form_field.dart';
 import 'models/message_model.dart';
 import 'provider/social_profile_message_from_profile_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -40,10 +37,18 @@ class SocialProfileMessageFromProfileScreenState
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients) {
-        _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
-      }
+      _scrollToBottom();
     });
+  }
+
+  void _scrollToBottom() {
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    }
   }
 
   @override
@@ -105,6 +110,7 @@ class SocialProfileMessageFromProfileScreenState
                             }
 
                             final messages = snapshot.data!;
+                            WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
                             return ListView.builder(
                               controller: _scrollController,
                               reverse: false,
@@ -225,55 +231,10 @@ class SocialProfileMessageFromProfileScreenState
               alignment: Alignment.topCenter,
               child: Padding(
                 padding: EdgeInsets.only(top: 16.h),
-                child: StreamBuilder<DocumentSnapshot>(
-                  stream: FirebaseFirestore.instance
-                      .collection('users')
-                      .doc(Provider.of<SocialProfileMessageFromProfileProvider>(context).receiverId)
-                      .snapshots(),
-                  builder: (context, snapshot) {
-                    if (snapshot.hasData && snapshot.data != null && snapshot.data!.exists) {
-                      final userData = snapshot.data!.data() as Map<String, dynamic>;
-                      final profilePicture = userData['profilePicture'] as String?;
-                      
-                      if (profilePicture != null && profilePicture.isNotEmpty) {
-                        // Decode and display base64 image
-                        return Container(
-                          height: 70.h,
-                          width: 70.h,
-                          padding: EdgeInsets.all(4.h),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                          ),
-                          child: ClipOval(
-                            child: AspectRatio(
-                              aspectRatio: 1,
-                              child: Image.memory(
-                                base64Decode(profilePicture),
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                          ),
-                        );
-                      }
-                    }
-                    
-                    // Fallback to default image
-                    return Container(
-                      height: 70.h,
-                      width: 70.h,
-                      padding: EdgeInsets.all(4.h),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                      ),
-                      child: CustomImageView(
-                        imagePath: ImageConstant.imgVectorOnerrorcontainer,
-                        height: 62.h,
-                        width: 62.h,
-                      ),
-                    );
-                  },
+                child: Consumer<SocialProfileMessageFromProfileProvider>(
+                  builder: (context, provider, _) => ProfilePictureWidget(
+                    receiverId: provider.receiverId ?? '',
+                  ),
                 ),
               ),
             ),
@@ -435,5 +396,67 @@ class SocialProfileMessageFromProfileScreenState
     return date1.year == date2.year && 
            date1.month == date2.month && 
            date1.day == date2.day;
+  }
+}
+
+class ProfilePictureWidget extends StatelessWidget {
+  final String receiverId;
+
+  const ProfilePictureWidget({
+    Key? key,
+    required this.receiverId,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<DocumentSnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('users')
+          .doc(receiverId)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.hasData && snapshot.data != null && snapshot.data!.exists) {
+          final userData = snapshot.data!.data() as Map<String, dynamic>;
+          final profilePicture = userData['profilePicture'] as String?;
+          
+          if (profilePicture != null && profilePicture.isNotEmpty) {
+            return Container(
+              height: 70.h,
+              width: 70.h,
+              padding: EdgeInsets.all(4.h),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+              ),
+              child: ClipOval(
+                child: AspectRatio(
+                  aspectRatio: 1,
+                  child: Image.memory(
+                    base64Decode(profilePicture),
+                    fit: BoxFit.cover,
+                    gaplessPlayback: true,  // Prevents flashing during image updates
+                  ),
+                ),
+              ),
+            );
+          }
+        }
+        
+        return Container(
+          height: 70.h,
+          width: 70.h,
+          padding: EdgeInsets.all(4.h),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            shape: BoxShape.circle,
+          ),
+          child: CustomImageView(
+            imagePath: ImageConstant.imgVectorOnerrorcontainer,
+            height: 62.h,
+            width: 62.h,
+          ),
+        );
+      },
+    );
   }
 }

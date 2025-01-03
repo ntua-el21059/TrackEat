@@ -2,7 +2,6 @@ import 'dart:io';
 import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image/image.dart' as img;
-import 'package:path_provider/path_provider.dart';
 
 class ProfilePictureService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
