@@ -1,3 +1,7 @@
-import·'../../../core/app_export.dart';
+import '../../../core/app_export.dart';
 
-class SocialProfileMessageFromProfileModel {}
+class SocialProfileMessageFromProfileModel {
+  String? message;
+  
+  SocialProfileMessageFromProfileModel({this.message});
+}

@@ -282,6 +282,29 @@ class ProfileScreenState extends State<ProfileScreen> {
               ],
             ),
           ),
+          SizedBox(width: 16.h),
+          GestureDetector(
+            onTap: () {
+              NavigatorService.pushNamed(AppRoutes.socialProfileMessageFromProfileScreen);
+            },
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  "MESSAGE".toUpperCase(),
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: const Color(0xFF8E8E93),
+                  ),
+                ),
+                CustomImageView(
+                  imagePath: ImageConstant.imgArrowRightBlueGray400,
+                  height: 10.h,
+                  width: 8.h,
+                  margin: EdgeInsets.only(left: 4.h),
+                )
+              ],
+            ),
+          ),
         ],
       ),
     );

@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../core/app_export.dart';
 import '../../widgets/app_bar/appbar_leading_image.dart';
 import '../../widgets/app_bar/appbar_subtitle.dart';
 import '../../widgets/app_bar/custom_app_bar.dart';
-import '../../widgets/custom_floating_button.dart';
 import '../../widgets/custom_text_form_field.dart';
-import 'models/social_profile_message_from_profile_model.dart';
+import 'models/message_model.dart';
 import 'provider/social_profile_message_from_profile_provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class SocialProfileMessageFromProfileScreen extends StatefulWidget {
   const SocialProfileMessageFromProfileScreen({Key? key}) : super(key: key);
@@ -33,88 +34,131 @@ class SocialProfileMessageFromProfileScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: theme.colorScheme.onErrorContainer,
-      resizeToAvoidBottomInset: false,
+      backgroundColor: Colors.white,
       appBar: _buildAppBar(context),
-      body: SafeArea(
-        top: false,
-        child: Container(
-          height: 744.h,
-          width: double.maxFinite,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              Container(
-                width: double.maxFinite,
-                decoration: AppDecoration.outlineBlack.copyWith(
-                  borderRadius: BorderRadiusStyle.roundedBorder54,
+      body: Stack(
+        children: [
+          Padding(
+            padding: EdgeInsets.only(top: 30.h),
+            child: Container(
+              width: double.maxFinite,
+              height: MediaQuery.of(context).size.height - 30.h,
+              decoration: BoxDecoration(
+                color: const Color(0xFFB2D7FF),
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(54.h),
+                  topRight: Radius.circular(54.h),
+                ),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(54.h),
+                  topRight: Radius.circular(54.h),
                 ),
                 child: Column(
-                  mainAxisSize: MainAxisSize.min,
                   children: [
                     SizedBox(height: 60.h),
-                    Text(
-                      "Nancy Reagan",
-                      style: CustomTextStyles.titleLargeGray800,
-                    ),
-                    Text(
-                      "@nancy_reagan",
-                      style: CustomTextStyles.bodyMediumGray800,
-                    ),
-                    SizedBox(height: 16.h),
-                    RichText(
-                      text: TextSpan(
-                        children: [
-                          TextSpan(
-                            text: "Today",
-                            style: CustomTextStyles.labelMediumGray50004,
-                          ),
-                          TextSpan(
-                            text: " 3:25 PM",
-                            style: CustomTextStyles.bodySmallGray50004,
-                          ),
-                        ],
+                    _buildProfileInfo(),
+                    Expanded(
+                      child: StreamBuilder<List<Message>>(
+                        stream: Provider.of<SocialProfileMessageFromProfileProvider>(context)
+                            .getMessages(),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState == ConnectionState.waiting) {
+                            return const Center(child: CircularProgressIndicator());
+                          }
+                          
+                          if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                            return Center(
+                              child: Text(
+                                "No messages yet",
+                                style: theme.textTheme.bodyLarge?.copyWith(
+                                  color: Colors.black54,
+                                ),
+                              ),
+                            );
+                          }
+
+                          final messages = snapshot.data!;
+                          return ListView.builder(
+                            reverse: true,
+                            padding: EdgeInsets.symmetric(horizontal: 16.h, vertical: 8.h),
+                            itemCount: messages.length,
+                            itemBuilder: (context, index) {
+                              final message = messages[index];
+                              final isMe = message.senderId == 
+                                  FirebaseAuth.instance.currentUser?.email;
+
+                              return Align(
+                                alignment: isMe 
+                                    ? Alignment.centerRight 
+                                    : Alignment.centerLeft,
+                                child: Container(
+                                  margin: EdgeInsets.only(
+                                    top: 8.h,
+                                    left: isMe ? 50.h : 0,
+                                    right: isMe ? 0 : 50.h,
+                                  ),
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 16.h,
+                                    vertical: 10.h,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: isMe ? theme.colorScheme.primary : Colors.white,
+                                    borderRadius: BorderRadius.circular(20.h),
+                                  ),
+                                  child: Text(
+                                    message.content,
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      color: isMe ? Colors.white : Colors.black,
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          );
+                        },
                       ),
-                      textAlign: TextAlign.left,
                     ),
-                    const Spacer(),
-                    _buildMessageColumn(context),
+                    _buildMessageInput(),
                   ],
                 ),
               ),
-              Align(
-                alignment: Alignment.topCenter,
-                child: SizedBox(
-                  height: 66.h,
-                  width: 72.h,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      CustomImageView(
-                        imagePath: ImageConstant.imgVectorOnerrorcontainer,
-                        height: 66.h,
-                        width: double.maxFinite,
-                      ),
-                    ],
-                  ),
+            ),
+          ),
+          Align(
+            alignment: Alignment.topCenter,
+            child: Padding(
+              padding: EdgeInsets.only(top: 16.h),
+              child: Container(
+                padding: EdgeInsets.all(4.h),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                ),
+                child: CustomImageView(
+                  imagePath: ImageConstant.imgVectorOnerrorcontainer,
+                  height: 60.h,
+                  width: 60.h,
                 ),
               ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
-      floatingActionButton: _buildFloatingActionButton(context),
     );
   }
 
-  /// Builds the AppBar widget
   PreferredSizeWidget _buildAppBar(BuildContext context) {
     return CustomAppBar(
-      height: 54.h,
-      leadingWidth: 23.h,
+      height: 38.h,
+      leadingWidth: 24.h,
       leading: AppbarLeadingImage(
         imagePath: ImageConstant.imgArrowLeftPrimary,
-        margin: EdgeInsets.only(left: 7.h),
+        margin: EdgeInsets.only(left: 8.h),
+        onTap: () {
+          NavigatorService.goBack();
+        },
       ),
       title: AppbarSubtitle(
         text: "Profile",
@@ -123,64 +167,96 @@ class SocialProfileMessageFromProfileScreenState
     );
   }
 
-  /// Builds the message input column
-  Widget _buildMessageColumn(BuildContext context) {
+  Widget _buildProfileInfo() {
     return Container(
-      width: double.maxFinite,
-      padding: EdgeInsets.symmetric(horizontal: 16.h, vertical: 18.h),
-      decoration: AppDecoration.graysWhite.copyWith(
-        borderRadius: BorderRadiusStyle.roundedBorder20,
-      ),
+      padding: EdgeInsets.symmetric(horizontal: 16.h),
       child: Column(
-        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Container(
-            padding: EdgeInsets.all(16.h),
-            decoration: AppDecoration.lightThemePrimarySurface.copyWith(
-              borderRadius: BorderRadiusStyle.circleBorder38,
-            ),
-            width: double.maxFinite,
-            child: Row(
-              children: [
-                Selector<SocialProfileMessageFromProfileProvider,
-                    TextEditingController?>(
-                  selector: (context, provider) => provider.messageoneController,
-                  builder: (context, messageOneController, child) {
-                    return CustomTextFormField(
-                      width: 272.h,
-                      controller: messageOneController,
-                      hintText: "Message",
-                      textInputAction: TextInputAction.done,
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: 16.h,
-                        vertical: 12.h,
-                      ),
-                      borderDecoration:
-                          TextFormFieldStyleHelper.fillOnErrorContainer,
-                      filled: true,
-                      fillColor: theme.colorScheme.onErrorContainer,
-                    );
-                  },
-                ),
-              ],
+          Text(
+            "Nancy Reagan",
+            textAlign: TextAlign.center,
+            style: theme.textTheme.titleLarge?.copyWith(
+              color: Colors.black,
+              fontWeight: FontWeight.w600,
             ),
           ),
-          SizedBox(height: 20.h),
+          Text(
+            "@nancy_reagan",
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: Colors.black54,
+            ),
+          ),
+          SizedBox(height: 4.h),
+          Text(
+            "Today 3:25 PM",
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: Colors.black54,
+            ),
+          ),
         ],
       ),
     );
   }
 
-  /// Builds the floating action button
-  Widget _buildFloatingActionButton(BuildContext context) {
-    return CustomFloatingButton(
-      height: 40,
-      width: 40,
-      backgroundColor: theme.colorScheme.primary,
-      child: CustomImageView(
-        imagePath: ImageConstant.imgArrowRightOnerrorcontainer,
-        height: 20.0.h,
-        width: 20.0.h,
+  Widget _buildMessageInput() {
+    return Container(
+      padding: EdgeInsets.fromLTRB(16.h, 24.h, 16.h, 32.h),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(20.h),
+        ),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.grey[100],
+                borderRadius: BorderRadius.circular(25.h),
+              ),
+              child: Consumer<SocialProfileMessageFromProfileProvider>(
+                builder: (context, provider, child) {
+                  return TextField(
+                    controller: provider.messageoneController,
+                    decoration: InputDecoration(
+                      hintText: "Message",
+                      border: InputBorder.none,
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 16.h,
+                        vertical: 12.h,
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+          SizedBox(width: 8.h),
+          Consumer<SocialProfileMessageFromProfileProvider>(
+            builder: (context, provider, child) {
+              final bool hasText = provider.messageoneController.text.trim().isNotEmpty;
+              return Container(
+                decoration: BoxDecoration(
+                  color: hasText ? theme.colorScheme.primary : Colors.grey[400],
+                  shape: BoxShape.circle,
+                ),
+                child: IconButton(
+                  icon: Icon(
+                    Icons.arrow_upward,
+                    color: Colors.white,
+                  ),
+                  onPressed: hasText ? () {
+                    provider.sendMessage(provider.messageoneController.text);
+                  } : null,
+                ),
+              );
+            },
+          ),
+        ],
       ),
     );
   }

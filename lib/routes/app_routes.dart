@@ -31,6 +31,7 @@ import '../presentation/ai_chat/ai_chat_main_page/ai_chat_main_page_screen.dart'
 import '../presentation/social_profile_myself_screen/social_profile_myself_screen.dart';
 import '../presentation/challenge_award_screen/challenge_award_screen.dart';
 import '../presentation/reward_screen_rings_closed_screen/reward_screen_rings_closed_screen.dart';
+import '../presentation/social_profile_message_from_profile_screen/social_profile_message_from_profile_screen.dart';
 
 class AppRoutes {
   static const String createAccountScreen = '/create_account_screen';
@@ -95,11 +96,12 @@ class AppRoutes {
         // aiChatSplashScreen: AiChatSplashScreen.builder,
         aiChatMainScreen: AiChatMainScreen.builder,
         initialRoute: WelcomeScreen.builder,
-        profileScreen: (context) => ProfileScreen(),
+        profileScreen: (context) => const ProfileScreen(),
         profileStaticScreen: (context) => const ProfileStaticScreen(),
         accessibilitySettingsScreen: (context) => AccessibilitySettingsScreen.builder(context),
         socialProfileMyselfScreen: (context) => SocialProfileMyselfScreen.builder(context),
         challengeAwardScreen: (context) => ChallengeAwardScreen.builder(context),
         rewardScreenRingsClosedScreen: (context) => RewardScreenRingsClosedScreen.builder(context),
+        socialProfileMessageFromProfileScreen: (context) => SocialProfileMessageFromProfileScreen.builder(context),
       };
 }
