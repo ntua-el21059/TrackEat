@@ -60,7 +60,7 @@ class LeaderboardProvider extends ChangeNotifier {
       ChallengeItemModel(
         imageUrl: 'assets/images/broccoli.svg',
         title: 'Broccoli\nchallenge',
-        backgroundColor: Color(0xFF000000),
+        backgroundColor: Colors.black,
       ),
       ChallengeItemModel(
         imageUrl: 'assets/images/wrap.svg',

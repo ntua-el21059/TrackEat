@@ -43,10 +43,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
+        automaticallyImplyLeading: false,
         title: Text(
           'Leaderboard',
           style: TextStyle(color: Colors.black, fontSize: 24),
