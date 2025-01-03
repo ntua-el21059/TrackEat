@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../routes/app_routes.dart';
 import '../../../widgets/custom_bottom_bar.dart';
 import 'models/challenge_item_model.dart';
 import 'provider/leaderboard_provider.dart';
@@ -8,20 +9,123 @@ import 'widgets/challenge_card.dart';
 class LeaderboardScreen extends StatefulWidget {
   @override
   _LeaderboardScreenState createState() => _LeaderboardScreenState();
-
-  static Widget builder(BuildContext context) {
-    return LeaderboardScreen();
-  }
 }
 
 class _LeaderboardScreenState extends State<LeaderboardScreen> {
   final PageController _challengesController = PageController();
-  int _currentPage = 0;
+
+  void _handleBottomBarSelection(BottomBarEnum type) {
+    switch (type) {
+      case BottomBarEnum.Home:
+        Navigator.pushReplacementNamed(context, AppRoutes.homeScreen);
+        break;
+      case BottomBarEnum.AI:
+        Navigator.pushReplacementNamed(context, AppRoutes.aiChatMainScreen);
+        break;
+      case BottomBarEnum.Leaderboard:
+        break;
+    }
+  }
 
   @override
-  void dispose() {
-    _challengesController.dispose();
-    super.dispose();
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider(
+      create: (_) => LeaderboardProvider(),
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text('Leaderboard'),
+          actions: [
+            IconButton(
+              icon: Icon(Icons.notifications_outlined),
+              onPressed: () {},
+            ),
+          ],
+        ),
+        body: Consumer<LeaderboardProvider>(
+          builder: (context, provider, _) => Column(
+            children: [
+              // Leaderboard list
+              Expanded(
+                flex: 2,
+                child: ListView.builder(
+                  itemCount: 5, // Number of top players
+                  padding: EdgeInsets.symmetric(horizontal: 16),
+                  itemBuilder: (context, index) {
+                    return ListTile(
+                      contentPadding: EdgeInsets.symmetric(vertical: 4),
+                      leading: CircleAvatar(
+                        child: Text('${index + 1}'),
+                      ),
+                      title: Text('Player ${index + 1}'),
+                      trailing: Text('${40 - index * 2} pts'),
+                    );
+                  },
+                ),
+              ),
+
+              // Find Friends button
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: ElevatedButton(
+                  onPressed: () {},
+                  child: Text('Find Friends'),
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: Size(200, 40),
+                  ),
+                ),
+              ),
+
+              // Challenges section
+              Expanded(
+                flex: 1,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+                      child: Text(
+                        'Challenges',
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                    ),
+                    Expanded(
+                      child: PageView.builder(
+                        controller: _challengesController,
+                        itemCount: provider.challengePages.length,
+                        itemBuilder: (context, pageIndex) {
+                          return Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: provider.challengePages[pageIndex]
+                                .map((challenge) {
+                              return ChallengeCard(challenge: challenge);
+                            }).toList(),
+                          );
+                        },
+                      ),
+                    ),
+                    Center(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: List.generate(
+                          provider.challengePages.length,
+                          (index) => _buildPageIndicator(index),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              
+              // Spacer to push content up from bottom bar
+              SizedBox(height: 16),
+            ],
+          ),
+        ),
+        bottomNavigationBar: CustomBottomBar(
+          onChanged: _handleBottomBarSelection,
+        ),
+      ),
+    );
   }
 
   Widget _buildPageIndicator(int index) {
@@ -31,146 +135,10 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
       margin: EdgeInsets.symmetric(horizontal: 4.0),
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: _currentPage == index ? Colors.blue : Colors.grey,
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        title: Text(
-          'Leaderboard',
-          style: TextStyle(color: Colors.black, fontSize: 24),
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.notifications_outlined, color: Colors.black),
-            onPressed: () {},
-          ),
-        ],
-      ),
-      body: Consumer<LeaderboardProvider>(
-        builder: (context, provider, _) => Column(
-          children: [
-            // Leaderboard list with light blue background
-            Container(
-              color: Color(0xFFE6F3FF),
-              child: ListView.builder(
-                shrinkWrap: true,
-                itemCount: provider.players.length,
-                itemBuilder: (context, index) {
-                  final player = provider.players[index];
-                  return Container(
-                    margin: EdgeInsets.symmetric(vertical: 4, horizontal: 16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: ListTile(
-                      leading: CircleAvatar(
-                        backgroundColor: Color(0xFFE6E6FA),
-                        child: Text('${index + 1}'),
-                      ),
-                      title: Row(
-                        children: [
-                          CircleAvatar(
-                            backgroundImage: NetworkImage(player.imageUrl),
-                            radius: 15,
-                          ),
-                          SizedBox(width: 8),
-                          Text(player.name),
-                        ],
-                      ),
-                      trailing: Text('${player.points} pts'),
-                    ),
-                  );
-                },
-              ),
-            ),
-
-            // Find Friends button
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 16.0),
-              child: ElevatedButton(
-                onPressed: () {},
-                child: Text('Find Friends'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: Color(0xFF9747FF),
-                  padding: EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                ),
-              ),
-            ),
-
-            // Challenges section
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Challenges',
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(height: 16),
-                  SizedBox(
-                    height: 120,
-                    child: PageView.builder(
-                      controller: _challengesController,
-                      onPageChanged: (int page) {
-                        setState(() {
-                          _currentPage = page;
-                        });
-                      },
-                      itemCount: provider.challengePages.length,
-                      itemBuilder: (context, pageIndex) {
-                        return Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: provider.challengePages[pageIndex]
-                              .map((challenge) => ChallengeCard(
-                                    challenge: challenge,
-                                  ))
-                              .toList(),
-                        );
-                      },
-                    ),
-                  ),
-                  SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(
-                      provider.challengePages.length,
-                      (index) => _buildPageIndicator(index),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-      bottomNavigationBar: CustomBottomBar(
-        onChanged: (BottomBarEnum type) {
-          switch (type) {
-            case BottomBarEnum.Home:
-              Navigator.pop(context);
-              break;
-            case BottomBarEnum.Leaderboard:
-              break;
-            case BottomBarEnum.AI:
-              Navigator.pushNamed(context, '/ai_chat_main');
-              break;
-          }
-        },
+        color: _challengesController.hasClients &&
+                _challengesController.page?.round() == index
+            ? Colors.blue
+            : Colors.grey,
       ),
     );
   }

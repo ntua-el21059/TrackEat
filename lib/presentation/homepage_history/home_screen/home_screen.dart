@@ -351,12 +351,7 @@ class HomeScreenState extends State<HomeScreen> {
               break;
             case BottomBarEnum.Leaderboard:
               if (mounted) {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => LeaderboardScreen(),
-                  ),
-                );
+                Navigator.pushNamed(context, AppRoutes.leaderboardScreen);
               }
               break;
             case BottomBarEnum.AI:
