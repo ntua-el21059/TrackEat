@@ -4,16 +4,21 @@ import 'package:image_cropper/image_cropper.dart';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class ProfilePictureProvider extends ChangeNotifier {
   String _profileImagePath = 'assets/images/imgVector80x84.png';
+  String? _cachedProfilePicture;
   final SharedPreferences _prefs;
 
   ProfilePictureProvider(this._prefs) {
     _loadProfilePicture();
+    _setupFirestoreListener();
   }
 
   String get profileImagePath => _profileImagePath;
+  String? get cachedProfilePicture => _cachedProfilePicture;
 
   Future<void> _loadProfilePicture() async {
     final savedPath = _prefs.getString('profile_picture_path');
@@ -23,6 +28,28 @@ class ProfilePictureProvider extends ChangeNotifier {
       _profileImagePath = 'assets/images/imgVector80x84.png';
     }
     notifyListeners();
+  }
+
+  void _setupFirestoreListener() {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser?.email != null) {
+      FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentUser!.email)
+          .snapshots()
+          .listen((snapshot) {
+        if (snapshot.exists) {
+          final userData = snapshot.data()!;
+          final newProfilePicture = userData['profilePicture'] as String?;
+          
+          // Only update and notify if the profile picture has actually changed
+          if (newProfilePicture != _cachedProfilePicture) {
+            _cachedProfilePicture = newProfilePicture;
+            notifyListeners();
+          }
+        }
+      });
+    }
   }
 
   Future<bool> updateProfilePicture(String imagePath) async {
