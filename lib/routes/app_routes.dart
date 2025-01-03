@@ -32,6 +32,7 @@ import '../presentation/social_profile_myself_screen/social_profile_myself_scree
 import '../presentation/challenge_award_screen/challenge_award_screen.dart';
 import '../presentation/reward_screen_rings_closed_screen/reward_screen_rings_closed_screen.dart';
 import '../presentation/social_profile_message_from_profile_screen/social_profile_message_from_profile_screen.dart';
+import '../presentation/alkis/leaderboard_screen/leaderboard_screen.dart';
 
 class AppRoutes {
   static const String createAccountScreen = '/create_account_screen';
@@ -66,6 +67,7 @@ class AppRoutes {
   static const String accessibilitySettingsScreen = '/accessibility_settings_screen';
   static const String rewardScreenRingsClosedScreen = '/reward_screen_rings_closed_screen';
   static const String rewardScreenNewAwardScreen = '/reward_screen_new_award_screen';
+  static const String leaderboardScreen = '/leaderboard';
   static const String leaderboard12Screen = '/leaderboard_1_2_screen';
   static const String leaderboard22Screen = '/leaderboard_2_2_screen';
   static const String findFriendsScreen = '/find_friends_screen';
@@ -103,5 +105,6 @@ class AppRoutes {
         challengeAwardScreen: (context) => ChallengeAwardScreen.builder(context),
         rewardScreenRingsClosedScreen: (context) => RewardScreenRingsClosedScreen.builder(context),
         socialProfileMessageFromProfileScreen: (context) => SocialProfileMessageFromProfileScreen.builder(context),
+        leaderboardScreen: (context) => LeaderboardScreen(),
       };
 }

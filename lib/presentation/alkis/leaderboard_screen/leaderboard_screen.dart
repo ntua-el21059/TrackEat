@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../routes/app_routes.dart';
+import '../../../widgets/custom_bottom_bar.dart';
 import 'models/challenge_item_model.dart';
 import 'provider/leaderboard_provider.dart';
 import 'widgets/challenge_card.dart';
@@ -11,6 +13,19 @@ class LeaderboardScreen extends StatefulWidget {
 
 class _LeaderboardScreenState extends State<LeaderboardScreen> {
   final PageController _challengesController = PageController();
+
+  void _handleBottomBarSelection(BottomBarEnum type) {
+    switch (type) {
+      case BottomBarEnum.Home:
+        Navigator.pushReplacementNamed(context, AppRoutes.homeScreen);
+        break;
+      case BottomBarEnum.AI:
+        Navigator.pushReplacementNamed(context, AppRoutes.aiChatMainScreen);
+        break;
+      case BottomBarEnum.Leaderboard:
+        break;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,10 +46,13 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
             children: [
               // Leaderboard list
               Expanded(
+                flex: 2,
                 child: ListView.builder(
                   itemCount: 5, // Number of top players
+                  padding: EdgeInsets.symmetric(horizontal: 16),
                   itemBuilder: (context, index) {
                     return ListTile(
+                      contentPadding: EdgeInsets.symmetric(vertical: 4),
                       leading: CircleAvatar(
                         child: Text('${index + 1}'),
                       ),
@@ -47,7 +65,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
 
               // Find Friends button
               Padding(
-                padding: const EdgeInsets.all(8.0),
+                padding: const EdgeInsets.symmetric(vertical: 8),
                 child: ElevatedButton(
                   onPressed: () {},
                   child: Text('Find Friends'),
@@ -58,45 +76,53 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
               ),
 
               // Challenges section
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Text(
-                      'Challenges',
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                  ),
-                  SizedBox(
-                    height: 120,
-                    child: PageView.builder(
-                      controller: _challengesController,
-                      itemCount: provider.challengePages.length,
-                      itemBuilder: (context, pageIndex) {
-                        return Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: provider.challengePages[pageIndex]
-                              .map((challenge) {
-                            return ChallengeCard(challenge: challenge);
-                          }).toList(),
-                        );
-                      },
-                    ),
-                  ),
-                  Center(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(
-                        provider.challengePages.length,
-                        (index) => _buildPageIndicator(index),
+              Expanded(
+                flex: 1,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+                      child: Text(
+                        'Challenges',
+                        style: Theme.of(context).textTheme.titleLarge,
                       ),
                     ),
-                  ),
-                ],
+                    Expanded(
+                      child: PageView.builder(
+                        controller: _challengesController,
+                        itemCount: provider.challengePages.length,
+                        itemBuilder: (context, pageIndex) {
+                          return Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: provider.challengePages[pageIndex]
+                                .map((challenge) {
+                              return ChallengeCard(challenge: challenge);
+                            }).toList(),
+                          );
+                        },
+                      ),
+                    ),
+                    Center(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: List.generate(
+                          provider.challengePages.length,
+                          (index) => _buildPageIndicator(index),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
+              
+              // Spacer to push content up from bottom bar
+              SizedBox(height: 16),
             ],
           ),
+        ),
+        bottomNavigationBar: CustomBottomBar(
+          onChanged: _handleBottomBarSelection,
         ),
       ),
     );

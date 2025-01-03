@@ -67,7 +67,7 @@ class CustomBottomBarState extends State<CustomBottomBar> {
                     width: 28,
                     aspectRatio: 0.92,
                     type: BottomBarEnum.Leaderboard,
-                    isSelected: currentRoute == '/leaderboard',
+                    isSelected: currentRoute == AppRoutes.leaderboardScreen,
                   ),
                 ),
               ],
