@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/cupertino.dart';
+import 'dart:io' show Platform;
 import '../../core/app_export.dart';
 import '../../widgets/app_bar/appbar_leading_image.dart';
 import '../../widgets/app_bar/appbar_subtitle.dart';
@@ -356,132 +358,130 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> {
   }
 
   void _showGenderSelector(BuildContext context, String currentValue) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(12.h),
+    final List<String> genderOptions = ['Male', 'Female', 'Non Binary'];
+    // Get the initial selected index based on the current value
+    int initialIndex = genderOptions.indexOf(currentValue);
+    // If current value is not in the list, default to first option
+    if (initialIndex == -1) initialIndex = 0;
+
+    if (Platform.isIOS) {
+      showCupertinoModalPopup(
+        context: context,
+        builder: (BuildContext context) {
+          return Container(
+            height: 216,
+            padding: const EdgeInsets.only(top: 6.0),
+            margin: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+            ),
+            color: CupertinoColors.systemBackground.resolveFrom(context),
+            child: SafeArea(
+              top: false,
+              child: CupertinoPicker(
+                scrollController: FixedExtentScrollController(initialItem: initialIndex),
+                itemExtent: 44.0,
+                onSelectedItemChanged: (int index) async {
+                  final gender = genderOptions[index];
+                  final currentUser = FirebaseAuth.instance.currentUser;
+                  if (currentUser?.email != null) {
+                    try {
+                      // Update Firebase
+                      await FirebaseFirestore.instance
+                          .collection('users')
+                          .doc(currentUser!.email)
+                          .update({'gender': gender});
+
+                      // Update local provider
+                      if (context.mounted) {
+                        final userInfoProvider = Provider.of<UserInfoProvider>(context, listen: false);
+                        await userInfoProvider.updateGender(gender);
+                      }
+                    } catch (e) {
+                      print("Error updating gender: $e");
+                    }
+                  }
+                },
+                children: genderOptions.map((gender) => 
+                  Text(
+                    gender,
+                    style: TextStyle(
+                      fontSize: 20,
+                      color: CupertinoColors.black,
+                    ),
+                  )
+                ).toList(),
+              ),
+            ),
+          );
+        },
+      );
+    } else {
+      showModalBottomSheet(
+        context: context,
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
         ),
-      ),
-      builder: (BuildContext context) {
-        return Container(
-          padding: EdgeInsets.all(16.h),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                "Select Gender",
-                style: theme.textTheme.titleLarge?.copyWith(
-                  color: Colors.black,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              SizedBox(height: 16.h),
-              // Male Button
-              _buildGenderButton(
-                context: context,
-                label: "Male",
-                currentValue: currentValue,
-              ),
-              SizedBox(height: 8.h),
-              // Female Button
-              _buildGenderButton(
-                context: context,
-                label: "Female",
-                currentValue: currentValue,
-              ),
-              SizedBox(height: 8.h),
-              // Non Binary Button
-              _buildGenderButton(
-                context: context,
-                label: "Non Binary",
-                currentValue: currentValue,
-              ),
-              SizedBox(height: 16.h),
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text(
-                  'Cancel',
-                  style: TextStyle(
-                    color: Colors.blue,
-                    fontSize: 16.h,
+        builder: (BuildContext context) {
+          return Container(
+            padding: EdgeInsets.symmetric(vertical: 20.h),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  "Select Gender",
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
+                SizedBox(height: 16.h),
+                ...genderOptions.map((gender) => ListTile(
+                  title: Text(
+                    gender,
+                    style: CustomTextStyles.bodyLargeBlack90018,
+                    textAlign: TextAlign.center,
+                  ),
+                  tileColor: gender == currentValue ? Colors.blue.withOpacity(0.1) : null,
+                  onTap: () async {
+                    final currentUser = FirebaseAuth.instance.currentUser;
+                    if (currentUser?.email != null) {
+                      try {
+                        // Update Firebase
+                        await FirebaseFirestore.instance
+                            .collection('users')
+                            .doc(currentUser!.email)
+                            .update({'gender': gender});
 
-  // Helper method to build gender selection buttons
-  Widget _buildGenderButton({
-    required BuildContext context,
-    required String label,
-    required String currentValue,
-  }) {
-    bool isSelected = false;
-    
-    return StreamBuilder<DocumentSnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('users')
-          .doc(FirebaseAuth.instance.currentUser?.email)
-          .snapshots(),
-      builder: (context, snapshot) {
-        if (snapshot.hasData && snapshot.data != null && snapshot.data!.exists) {
-          final userData = snapshot.data!.data() as Map<String, dynamic>;
-          String currentGender = userData['gender']?.toString() ?? '';
-          isSelected = currentGender == label;
-        }
-        
-        return SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: isSelected ? Colors.blue : Colors.grey[200],
-              padding: EdgeInsets.symmetric(vertical: 12.h),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8.h),
-              ),
+                        // Update local provider
+                        if (context.mounted) {
+                          final userInfoProvider = Provider.of<UserInfoProvider>(context, listen: false);
+                          await userInfoProvider.updateGender(gender);
+                        }
+                      } catch (e) {
+                        print("Error updating gender: $e");
+                      }
+                    }
+                    Navigator.pop(context);
+                  },
+                )).toList(),
+                SizedBox(height: 8.h),
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text(
+                    'Cancel',
+                    style: TextStyle(
+                      fontSize: 16.h,
+                      color: Colors.blue,
+                    ),
+                  ),
+                ),
+              ],
             ),
-            onPressed: () async {
-              // Get current user email
-              final currentUser = FirebaseAuth.instance.currentUser;
-              if (currentUser?.email != null) {
-                try {
-                  // Update Firestore
-                  await FirebaseFirestore.instance
-                      .collection('users')
-                      .doc(currentUser!.email)
-                      .update({'gender': label});
-
-                  // Update local provider
-                  if (context.mounted) {
-                    final userInfoProvider = Provider.of<UserInfoProvider>(context, listen: false);
-                    await userInfoProvider.updateGender(label);
-                  }
-                } catch (e) {
-                  print("Error updating gender: $e");
-                }
-              }
-              if (context.mounted) {
-                Navigator.pop(context);
-              }
-            },
-            child: Text(
-              label,
-              style: TextStyle(
-                color: isSelected ? Colors.white : Colors.black,
-                fontSize: 16.h,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              ),
-            ),
-          ),
-        );
-      }
-    );
+          );
+        },
+      );
+    }
   }
 
   @override

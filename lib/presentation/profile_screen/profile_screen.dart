@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/cupertino.dart';
+import 'dart:io' show Platform;
 import '../../core/app_export.dart';
 import '../../widgets/app_bar/appbar_leading_image.dart';
 import '../../widgets/app_bar/appbar_subtitle.dart';
@@ -556,20 +558,90 @@ class ProfileScreenState extends State<ProfileScreen> {
       'Fruitarian',
     ];
 
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
-      ),
-      builder: (BuildContext context) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ...menuChoices.map((diet) => Material(
-                color: Colors.transparent,
-                child: InkWell(
+    // Get current diet from provider
+    final currentDiet = Provider.of<ProfileProvider>(context, listen: false).profileModelObj.profileItemList[5].value ?? 'Balanced';
+    // Get initial index
+    final initialIndex = menuChoices.indexOf(currentDiet);
+
+    if (Platform.isIOS) {
+      showCupertinoModalPopup(
+        context: context,
+        builder: (BuildContext context) {
+          return Container(
+            height: 216,
+            padding: const EdgeInsets.only(top: 6.0),
+            margin: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+            ),
+            color: CupertinoColors.systemBackground.resolveFrom(context),
+            child: SafeArea(
+              top: false,
+              child: CupertinoPicker(
+                scrollController: FixedExtentScrollController(initialItem: initialIndex),
+                itemExtent: 44.0,
+                onSelectedItemChanged: (int index) async {
+                  final diet = menuChoices[index];
+                  final currentUser = FirebaseAuth.instance.currentUser;
+                  if (currentUser?.email != null) {
+                    try {
+                      // Update Firebase
+                      await FirebaseFirestore.instance
+                          .collection('users')
+                          .doc(currentUser!.email)
+                          .update({'diet': diet});
+
+                      // Update local provider
+                      if (context.mounted) {
+                        Provider.of<ProfileProvider>(context, listen: false)
+                            .updateDiet(diet);
+                      }
+                    } catch (e) {
+                      print("Error updating diet: $e");
+                    }
+                  }
+                },
+                children: menuChoices.map((diet) => 
+                  Text(
+                    diet,
+                    style: TextStyle(
+                      fontSize: 20,
+                      color: CupertinoColors.black,
+                    ),
+                  )
+                ).toList(),
+              ),
+            ),
+          );
+        },
+      );
+    } else {
+      showModalBottomSheet(
+        context: context,
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
+        ),
+        builder: (BuildContext context) {
+          return Container(
+            padding: EdgeInsets.symmetric(vertical: 20.h),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  "Select Diet",
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                SizedBox(height: 16.h),
+                ...menuChoices.map((diet) => ListTile(
+                  title: Text(
+                    diet,
+                    style: CustomTextStyles.bodyLargeBlack90018,
+                    textAlign: TextAlign.center,
+                  ),
+                  tileColor: diet == currentDiet ? Colors.blue.withOpacity(0.1) : null,
                   onTap: () async {
                     final currentUser = FirebaseAuth.instance.currentUser;
                     if (currentUser?.email != null) {
@@ -580,71 +652,124 @@ class ProfileScreenState extends State<ProfileScreen> {
                             .doc(currentUser!.email)
                             .update({'diet': diet});
 
-                        // Update only local provider
-                        Provider.of<ProfileProvider>(context, listen: false)
-                            .updateDiet(diet);
+                        // Update local provider
+                        if (context.mounted) {
+                          Provider.of<ProfileProvider>(context, listen: false)
+                              .updateDiet(diet);
+                        }
                       } catch (e) {
                         print("Error updating diet: $e");
                       }
                     }
                     Navigator.pop(context);
                   },
-                  child: Container(
-                    width: double.infinity,
-                    padding: EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-                    child: Text(
-                      diet,
-                      style: TextStyle(
-                        fontSize: 17,
-                        color: Colors.black,
-                      ),
-                      textAlign: TextAlign.center,
+                )).toList(),
+                SizedBox(height: 8.h),
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text(
+                    'Cancel',
+                    style: TextStyle(
+                      fontSize: 16.h,
+                      color: Colors.blue,
                     ),
                   ),
                 ),
-              )).toList(),
-              Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () => Navigator.pop(context),
-                  child: Container(
-                    width: double.infinity,
-                    padding: EdgeInsets.symmetric(vertical: 16),
-                    child: Text(
-                      'Cancel',
-                      style: TextStyle(
-                        fontSize: 17,
-                        color: Colors.blue,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
+              ],
+            ),
+          );
+        },
+      );
+    }
   }
 
   void _showActivityLevelDialog(BuildContext context) {
     final List<String> activityLevels = ['Light', 'Moderate', 'Vigorous'];
+    
+    // Get current activity level from provider
+    final currentActivity = Provider.of<ProfileProvider>(context, listen: false).profileModelObj.profileItemList[0].value ?? 'Light';
+    // Get initial index
+    final initialIndex = activityLevels.indexOf(currentActivity);
 
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
-      ),
-      builder: (BuildContext context) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ...activityLevels.map((level) => Material(
-                color: Colors.transparent,
-                child: InkWell(
+    if (Platform.isIOS) {
+      showCupertinoModalPopup(
+        context: context,
+        builder: (BuildContext context) {
+          return Container(
+            height: 216,
+            padding: const EdgeInsets.only(top: 6.0),
+            margin: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+            ),
+            color: CupertinoColors.systemBackground.resolveFrom(context),
+            child: SafeArea(
+              top: false,
+              child: CupertinoPicker(
+                scrollController: FixedExtentScrollController(initialItem: initialIndex),
+                itemExtent: 44.0,
+                onSelectedItemChanged: (int index) async {
+                  final level = activityLevels[index];
+                  final currentUser = FirebaseAuth.instance.currentUser;
+                  if (currentUser?.email != null) {
+                    try {
+                      // Update Firebase
+                      await FirebaseFirestore.instance
+                          .collection('users')
+                          .doc(currentUser!.email)
+                          .update({'activity': level});
+
+                      // Update local provider
+                      if (context.mounted) {
+                        Provider.of<ProfileProvider>(context, listen: false)
+                            .updateActivityLevel(level);
+                      }
+                    } catch (e) {
+                      print("Error updating activity level: $e");
+                    }
+                  }
+                },
+                children: activityLevels.map((level) => 
+                  Text(
+                    level,
+                    style: TextStyle(
+                      fontSize: 20,
+                      color: CupertinoColors.black,
+                    ),
+                  )
+                ).toList(),
+              ),
+            ),
+          );
+        },
+      );
+    } else {
+      showModalBottomSheet(
+        context: context,
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
+        ),
+        builder: (BuildContext context) {
+          return Container(
+            padding: EdgeInsets.symmetric(vertical: 20.h),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  "Select Activity Level",
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                SizedBox(height: 16.h),
+                ...activityLevels.map((level) => ListTile(
+                  title: Text(
+                    level,
+                    style: CustomTextStyles.bodyLargeBlack90018,
+                    textAlign: TextAlign.center,
+                  ),
+                  tileColor: level == currentActivity ? Colors.blue.withOpacity(0.1) : null,
                   onTap: () async {
                     final currentUser = FirebaseAuth.instance.currentUser;
                     if (currentUser?.email != null) {
@@ -656,51 +781,34 @@ class ProfileScreenState extends State<ProfileScreen> {
                             .update({'activity': level});
 
                         // Update local provider
-                        Provider.of<ProfileProvider>(context, listen: false)
-                            .updateActivityLevel(level);
+                        if (context.mounted) {
+                          Provider.of<ProfileProvider>(context, listen: false)
+                              .updateActivityLevel(level);
+                        }
                       } catch (e) {
                         print("Error updating activity level: $e");
                       }
                     }
                     Navigator.pop(context);
                   },
-                  child: Container(
-                    width: double.infinity,
-                    padding: EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-                    child: Text(
-                      level,
-                      style: TextStyle(
-                        fontSize: 17,
-                        color: Colors.black,
-                      ),
-                      textAlign: TextAlign.center,
+                )).toList(),
+                SizedBox(height: 8.h),
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text(
+                    'Cancel',
+                    style: TextStyle(
+                      fontSize: 16.h,
+                      color: Colors.blue,
                     ),
                   ),
                 ),
-              )).toList(),
-              Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () => Navigator.pop(context),
-                  child: Container(
-                    width: double.infinity,
-                    padding: EdgeInsets.symmetric(vertical: 16),
-                    child: Text(
-                      'Cancel',
-                      style: TextStyle(
-                        fontSize: 17,
-                        color: Colors.blue,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
+              ],
+            ),
+          );
+        },
+      );
+    }
   }
 
   void _showGoalWeightInputDialog(BuildContext context) {
