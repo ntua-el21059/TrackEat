@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../models/challenge_item_model.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 class ChallengeCard extends StatelessWidget {
   final ChallengeItemModel challenge;
@@ -20,7 +19,7 @@ class ChallengeCard extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          SvgPicture.asset(
+          Image.asset(
             challenge.imageUrl,
             width: 32,
             height: 32,
