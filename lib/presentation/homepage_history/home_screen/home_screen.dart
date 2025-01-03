@@ -15,10 +15,9 @@ import '../../../presentation/profile_screen/profile_screen.dart';
 import '../../../providers/profile_picture_provider.dart';
 import '../../../services/meal_service.dart';
 import '../../../widgets/calories_macros_widget.dart';
-import '../../alkis/leaderboard_screen/leaderboard_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  const HomeScreen({super.key});
 
   @override
   HomeScreenState createState() => HomeScreenState();
