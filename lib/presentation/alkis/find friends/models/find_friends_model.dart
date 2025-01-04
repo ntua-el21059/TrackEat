@@ -9,18 +9,6 @@ class FindFriendsModel {
   // - Some entries have both images and names (Oliver Gray, Amelia Brooks)
   // - Others have only names, which will use the default profile image
   List<FindFriendsItemModel> findFriendsItemList = [
-    // Full entries with custom profile images
-    FindFriendsItemModel(
-        oliverGrayOne: ImageConstant.imgVector80x84, garylee: "Oliver Gray"),
-    FindFriendsItemModel(
-        oliverGrayOne: ImageConstant.imgVector80x84, garylee: "Amelia Brooks"),
-
-    // Entries with only names - they will use default profile images
-    FindFriendsItemModel(garylee: "Benjamin Reed"),
-    FindFriendsItemModel(garylee: "Chloe Hart"),
-    FindFriendsItemModel(garylee: "Daniel Morris"),
-    FindFriendsItemModel(garylee: "Emily Foster"),
-    FindFriendsItemModel(garylee: "William Hayes"),
-    FindFriendsItemModel(garylee: "Grace Harper")
+    // Initial empty list - will be populated from Firestore
   ];
 }

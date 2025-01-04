@@ -34,6 +34,9 @@ class FindFriendsScreenState extends State<FindFriendsScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<FindFriendsProvider>().fetchUsers();
+    });
   }
 
   @override
@@ -62,6 +65,9 @@ class FindFriendsScreenState extends State<FindFriendsScreen> {
                         horizontal: 8.h,
                         vertical: 6.h,
                       ),
+                      onChanged: (query) {
+                        context.read<FindFriendsProvider>().searchUsers(query);
+                      },
                     );
                   },
                 ),
@@ -106,11 +112,14 @@ class FindFriendsScreenState extends State<FindFriendsScreen> {
       leading: AppbarLeadingImage(
         imagePath: ImageConstant.imgArrowLeftPrimary,
         margin: EdgeInsets.only(left: 4.h),
-        onTap: () => Navigator.pop(context),
+        onTap: () => Navigator.pushReplacementNamed(
+            context, AppRoutes.leaderboardScreen),
       ),
       title: AppbarSubtitle(
-        text: "Find Friends",
+        text: "Leaderboard",
         margin: EdgeInsets.only(left: 7.h),
+        onTap: () => Navigator.pushReplacementNamed(
+            context, AppRoutes.leaderboardScreen),
       ),
     );
   }
