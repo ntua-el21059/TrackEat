@@ -62,8 +62,8 @@ class ChallengeCard extends StatelessWidget {
           children: [
             Image.asset(
               challenge.imageUrl,
-              width: 32,
-              height: 32,
+              width: 40,
+              height: 40,
             ),
             SizedBox(height: 8),
             Text(

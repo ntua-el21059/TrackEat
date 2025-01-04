@@ -9,6 +9,7 @@ import 'provider/leaderboard_provider.dart';
 import 'widgets/challenge_card.dart';
 import '../notifications/notifications_screen.dart';
 import '../notifications/provider/notifications_provider.dart';
+import '../../../widgets/custom_image_view.dart';
 
 class LeaderboardScreen extends StatefulWidget {
   const LeaderboardScreen({Key? key}) : super(key: key);
@@ -155,23 +156,12 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                                   ),
                                 ),
                                 // Profile picture
-                                CircleAvatar(
-                                  radius: 16.h,
-                                  backgroundColor: Color(
-                                      0xFFE8E0FF), // Light purple background
-                                  backgroundImage: user.profileImage != null
-                                      ? NetworkImage(user.profileImage!)
-                                      : null,
-                                  child: user.profileImage == null
-                                      ? Text(
-                                          user.username[0].toUpperCase(),
-                                          style: TextStyle(
-                                            color: Color(0xFF9747FF),
-                                            fontSize: 14.h,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        )
-                                      : null,
+                                CustomImageView(
+                                  imagePath: user.profileImage ??
+                                      ImageConstant.imgVector80x84,
+                                  height: 32.h,
+                                  width: 32.h,
+                                  radius: BorderRadius.circular(16.h),
                                 ),
                                 SizedBox(width: 12.h),
                                 // Username
