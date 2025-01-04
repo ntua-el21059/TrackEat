@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import '../../../../../core/app_export.dart';
+import 'package:provider/provider.dart';
+import '../base_challenge_dialog.dart';
 import 'provider/carnivore_challenge_provider.dart';
 
 // This directive indicates that we intentionally want this widget to be mutable
 // ignore_for_file: must_be_immutable
-class CarnivoreChallengeDialog extends StatefulWidget {
+class CarnivoreChallengeDialog extends BaseChallengeDialog {
   // Constructor with an optional key parameter for widget identification
   const CarnivoreChallengeDialog({Key? key})
       : super(
@@ -24,82 +25,21 @@ class CarnivoreChallengeDialog extends StatefulWidget {
   }
 }
 
-class CarnivoreChallengeDialogState extends State<CarnivoreChallengeDialog> {
+class CarnivoreChallengeDialogState
+    extends BaseChallengeDialogState<CarnivoreChallengeDialog> {
   @override
-  void initState() {
-    super.initState();
-  }
+  String get title => "Carnivore\nchallenge";
 
   @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          height: 314.h,
-          padding: EdgeInsets.only(
-            left: 18.h,
-            top: 16.h,
-            right: 18.h,
-          ),
-          decoration: AppDecoration.redcarnivorechallenge,
-          width: double.maxFinite,
-          child: Stack(
-            alignment: Alignment.topCenter,
-            children: [
-              // Vector image (likely a meat-themed graphic)
-              CustomImageView(
-                imagePath: ImageConstant.imgVector62x64,
-                height: 62.h,
-                width: 66.h,
-                margin: EdgeInsets.only(top: 8.h),
-              ),
-              // Main content column containing text and buttons
-              SizedBox(
-                width: double.maxFinite,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Close button in the top-right corner
-                    CustomImageView(
-                      imagePath: ImageConstant.imgXButton,
-                      height: 20.h,
-                      width: 22.h,
-                      alignment: Alignment.centerRight,
-                    ),
-                    SizedBox(height: 48.h),
-                    // Challenge title
-                    Text(
-                      "Carinvore\nchallenge",
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.labelLarge,
-                    ),
-                    SizedBox(height: 14.h),
-                    // Challenge description
-                    Text(
-                      "Eat only meat, fish, and eggs for 15 days—fuel \n"
-                      "your body, embrace the challenge! 🥩🔥",
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.labelLarge,
-                    ),
-                    SizedBox(height: 36.h),
-                    // Time remaining indicator
-                    Text(
-                      "Time left: 20 days",
-                      style: theme.textTheme.labelLarge,
-                    )
-                  ],
-                ),
-              )
-            ],
-          ),
-        )
-      ],
-    );
-  }
+  String get description => "Eat only meat, fish, and eggs for 15 days— \n"
+      "fuel your body, embrace the challenge! 🥩🔥";
+
+  @override
+  String get timeLeft => "20 days";
+
+  @override
+  String get iconPath => "assets/images/meat.png";
+
+  @override
+  Color get backgroundColor => Color(0xFFFF3B30); // Green color from the design
 }

@@ -1,20 +1,14 @@
 import 'package:flutter/material.dart';
-import '../../../../../core/app_export.dart';
+import 'package:provider/provider.dart';
+import '../base_challenge_dialog.dart';
 import 'provider/beatles_challenge_provider.dart';
 
-// This directive indicates that we intentionally want this widget to be mutable
-// ignore_for_file: must_be_immutable
-class BeatlesChallengeDialog extends StatefulWidget {
-  // Constructor with key parameter for widget identification
-  const BeatlesChallengeDialog({Key? key})
-      : super(
-          key: key,
-        );
+class BeatlesChallengeDialog extends BaseChallengeDialog {
+  const BeatlesChallengeDialog({Key? key}) : super(key: key);
 
   @override
   BeatlesChallengeDialogState createState() => BeatlesChallengeDialogState();
 
-  // Factory method that sets up the widget with its state management provider
   static Widget builder(BuildContext context) {
     return ChangeNotifierProvider(
       create: (context) => BeatlesChallengeProvider(),
@@ -23,82 +17,21 @@ class BeatlesChallengeDialog extends StatefulWidget {
   }
 }
 
-class BeatlesChallengeDialogState extends State<BeatlesChallengeDialog> {
+class BeatlesChallengeDialogState
+    extends BaseChallengeDialogState<BeatlesChallengeDialog> {
   @override
-  void initState() {
-    super.initState();
-  }
+  String get title => "Beatles\nchallenge";
 
   @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          height: 314.h,
-          padding: EdgeInsets.only(
-            left: 18.h,
-            top: 16.h,
-            right: 18.h,
-          ),
-          decoration: AppDecoration.darkBlueContrastwithLightBlue,
-          width: double.maxFinite,
-          child: Stack(
-            alignment: Alignment.topCenter,
-            children: [
-              // Vector image positioned at the top
-              CustomImageView(
-                imagePath: ImageConstant.imgVector78x72,
-                height: 78.h,
-                width: 74.h,
-                margin: EdgeInsets.only(top: 4.h),
-              ),
-              // Main content column
-              SizedBox(
-                width: double.maxFinite,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Close button
-                    CustomImageView(
-                      imagePath: ImageConstant.imgXButton,
-                      height: 20.h,
-                      width: 22.h,
-                      alignment: Alignment.centerRight,
-                    ),
-                    SizedBox(height: 50.h),
-                    // Challenge title
-                    Text(
-                      "Beatles \nchallenge",
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.labelLarge,
-                    ),
-                    SizedBox(height: 14.h),
-                    // Challenge description
-                    Text(
-                      "Try a beetle salad—crunchy, unique, and\n"
-                      " packed with nutrients! 🥗✨",
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.labelLarge,
-                    ),
-                    SizedBox(height: 42.h),
-                    // Time remaining indicator
-                    Text(
-                      "Time left: 12:00:00",
-                      style: theme.textTheme.labelLarge,
-                    )
-                  ],
-                ),
-              )
-            ],
-          ),
-        )
-      ],
-    );
-  }
+  String get description =>
+      "Try a beetle salad—crunchy, unique, and packed with nutrients! 🥗✨";
+
+  @override
+  String get timeLeft => "12:00:00";
+
+  @override
+  String get iconPath => "assets/images/beatles.png";
+
+  @override
+  Color get backgroundColor => Color(0xFF007AFF); // Blue color from the design
 }

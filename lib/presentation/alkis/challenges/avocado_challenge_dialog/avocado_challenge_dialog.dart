@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../../../../core/app_export.dart';
+import 'package:provider/provider.dart';
+import '../base_challenge_dialog.dart';
 import 'provider/avocado_challenge_provider.dart';
 
-// ignore_for_file: must_be_immutable
-class AvocadoChallengeDialog extends StatefulWidget {
+class AvocadoChallengeDialog extends BaseChallengeDialog {
   const AvocadoChallengeDialog({Key? key}) : super(key: key);
 
   @override
@@ -17,77 +17,21 @@ class AvocadoChallengeDialog extends StatefulWidget {
   }
 }
 
-class AvocadoChallengeDialogState extends State<AvocadoChallengeDialog> {
+class AvocadoChallengeDialogState
+    extends BaseChallengeDialogState<AvocadoChallengeDialog> {
   @override
-  void initState() {
-    super.initState();
-  }
+  String get title => "Avocado\nchallenge";
 
   @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          height: 314.h,
-          padding: EdgeInsets.only(
-            left: 14.h,
-            top: 16.h,
-            right: 14.h,
-          ),
-          decoration: AppDecoration.greenavocadochallenge,
-          width: double.maxFinite,
-          child: Stack(
-            alignment: Alignment.topCenter,
-            children: [
-              CustomImageView(
-                imagePath: ImageConstant.imgVector76x86,
-                height: 76.h,
-                width: 88.h,
-                margin: EdgeInsets.only(top: 6.h),
-              ),
-              SizedBox(
-                width: double.maxFinite,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    CustomImageView(
-                      imagePath: ImageConstant.imgXButton,
-                      height: 20.h,
-                      width: 22.h,
-                      alignment: Alignment.centerRight,
-                      margin: EdgeInsets.only(right: 2.h),
-                    ),
-                    SizedBox(height: 52.h),
-                    Text(
-                      "Avocado \nchallenge",
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.labelLarge,
-                    ),
-                    SizedBox(height: 12.h),
-                    Text(
-                      "Savor a slice of avocado toast every morning for 5 \n"
-                      "days—creamy, crunchy, and oh-so-good! 🥑🍞✨",
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.labelLarge,
-                    ),
-                    SizedBox(height: 34.h),
-                    Text(
-                      "Time left: 29 days",
-                      style: theme.textTheme.labelLarge,
-                    )
-                  ],
-                ),
-              )
-            ],
-          ),
-        )
-      ],
-    );
-  }
+  String get description =>
+      "Savor a slice of avocado toast every morning for 5 days—creamy, crunchy, and oh-so-good! 🥑🍞✨";
+
+  @override
+  String get timeLeft => "29 days";
+
+  @override
+  String get iconPath => "assets/images/avocado.png";
+
+  @override
+  Color get backgroundColor => Color(0xFF4CD964); // Green color from the design
 }
