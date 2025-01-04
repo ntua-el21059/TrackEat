@@ -3,12 +3,12 @@ import 'package:flutter/material.dart';
 class NotificationItem {
   final String message;
   final String id;
-  final bool isRead;
+  bool isRead;
 
   NotificationItem({
     required this.message,
     required this.id,
-    this.isRead = false,
+    required this.isRead,
   });
 }
 

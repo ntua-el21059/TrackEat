@@ -57,12 +57,12 @@ class FindFriendsItemWidget extends StatelessWidget {
           ),
           // Spacer pushes the chevron to the far right
           Spacer(),
-          // Chevron arrow on the right indicating this item is tappable
-          // and leads to more details about the friend
+          // Arrow icon on the right indicating this item is tappable
           CustomImageView(
-            imagePath: ImageConstant.imgChevronRight3,
-            height: 20.h,
-            width: 16.h,
+            imagePath: ImageConstant.imgArrowRightBlueGray400,
+            height: 24.h,
+            width: 24.h,
+            margin: EdgeInsets.only(right: 8.h),
           )
         ],
       ),

@@ -45,11 +45,9 @@ class FindFriendsScreenState extends State<FindFriendsScreen> {
       appBar: _buildAppbar(context),
       body: SafeArea(
         top: false,
-        child: Container(
-          width: double.maxFinite,
+        child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 8.h),
           child: Column(
-            mainAxisSize: MainAxisSize.max,
             children: [
               // Search bar section for filtering friends
               Padding(
@@ -70,30 +68,30 @@ class FindFriendsScreenState extends State<FindFriendsScreen> {
               ),
               SizedBox(height: 18.h),
               // Main content section showing friend suggestions
-              Expanded(
-                child: Container(
-                  width: double.maxFinite,
-                  padding: EdgeInsets.only(
-                    left: 14.h,
-                    top: 14.h,
-                    right: 14.h,
-                  ),
-                  decoration: AppDecoration.lightBlueLayoutPadding.copyWith(
-                    borderRadius: BorderRadiusStyle.roundedBorder10,
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.max,
-                    children: [
-                      Text(
-                        "People you may know",
-                        style: theme.textTheme.titleLarge,
-                      ),
-                      SizedBox(height: 18.h),
-                      _buildFindfriends(context)
-                    ],
-                  ),
+              Container(
+                width: double.maxFinite,
+                padding: EdgeInsets.only(
+                  left: 14.h,
+                  top: 14.h,
+                  right: 14.h,
+                  bottom: 14.h,
                 ),
-              )
+                decoration: AppDecoration.lightBlueLayoutPadding.copyWith(
+                  borderRadius: BorderRadiusStyle.roundedBorder10,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      "People you may know",
+                      style: theme.textTheme.titleLarge,
+                    ),
+                    SizedBox(height: 18.h),
+                    _buildFindfriends(context),
+                  ],
+                ),
+              ),
+              Spacer(),
             ],
           ),
         ),
@@ -111,31 +109,28 @@ class FindFriendsScreenState extends State<FindFriendsScreen> {
         onTap: () => Navigator.pop(context),
       ),
       title: AppbarSubtitle(
-        text: "Leaderboard",
+        text: "Find Friends",
         margin: EdgeInsets.only(left: 7.h),
-        onTap: () => Navigator.pop(context),
       ),
     );
   }
 
   // Creates the scrollable list of friend suggestions
   Widget _buildFindfriends(BuildContext context) {
-    return Expanded(
-      child: Consumer<FindFriendsProvider>(
-        builder: (context, provider, child) {
-          return ListView.separated(
-            physics: BouncingScrollPhysics(),
-            shrinkWrap: true,
-            separatorBuilder: (context, index) => SizedBox(height: 8.h),
-            itemCount: provider.findFriendsModelObj.findFriendsItemList.length,
-            itemBuilder: (context, index) {
-              FindFriendsItemModel model =
-                  provider.findFriendsModelObj.findFriendsItemList[index];
-              return FindFriendsItemWidget(model);
-            },
-          );
-        },
-      ),
+    return Consumer<FindFriendsProvider>(
+      builder: (context, provider, child) {
+        return ListView.separated(
+          physics: NeverScrollableScrollPhysics(),
+          shrinkWrap: true,
+          separatorBuilder: (context, index) => SizedBox(height: 8.h),
+          itemCount: provider.findFriendsModelObj.findFriendsItemList.length,
+          itemBuilder: (context, index) {
+            FindFriendsItemModel model =
+                provider.findFriendsModelObj.findFriendsItemList[index];
+            return FindFriendsItemWidget(model);
+          },
+        );
+      },
     );
   }
 }

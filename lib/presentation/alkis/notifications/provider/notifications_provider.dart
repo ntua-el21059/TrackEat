@@ -5,12 +5,17 @@ import '../notifications_screen.dart';
 class NotificationsProvider extends ChangeNotifier {
   NotificationsModel _model = NotificationsModel();
   NotificationScreenState _screenState = NotificationScreenState.unread;
+  bool _hasBeenViewed = false;
+
+  bool get hasBeenViewed => _hasBeenViewed;
 
   NotificationsProvider() {
     _resetNotifications();
   }
 
   void _resetNotifications() {
+    _model = NotificationsModel();
+    _hasBeenViewed = false;
     _model.notifications = [
       NotificationItem(
         message: "@nancy_raegan added you",
@@ -30,53 +35,56 @@ class NotificationsProvider extends ChangeNotifier {
       NotificationItem(
         message: "@miabrooksier added you",
         id: "4",
-        isRead: false,
+        isRead: true,
       ),
       NotificationItem(
         message: "@benreeds sent a message",
         id: "5",
-        isRead: false,
+        isRead: true,
       ),
       NotificationItem(
         message: "@emfos93 added you",
         id: "6",
-        isRead: false,
+        isRead: true,
       ),
     ];
     _updateScreenState();
     notifyListeners();
   }
 
-  NotificationScreenState get screenState => _screenState;
+  NotificationScreenState get screenState {
+    if (_hasBeenViewed) {
+      if (_model.notifications.isEmpty) {
+        return NotificationScreenState.empty;
+      }
+      return NotificationScreenState.read;
+    }
+    return _screenState;
+  }
 
   List<NotificationItem> get unreadNotifications => _model.notifications
-      .where((notification) => !notification.isRead)
+      .where((notification) => !notification.isRead && !_hasBeenViewed)
       .toList();
 
   List<NotificationItem> get readNotifications => _model.notifications
-      .where((notification) => notification.isRead)
+      .where((notification) => notification.isRead || _hasBeenViewed)
       .toList();
 
-  bool get hasUnreadNotifications => unreadNotifications.isNotEmpty;
+  bool get hasUnreadNotifications =>
+      !_hasBeenViewed && unreadNotifications.isNotEmpty;
 
   void clearNotifications() {
     _model.notifications.clear();
+    _hasBeenViewed = true;
     _screenState = NotificationScreenState.empty;
     notifyListeners();
   }
 
   void markAllAsRead() {
-    List<NotificationItem> updatedNotifications = [];
+    _hasBeenViewed = true;
     for (var notification in _model.notifications) {
-      updatedNotifications.add(
-        NotificationItem(
-          message: notification.message,
-          id: notification.id,
-          isRead: true,
-        ),
-      );
+      notification.isRead = true;
     }
-    _model.notifications = updatedNotifications;
     _updateScreenState();
     notifyListeners();
   }

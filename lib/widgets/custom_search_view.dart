@@ -65,8 +65,8 @@ class CustomSearchView extends StatelessWidget {
         width: width ?? double.maxFinite,
         decoration: boxDecoration,
         child: TextFormField(
-          scrollPadding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewInsets.bottom),
+          scrollPadding:
+              EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
           controller: controller,
           focusNode: focusNode,
           onTapOutside: (event) {
@@ -105,16 +105,12 @@ class CustomSearchView extends StatelessWidget {
               maxHeight: 36.h,
             ),
         suffixIcon: suffix ??
-            Padding(
-              padding: EdgeInsets.only(
-                right: 15.h,
-              ),
-              child: IconButton(
-                onPressed: () => controller?.clear(),
-                icon: Icon(
-                  Icons.clear,
-                  color: Colors.grey.shade600,
-                ),
+            IconButton(
+              padding: EdgeInsets.zero,
+              onPressed: () => controller?.clear(),
+              icon: Icon(
+                Icons.clear,
+                color: Colors.grey.shade600,
               ),
             ),
         suffixIconConstraints: suffixConstraints ??
