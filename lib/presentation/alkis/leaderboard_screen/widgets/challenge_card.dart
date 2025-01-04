@@ -23,7 +23,6 @@ class ChallengeCard extends StatelessWidget {
             challenge.imageUrl,
             width: 32,
             height: 32,
-            color: Colors.white, // Make icons white
           ),
           SizedBox(height: 8),
           Text(
