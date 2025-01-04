@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../core/app_export.dart';
 
 abstract class BaseChallengeDialog extends StatefulWidget {
@@ -51,11 +52,12 @@ abstract class BaseChallengeDialogState<T extends BaseChallengeDialog>
                       alignment: Alignment.centerRight,
                       child: GestureDetector(
                         onTap: () => Navigator.pop(context),
-                        child: Image.asset(
+                        child: SvgPicture.asset(
                           'assets/images/x_button.svg',
                           width: 24.h,
                           height: 24.h,
-                          color: Colors.white,
+                          colorFilter:
+                              ColorFilter.mode(Colors.white, BlendMode.srcIn),
                         ),
                       ),
                     ),

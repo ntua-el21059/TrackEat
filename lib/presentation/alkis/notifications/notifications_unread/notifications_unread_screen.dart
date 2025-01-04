@@ -111,6 +111,7 @@ class NotificationsUnreadScreenState extends State<NotificationsUnreadScreen> {
       leading: AppbarLeadingImage(
         imagePath: ImageConstant.imgArrowLeftPrimary,
         margin: EdgeInsets.only(left: 4.h),
+        onTap: () => Navigator.pop(context),
       ),
       title: AppbarSubtitle(
         text: "Leaderboard",
@@ -149,11 +150,13 @@ class NotificationsUnreadScreenState extends State<NotificationsUnreadScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Padding(
-            padding: EdgeInsets.only(left: 4.h),
-            child: Text(
-              "@nancy_raegan added you",
-              style: CustomTextStyles.titleSmallBold,
+          Expanded(
+            child: Padding(
+              padding: EdgeInsets.only(left: 4.h),
+              child: Text(
+                "@nancy_raegan added you",
+                style: CustomTextStyles.titleSmallBold,
+              ),
             ),
           ),
           _buildAdd(context),
@@ -192,13 +195,9 @@ class NotificationsUnreadScreenState extends State<NotificationsUnreadScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Align(
-            alignment: Alignment.bottomCenter,
+          Expanded(
             child: Padding(
-              padding: EdgeInsets.only(
-                left: 4.h,
-                bottom: 4.h,
-              ),
+              padding: EdgeInsets.only(left: 4.h),
               child: Text(
                 "@tim_cook sent a message",
                 style: CustomTextStyles.titleSmallBold,
@@ -232,25 +231,24 @@ class NotificationsUnreadScreenState extends State<NotificationsUnreadScreen> {
   /// Third unread notification widget
   Widget _buildThird(BuildContext context) {
     return Container(
+      margin: EdgeInsets.symmetric(horizontal: 4.h),
       padding: EdgeInsets.all(8.h),
       decoration: AppDecoration.lightBlueLayoutPadding.copyWith(
         borderRadius: BorderRadiusStyle.roundedBorder20,
       ),
+      width: double.maxFinite,
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Align(
-            alignment: Alignment.bottomCenter,
+          Expanded(
             child: Padding(
-              padding: EdgeInsets.only(bottom: 2.h),
+              padding: EdgeInsets.only(left: 4.h),
               child: Text(
                 "@olie12 started carnivore challenge",
                 style: CustomTextStyles.titleSmallBold,
               ),
             ),
           ),
-          SizedBox(width: 18.h),
           _buildView(context),
         ],
       ),
@@ -259,25 +257,22 @@ class NotificationsUnreadScreenState extends State<NotificationsUnreadScreen> {
 
   /// Read notifications list widget
   Widget _buildReadtwo(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(right: 8.h),
-      child: Consumer<NotificationsUnreadProvider>(
-        builder: (context, provider, child) {
-          return ListView.separated(
-            padding: EdgeInsets.zero,
-            physics: NeverScrollableScrollPhysics(),
-            shrinkWrap: true,
-            separatorBuilder: (context, index) => SizedBox(height: 6.h),
-            itemCount:
-                provider.notificationsUnreadModelObj.readTwoItemList.length,
-            itemBuilder: (context, index) {
-              ReadTwoItemModel model =
-                  provider.notificationsUnreadModelObj.readTwoItemList[index];
-              return ReadTwoItemWidget(model);
-            },
-          );
-        },
-      ),
+    return Consumer<NotificationsUnreadProvider>(
+      builder: (context, provider, child) {
+        return ListView.separated(
+          padding: EdgeInsets.zero,
+          physics: NeverScrollableScrollPhysics(),
+          shrinkWrap: true,
+          separatorBuilder: (context, index) => SizedBox(height: 6.h),
+          itemCount:
+              provider.notificationsUnreadModelObj.readTwoItemList.length,
+          itemBuilder: (context, index) {
+            ReadTwoItemModel model =
+                provider.notificationsUnreadModelObj.readTwoItemList[index];
+            return ReadTwoItemWidget(model);
+          },
+        );
+      },
     );
   }
 

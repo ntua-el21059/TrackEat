@@ -57,7 +57,10 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
           actions: [
             IconButton(
               icon: Icon(Icons.notifications_outlined),
-              onPressed: () {},
+              onPressed: () {
+                Navigator.pushNamed(
+                    context, AppRoutes.notificationsUnreadScreen);
+              },
             ),
           ],
         ),
