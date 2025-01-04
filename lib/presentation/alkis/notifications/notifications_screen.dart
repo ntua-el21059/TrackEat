@@ -103,8 +103,9 @@ class NotificationsScreenState extends State<NotificationsScreen> {
               height: 30.h,
               width: 164.h,
               text: "Clear Notifications",
-              buttonStyle: CustomButtonStyles.fillBlueGrayTL16,
+              buttonStyle: CustomButtonStyles.fillGray,
               buttonTextStyle: CustomTextStyles.bodyLargeOnErrorContainer,
+              onPressed: null,
             ),
           ),
           SizedBox(height: 50.h)

@@ -65,7 +65,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                       ? Icons.notifications
                       : Icons.notifications_outlined,
                   color: notificationsProvider.hasUnreadNotifications
-                      ? Colors.blue
+                      ? Colors.black
                       : null,
                 ),
                 onPressed: () async {

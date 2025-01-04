@@ -30,20 +30,21 @@ class NotificationsProvider extends ChangeNotifier {
       NotificationItem(
         message: "@miabrooksier added you",
         id: "4",
-        isRead: true,
+        isRead: false,
       ),
       NotificationItem(
         message: "@benreeds sent a message",
         id: "5",
-        isRead: true,
+        isRead: false,
       ),
       NotificationItem(
         message: "@emfos93 added you",
         id: "6",
-        isRead: true,
+        isRead: false,
       ),
     ];
     _updateScreenState();
+    notifyListeners();
   }
 
   NotificationScreenState get screenState => _screenState;
