@@ -5,6 +5,7 @@ import '../../../widgets/custom_bottom_bar.dart';
 import 'models/challenge_item_model.dart';
 import 'provider/leaderboard_provider.dart';
 import 'widgets/challenge_card.dart';
+import '../notifications/notifications_screen.dart';
 
 class LeaderboardScreen extends StatefulWidget {
   @override
@@ -59,8 +60,12 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
             IconButton(
               icon: Icon(Icons.notifications_outlined),
               onPressed: () {
-                Navigator.pushNamed(
-                    context, AppRoutes.notificationsUnreadScreen);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => NotificationsScreen.builder(context),
+                  ),
+                );
               },
             ),
           ],

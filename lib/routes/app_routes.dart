@@ -34,7 +34,7 @@ import '../presentation/reward_screen_rings_closed_screen/reward_screen_rings_cl
 import '../presentation/social_profile_message_from_profile_screen/social_profile_message_from_profile_screen.dart';
 import '../presentation/alkis/leaderboard_screen/leaderboard_screen.dart';
 import '../presentation/alkis/find friends/find_friends_screen.dart';
-import '../presentation/alkis/notifications/notifications_unread/notifications_unread_screen.dart';
+import '../presentation/alkis/notifications/notifications_screen.dart';
 
 class AppRoutes {
   static const String createAccountScreen = '/create_account_screen';
@@ -100,6 +100,7 @@ class AppRoutes {
   static const String notificationsReadScreen = '/notifications_read_screen';
   static const String appNavigationScreen = '/app_navigation_screen';
   static const String initialRoute = '/initialRoute';
+  static const String notificationsScreen = '/notifications_screen';
 
   static Map<String, WidgetBuilder> routes = {
     splashScreen: SplashScreen.builder,
@@ -130,7 +131,6 @@ class AppRoutes {
         SocialProfileMessageFromProfileScreen.builder(context),
     leaderboardScreen: (context) => LeaderboardScreen(),
     findFriendsScreen: (context) => FindFriendsScreen.builder(context),
-    notificationsUnreadScreen: (context) =>
-        NotificationsUnreadScreen.builder(context),
+    notificationsScreen: (context) => NotificationsScreen.builder(context),
   };
 }

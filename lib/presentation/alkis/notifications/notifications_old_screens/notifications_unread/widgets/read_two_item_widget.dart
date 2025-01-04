@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../../../../core/app_export.dart';
+import '../../../../../../core/app_export.dart';
 import '../models/read_two_item_model.dart';
-import '../../../../../theme/custom_text_style.dart';
-import '../../../../../widgets/custom_elevated_button.dart';
-import '../../../../../theme/custom_button_style.dart';
+import '../../../../../../theme/custom_text_style.dart';
+import '../../../../../../widgets/custom_elevated_button.dart';
+import '../../../../../../theme/custom_button_style.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 class ReadTwoItemWidget extends StatelessWidget {

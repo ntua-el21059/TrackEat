@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../../core/app_export.dart';
+import '../../../../../../core/app_export.dart';
 import '../models/notifications_read_model.dart';
 import '../models/read_two_item_model.dart';
 
