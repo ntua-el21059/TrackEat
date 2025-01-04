@@ -5,6 +5,7 @@ import '../../../../theme/custom_text_style.dart';
 import '../../../../widgets/custom_elevated_button.dart';
 import '../../../../theme/custom_button_style.dart';
 import '../models/notifications_model.dart';
+import '../notifications_screen.dart';
 
 class ReadTwoItemWidget extends StatelessWidget {
   ReadTwoItemWidget(this.notification, {Key? key}) : super(key: key);
@@ -78,6 +79,15 @@ class ReadTwoItemWidget extends StatelessWidget {
       return CustomElevatedButton(
         width: 74.h,
         text: "View",
+        onPressed: () {
+          // Find the parent NotificationsScreenState to call showChallengeDialog
+          final notificationsState =
+              context.findAncestorStateOfType<NotificationsScreenState>();
+          if (notificationsState != null) {
+            notificationsState.showChallengeDialog(
+                context, notification.message);
+          }
+        },
         rightIcon: Container(
           margin: EdgeInsets.only(left: 4.h),
           child: SvgPicture.asset(

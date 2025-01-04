@@ -9,6 +9,12 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'models/notifications_model.dart';
 import 'provider/notifications_provider.dart';
 import 'widgets/read_two_item_widget.dart';
+import '../challenges/avocado_challenge_dialog/avocado_challenge_dialog.dart';
+import '../challenges/banana_challenge_dialog/banana_challenge_dialog.dart';
+import '../challenges/carnivore_challenge_dialog/carnivore_challenge_dialog.dart';
+import '../challenges/beatles_challenge_dialog/beatles_challenge_dialog.dart';
+import '../challenges/brocolli_challenge_dialog/brocolli_challenge_dialog.dart';
+import '../challenges/wrap_challenge_dialog/wrap_challenge_dialog.dart';
 
 enum NotificationScreenState { empty, unread, read }
 
@@ -20,6 +26,57 @@ class NotificationsScreen extends StatefulWidget {
 }
 
 class NotificationsScreenState extends State<NotificationsScreen> {
+  void showChallengeDialog(BuildContext context, String notificationText) {
+    // List of all possible challenges
+    final challenges = [
+      'avocado challenge',
+      'banana challenge',
+      'carnivore challenge',
+      'beatles challenge',
+      'broccoli challenge',
+      'wrap challenge'
+    ];
+
+    // Find which challenge is mentioned in the notification text
+    final mentionedChallenge = challenges.firstWhere(
+      (challenge) => notificationText.toLowerCase().contains(challenge),
+      orElse: () => '',
+    );
+
+    if (mentionedChallenge.isEmpty) return;
+
+    Widget? dialogWidget;
+
+    // Show the appropriate dialog based on the challenge name
+    switch (mentionedChallenge) {
+      case 'avocado challenge':
+        dialogWidget = AvocadoChallengeDialog.builder(context);
+        break;
+      case 'banana challenge':
+        dialogWidget = BananaChallengeDialog.builder(context);
+        break;
+      case 'carnivore challenge':
+        dialogWidget = CarnivoreChallengeDialog.builder(context);
+        break;
+      case 'beatles challenge':
+        dialogWidget = BeatlesChallengeDialog.builder(context);
+        break;
+      case 'broccoli challenge':
+        dialogWidget = BrocolliChallengeDialog.builder(context);
+        break;
+      case 'wrap challenge':
+        dialogWidget = WrapChallengeDialog.builder(context);
+        break;
+    }
+
+    if (dialogWidget != null) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) => dialogWidget!,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<NotificationsProvider>(

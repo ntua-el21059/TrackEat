@@ -28,7 +28,7 @@ class NotificationsProvider extends ChangeNotifier {
         isRead: false,
       ),
       NotificationItem(
-        message: "@olie12 started carnivore challenge",
+        message: "@olie12 completed carnivore challenge",
         id: "3",
         isRead: false,
       ),
@@ -43,7 +43,7 @@ class NotificationsProvider extends ChangeNotifier {
         isRead: true,
       ),
       NotificationItem(
-        message: "@emfos93 added you",
+        message: "@emfos93 completed avocado challenge",
         id: "6",
         isRead: true,
       ),
