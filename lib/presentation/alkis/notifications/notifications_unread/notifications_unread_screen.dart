@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../../core/app_export.dart';
 import '../../../../../theme/custom_button_style.dart';
 import '../../../../../widgets/app_bar/appbar_leading_image.dart';
@@ -128,8 +129,8 @@ class NotificationsUnreadScreenState extends State<NotificationsUnreadScreen> {
       text: "Add",
       rightIcon: Container(
         margin: EdgeInsets.only(left: 6.h),
-        child: CustomImageView(
-          imagePath: ImageConstant.imgPersonfillbadgeplus1,
+        child: SvgPicture.asset(
+          "assets/images/add_friends.svg",
           height: 20.h,
           width: 20.h,
           fit: BoxFit.contain,
@@ -173,8 +174,8 @@ class NotificationsUnreadScreenState extends State<NotificationsUnreadScreen> {
       text: "Open",
       rightIcon: Container(
         margin: EdgeInsets.only(left: 4.h),
-        child: CustomImageView(
-          imagePath: ImageConstant.imgMessagefill1,
+        child: SvgPicture.asset(
+          "assets/images/message_bubble.svg",
           height: 14.h,
           width: 16.h,
           fit: BoxFit.contain,
@@ -218,8 +219,8 @@ class NotificationsUnreadScreenState extends State<NotificationsUnreadScreen> {
       text: "View",
       rightIcon: Container(
         margin: EdgeInsets.only(left: 4.h),
-        child: CustomImageView(
-          imagePath: ImageConstant.imgArrowrightOnerrorcontainer16x12,
+        child: SvgPicture.asset(
+          "assets/images/imgArrowRight.svg",
           height: 16.h,
           width: 12.h,
           fit: BoxFit.contain,

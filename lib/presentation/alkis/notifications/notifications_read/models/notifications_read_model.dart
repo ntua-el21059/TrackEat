@@ -9,7 +9,7 @@ class NotificationsReadModel {
   List<ReadTwoItemModel> readTwoItemList = [
     // Messages from different users
     ReadTwoItemModel(timcookse1nt: "@tim_cook se1nt a message"),
-    ReadTwoItemModel(timcookse1nt: "@olie12 started carnivore challenge"),
+    ReadTwoItemModel(timcookse1nt: "@olie12 completed carnivore challenge"),
     ReadTwoItemModel(timcookse1nt: "@benreeds sent a message"),
     ReadTwoItemModel(timcookse1nt: "@tim_cook sent a message"),
 

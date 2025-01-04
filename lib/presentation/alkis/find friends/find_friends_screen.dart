@@ -108,10 +108,12 @@ class FindFriendsScreenState extends State<FindFriendsScreen> {
       leading: AppbarLeadingImage(
         imagePath: ImageConstant.imgArrowLeftPrimary,
         margin: EdgeInsets.only(left: 4.h),
+        onTap: () => Navigator.pop(context),
       ),
       title: AppbarSubtitle(
         text: "Leaderboard",
         margin: EdgeInsets.only(left: 7.h),
+        onTap: () => Navigator.pop(context),
       ),
     );
   }
