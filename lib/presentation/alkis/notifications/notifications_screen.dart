@@ -17,16 +17,22 @@ class NotificationsScreen extends StatefulWidget {
 
   @override
   NotificationsScreenState createState() => NotificationsScreenState();
-
-  static Widget builder(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (context) => NotificationsProvider(),
-      child: NotificationsScreen(),
-    );
-  }
 }
 
 class NotificationsScreenState extends State<NotificationsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Mark notifications as read when screen is opened
+    Future.microtask(() {
+      final provider =
+          Provider.of<NotificationsProvider>(context, listen: false);
+      if (provider.hasUnreadNotifications) {
+        provider.markAllAsRead();
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<NotificationsProvider>(

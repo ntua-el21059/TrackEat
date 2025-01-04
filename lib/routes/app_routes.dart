@@ -35,6 +35,8 @@ import '../presentation/social_profile_message_from_profile_screen/social_profil
 import '../presentation/alkis/leaderboard_screen/leaderboard_screen.dart';
 import '../presentation/alkis/find friends/find_friends_screen.dart';
 import '../presentation/alkis/notifications/notifications_screen.dart';
+import '../presentation/alkis/notifications/provider/notifications_provider.dart';
+import 'package:provider/provider.dart';
 
 class AppRoutes {
   static const String createAccountScreen = '/create_account_screen';
@@ -131,6 +133,6 @@ class AppRoutes {
         SocialProfileMessageFromProfileScreen.builder(context),
     leaderboardScreen: (context) => LeaderboardScreen(),
     findFriendsScreen: (context) => FindFriendsScreen.builder(context),
-    notificationsScreen: (context) => NotificationsScreen.builder(context),
+    notificationsScreen: (context) => const NotificationsScreen(),
   };
 }

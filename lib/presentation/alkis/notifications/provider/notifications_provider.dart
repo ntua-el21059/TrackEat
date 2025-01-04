@@ -3,14 +3,47 @@ import '../models/notifications_model.dart';
 import '../notifications_screen.dart';
 
 class NotificationsProvider extends ChangeNotifier {
-  final NotificationsModel _model = NotificationsModel();
+  NotificationsModel _model = NotificationsModel();
   NotificationScreenState _screenState = NotificationScreenState.unread;
 
   NotificationsProvider() {
-    // Mark notifications as read when screen is opened
-    if (hasUnreadNotifications) {
-      markAllAsRead();
-    }
+    _resetNotifications();
+  }
+
+  void _resetNotifications() {
+    _model.notifications = [
+      NotificationItem(
+        message: "@nancy_raegan added you",
+        id: "1",
+        isRead: false,
+      ),
+      NotificationItem(
+        message: "@tim_cook sent a message",
+        id: "2",
+        isRead: false,
+      ),
+      NotificationItem(
+        message: "@olie12 started carnivore challenge",
+        id: "3",
+        isRead: false,
+      ),
+      NotificationItem(
+        message: "@miabrooksier added you",
+        id: "4",
+        isRead: true,
+      ),
+      NotificationItem(
+        message: "@benreeds sent a message",
+        id: "5",
+        isRead: true,
+      ),
+      NotificationItem(
+        message: "@emfos93 added you",
+        id: "6",
+        isRead: true,
+      ),
+    ];
+    _updateScreenState();
   }
 
   NotificationScreenState get screenState => _screenState;

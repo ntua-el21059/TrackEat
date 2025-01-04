@@ -13,6 +13,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'providers/profile_picture_provider.dart';
 import 'providers/user_info_provider.dart';
 import 'presentation/alkis/leaderboard_screen/provider/leaderboard_provider.dart';
+import 'presentation/alkis/notifications/provider/notifications_provider.dart';
 
 var globalMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
@@ -66,6 +67,9 @@ void main() async {
         ),
         ChangeNotifierProvider<LeaderboardProvider>(
           create: (_) => LeaderboardProvider(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => NotificationsProvider(),
         ),
       ],
       child: MyApp(),
