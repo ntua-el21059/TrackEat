@@ -116,6 +116,7 @@ class NotificationsUnreadScreenState extends State<NotificationsUnreadScreen> {
       title: AppbarSubtitle(
         text: "Leaderboard",
         margin: EdgeInsets.only(left: 7.h),
+        onTap: () => Navigator.pop(context),
       ),
     );
   }

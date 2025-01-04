@@ -53,6 +53,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
       create: (_) => LeaderboardProvider(),
       child: Scaffold(
         appBar: AppBar(
+          automaticallyImplyLeading: false,
           title: Text('Leaderboard'),
           actions: [
             IconButton(
