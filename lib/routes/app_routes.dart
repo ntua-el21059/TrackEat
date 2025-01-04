@@ -131,7 +131,7 @@ class AppRoutes {
         RewardScreenRingsClosedScreen.builder(context),
     socialProfileMessageFromProfileScreen: (context) =>
         SocialProfileMessageFromProfileScreen.builder(context),
-    leaderboardScreen: (context) => LeaderboardScreen(),
+    leaderboardScreen: (context) => LeaderboardScreen.builder(context),
     findFriendsScreen: (context) => FindFriendsScreen.builder(context),
     notificationsScreen: (context) => const NotificationsScreen(),
   };
