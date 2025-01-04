@@ -59,10 +59,11 @@ class FindFriendsItemWidget extends StatelessWidget {
           Spacer(),
           // Arrow icon on the right indicating this item is tappable
           CustomImageView(
-            imagePath: ImageConstant.imgArrowRightBlueGray400,
+            imagePath: ImageConstant.imgArrowRight,
             height: 24.h,
             width: 24.h,
             margin: EdgeInsets.only(right: 8.h),
+            color: appTheme.blue100,
           )
         ],
       ),
