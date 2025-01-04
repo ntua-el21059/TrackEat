@@ -4,6 +4,7 @@ class LeaderboardUserModel {
   final int points;
   final String email;
   final bool isCurrentUser;
+  final String? profileImage;
 
   LeaderboardUserModel({
     required this.username,
@@ -11,5 +12,6 @@ class LeaderboardUserModel {
     required this.points,
     required this.email,
     required this.isCurrentUser,
+    this.profileImage,
   });
 }

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../core/app_export.dart';
+import '../../../core/utils/size_utils.dart';
 import '../../../routes/app_routes.dart';
 import '../../../widgets/custom_bottom_bar.dart';
 import 'models/challenge_item_model.dart';
@@ -14,7 +16,6 @@ class LeaderboardScreen extends StatefulWidget {
   @override
   _LeaderboardScreenState createState() => _LeaderboardScreenState();
 
-  // Factory builder method that sets up the screen with its state management provider
   static Widget builder(BuildContext context) {
     return ChangeNotifierProvider(
       create: (context) => LeaderboardProvider(),
@@ -107,36 +108,96 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                 ),
                 child: provider.isLoading
                     ? Center(child: CircularProgressIndicator())
-                    : ListView.builder(
+                    : ListView.separated(
                         itemCount: provider.users.length,
-                        padding: EdgeInsets.symmetric(horizontal: 16),
+                        padding: EdgeInsets.only(
+                          left: 16.h,
+                          right: 16.h,
+                          top: 32.h, // Add significant top padding
+                          bottom: 16.h,
+                        ),
+                        separatorBuilder: (context, index) =>
+                            SizedBox(height: 8.h),
                         itemBuilder: (context, index) {
                           final user = provider.users[index];
-                          return ListTile(
-                            contentPadding: EdgeInsets.symmetric(vertical: 4),
-                            leading: CircleAvatar(
-                              child: Text('${index + 1}'),
-                              backgroundColor:
-                                  user.isCurrentUser ? Colors.blue : null,
+                          return Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 16.h,
+                              vertical: 12.h,
                             ),
-                            title: Text(
-                              user.fullName.isNotEmpty
-                                  ? user.fullName
-                                  : '@${user.username}',
-                              style: TextStyle(
-                                fontWeight:
-                                    user.isCurrentUser ? FontWeight.bold : null,
-                              ),
+                            decoration: BoxDecoration(
+                              color: user.isCurrentUser
+                                  ? Color(0xFF007AFF)
+                                  : Colors.white,
+                              borderRadius: BorderRadius.circular(15.h),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.05),
+                                  blurRadius: 4,
+                                  offset: Offset(0, 2),
+                                ),
+                              ],
                             ),
-                            subtitle: user.fullName.isNotEmpty
-                                ? Text('@${user.username}')
-                                : null,
-                            trailing: Text(
-                              '${user.points} pts',
-                              style: TextStyle(
-                                fontWeight:
-                                    user.isCurrentUser ? FontWeight.bold : null,
-                              ),
+                            child: Row(
+                              children: [
+                                // Ranking number
+                                Container(
+                                  width: 24.h,
+                                  child: Text(
+                                    '${index + 4}', // Starting from 4 as per design
+                                    style: TextStyle(
+                                      color: user.isCurrentUser
+                                          ? Colors.white
+                                          : Colors.black,
+                                      fontSize: 16.h,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                                // Profile picture
+                                CircleAvatar(
+                                  radius: 16.h,
+                                  backgroundColor: Color(
+                                      0xFFE8E0FF), // Light purple background
+                                  backgroundImage: user.profileImage != null
+                                      ? NetworkImage(user.profileImage!)
+                                      : null,
+                                  child: user.profileImage == null
+                                      ? Text(
+                                          user.username[0].toUpperCase(),
+                                          style: TextStyle(
+                                            color: Color(0xFF9747FF),
+                                            fontSize: 14.h,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        )
+                                      : null,
+                                ),
+                                SizedBox(width: 12.h),
+                                // Username
+                                Text(
+                                  '@${user.username}',
+                                  style: TextStyle(
+                                    color: user.isCurrentUser
+                                        ? Colors.white
+                                        : Colors.black,
+                                    fontSize: 16.h,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                Spacer(),
+                                // Points
+                                Text(
+                                  '${user.points} pts',
+                                  style: TextStyle(
+                                    color: user.isCurrentUser
+                                        ? Colors.white
+                                        : Colors.black,
+                                    fontSize: 16.h,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
                             ),
                           );
                         },

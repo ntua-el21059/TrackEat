@@ -70,6 +70,7 @@ class LeaderboardProvider extends ChangeNotifier {
                           5), // Random points under 50 if not set
               email: doc.id,
               isCurrentUser: doc.id == currentUser.email,
+              profileImage: data['profilePicture'],
             );
           })
           .where((user) =>
