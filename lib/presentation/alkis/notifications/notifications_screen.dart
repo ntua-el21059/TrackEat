@@ -78,9 +78,12 @@ class NotificationsScreenState extends State<NotificationsScreen> {
         children: [
           Align(
             alignment: Alignment.centerLeft,
-            child: Text(
-              "Notifications",
-              style: theme.textTheme.displaySmall,
+            child: Padding(
+              padding: EdgeInsets.only(left: 14.h),
+              child: Text(
+                "Notifications",
+                style: theme.textTheme.displaySmall,
+              ),
             ),
           ),
           Spacer(flex: 45),
@@ -89,12 +92,14 @@ class NotificationsScreenState extends State<NotificationsScreen> {
             style: CustomTextStyles.headlineSmallBluegray400,
           ),
           Spacer(flex: 54),
-          CustomElevatedButton(
-            height: 30.h,
-            width: 164.h,
-            text: "Clear Notifications",
-            buttonStyle: CustomButtonStyles.fillBlueGrayTL16,
-            buttonTextStyle: CustomTextStyles.bodyLargeOnErrorContainer,
+          Center(
+            child: CustomElevatedButton(
+              height: 30.h,
+              width: 164.h,
+              text: "Clear Notifications",
+              buttonStyle: CustomButtonStyles.fillBlueGrayTL16,
+              buttonTextStyle: CustomTextStyles.bodyLargeOnErrorContainer,
+            ),
           ),
           SizedBox(height: 50.h)
         ],
@@ -124,7 +129,9 @@ class NotificationsScreenState extends State<NotificationsScreen> {
             SizedBox(height: 10.h),
             _buildReadSection(context, provider),
             SizedBox(height: 62.h),
-            _buildClearButton(context, provider),
+            Center(
+              child: _buildClearButton(context, provider),
+            ),
             SizedBox(height: 50.h),
           ],
         ),
@@ -148,11 +155,46 @@ class NotificationsScreenState extends State<NotificationsScreen> {
               ),
             ),
             SizedBox(height: 12.h),
-            _buildAllCaughtUpSection(),
+            Padding(
+              padding: EdgeInsets.only(left: 14.h),
+              child: Text(
+                "UNREAD",
+                style: CustomTextStyles.labelLargeBluegray400,
+              ),
+            ),
             SizedBox(height: 16.h),
-            _buildReadSection(context, provider),
+            Center(
+              child: Text(
+                "You are all caught up!",
+                style: theme.textTheme.titleLarge?.copyWith(
+                  color: Colors.grey[600],
+                ),
+              ),
+            ),
+            SizedBox(height: 24.h),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: EdgeInsets.only(left: 14.h),
+                  child: Text(
+                    "READ",
+                    style: CustomTextStyles.labelLargeBluegray400,
+                  ),
+                ),
+                SizedBox(height: 10.h),
+                ...provider.readNotifications.map((notification) {
+                  return Padding(
+                    padding: EdgeInsets.only(bottom: 6.h),
+                    child: ReadTwoItemWidget(notification),
+                  );
+                }).toList(),
+              ],
+            ),
             SizedBox(height: 14.h),
-            _buildClearButton(context, provider),
+            Center(
+              child: _buildClearButton(context, provider),
+            ),
             SizedBox(height: 50.h)
           ],
         ),
@@ -179,29 +221,6 @@ class NotificationsScreenState extends State<NotificationsScreen> {
             child: ReadTwoItemWidget(notification),
           );
         }).toList(),
-      ],
-    );
-  }
-
-  Widget _buildAllCaughtUpSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: EdgeInsets.only(left: 10.h),
-          child: Text(
-            "UNREAD",
-            style: CustomTextStyles.labelLargeBluegray400,
-          ),
-        ),
-        SizedBox(height: 16.h),
-        Align(
-          alignment: Alignment.center,
-          child: Text(
-            "You are all caught up!",
-            style: theme.textTheme.titleLarge,
-          ),
-        ),
       ],
     );
   }

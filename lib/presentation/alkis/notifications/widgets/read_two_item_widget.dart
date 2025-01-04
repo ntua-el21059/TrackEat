@@ -16,7 +16,10 @@ class ReadTwoItemWidget extends StatelessWidget {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 4.h),
       padding: EdgeInsets.all(8.h),
-      decoration: AppDecoration.lightGreyButtonsPadding.copyWith(
+      decoration: (notification.isRead
+              ? AppDecoration.lightGreyButtonsPadding
+              : AppDecoration.lightBlueLayoutPadding)
+          .copyWith(
         borderRadius: BorderRadiusStyle.roundedBorder20,
       ),
       width: double.maxFinite,

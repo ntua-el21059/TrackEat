@@ -6,6 +6,13 @@ class NotificationsProvider extends ChangeNotifier {
   final NotificationsModel _model = NotificationsModel();
   NotificationScreenState _screenState = NotificationScreenState.unread;
 
+  NotificationsProvider() {
+    // Mark notifications as read when screen is opened
+    if (hasUnreadNotifications) {
+      markAllAsRead();
+    }
+  }
+
   NotificationScreenState get screenState => _screenState;
 
   List<NotificationItem> get unreadNotifications => _model.notifications
@@ -25,17 +32,17 @@ class NotificationsProvider extends ChangeNotifier {
   }
 
   void markAllAsRead() {
+    List<NotificationItem> updatedNotifications = [];
     for (var notification in _model.notifications) {
-      if (!notification.isRead) {
-        _model.notifications[_model.notifications.indexOf(notification)] =
-            NotificationItem(
+      updatedNotifications.add(
+        NotificationItem(
           message: notification.message,
           id: notification.id,
           isRead: true,
-        );
-      }
+        ),
+      );
     }
-
+    _model.notifications = updatedNotifications;
     _updateScreenState();
     notifyListeners();
   }
