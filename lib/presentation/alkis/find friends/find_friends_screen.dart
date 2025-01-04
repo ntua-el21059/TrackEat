@@ -41,71 +41,252 @@ class FindFriendsScreenState extends State<FindFriendsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // The main scaffold provides the screen's structure with an app bar and scrollable body
-    return Scaffold(
-      backgroundColor: theme.colorScheme.onErrorContainer,
-      resizeToAvoidBottomInset: false,
-      appBar: _buildAppbar(context),
-      body: SafeArea(
-        top: false,
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 8.h),
-          child: Column(
-            children: [
-              // Search bar section for filtering friends
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 6.h),
-                child: Selector<FindFriendsProvider, TextEditingController?>(
-                  selector: (context, provider) => provider.searchController,
-                  builder: (context, searchController, child) {
-                    return CustomSearchView(
-                      controller: searchController,
-                      hintText: "Find friends",
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: 8.h,
-                        vertical: 6.h,
-                      ),
-                      onChanged: (query) {
-                        context.read<FindFriendsProvider>().searchUsers(query);
-                      },
-                    );
-                  },
-                ),
-              ),
-              SizedBox(height: 18.h),
-              // Main content section showing friend suggestions
-              Container(
-                width: double.maxFinite,
-                padding: EdgeInsets.only(
-                  left: 14.h,
-                  top: 14.h,
-                  right: 14.h,
-                  bottom: 14.h,
-                ),
-                decoration: AppDecoration.lightBlueLayoutPadding.copyWith(
-                  borderRadius: BorderRadiusStyle.roundedBorder10,
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      "People you may know",
-                      style: theme.textTheme.titleLarge,
+    return Consumer<FindFriendsProvider>(
+      builder: (context, provider, _) => Scaffold(
+        backgroundColor: theme.colorScheme.onErrorContainer,
+        resizeToAvoidBottomInset: false,
+        appBar: provider.isSearching
+            ? _buildSearchAppbar(context)
+            : _buildAppbar(context),
+        body: SafeArea(
+          top: false,
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 8.h),
+            child: Column(
+              children: [
+                if (!provider.isSearching) ...[
+                  // Search bar section for filtering friends
+                  Container(
+                    width: double.maxFinite,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 16.h,
+                      vertical: 12.h,
                     ),
-                    SizedBox(height: 18.h),
-                    _buildFindfriends(context),
-                  ],
-                ),
-              ),
-              Spacer(),
-            ],
+                    decoration: BoxDecoration(
+                      color: Color(0xFFF2F2F7),
+                      borderRadius: BorderRadius.circular(15.h),
+                    ),
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () {
+                        context.read<FindFriendsProvider>().startSearch();
+                      },
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.search,
+                            color: Colors.grey[500],
+                            size: 20.h,
+                          ),
+                          SizedBox(width: 8.h),
+                          Text(
+                            "Find friends",
+                            style: TextStyle(
+                              color: Colors.grey[500],
+                              fontSize: 16.h,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 18.h),
+                  // Main content section showing friend suggestions
+                  Container(
+                    width: double.maxFinite,
+                    padding: EdgeInsets.all(14.h),
+                    decoration: AppDecoration.lightBlueLayoutPadding.copyWith(
+                      borderRadius: BorderRadiusStyle.roundedBorder10,
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          "People you may know",
+                          style: theme.textTheme.titleLarge,
+                        ),
+                        SizedBox(height: 18.h),
+                        _buildFindfriends(context),
+                      ],
+                    ),
+                  ),
+                  Spacer(),
+                ] else ...[
+                  // Search bar in search mode
+                  Container(
+                    width: double.maxFinite,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 16.h,
+                      vertical: 12.h,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Color(0xFFF2F2F7),
+                      borderRadius: BorderRadius.circular(15.h),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.search,
+                          color: Colors.grey[500],
+                          size: 20.h,
+                        ),
+                        SizedBox(width: 8.h),
+                        Expanded(
+                          child: TextField(
+                            controller: context
+                                .read<FindFriendsProvider>()
+                                .searchController,
+                            focusNode: context
+                                .read<FindFriendsProvider>()
+                                .searchFocusNode,
+                            onChanged: (query) {
+                              context
+                                  .read<FindFriendsProvider>()
+                                  .searchUsers(query);
+                            },
+                            style: TextStyle(
+                              color: Colors.black87,
+                              fontSize: 16.h,
+                            ),
+                            decoration: InputDecoration(
+                              hintText: "Find friends",
+                              hintStyle: TextStyle(
+                                color: Colors.grey[500],
+                                fontSize: 16.h,
+                              ),
+                              isDense: true,
+                              contentPadding: EdgeInsets.zero,
+                              border: InputBorder.none,
+                            ),
+                          ),
+                        ),
+                        if (context
+                            .read<FindFriendsProvider>()
+                            .searchController
+                            .text
+                            .isNotEmpty)
+                          GestureDetector(
+                            onTap: () {
+                              context
+                                  .read<FindFriendsProvider>()
+                                  .cancelSearch();
+                            },
+                            child: Icon(
+                              Icons.clear,
+                              color: Colors.grey[500],
+                              size: 20.h,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  // Search results layout
+                  Expanded(
+                    child: ListView.builder(
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 14.h, vertical: 8.h),
+                      itemCount: provider
+                          .findFriendsModelObj.findFriendsItemList.length,
+                      itemBuilder: (context, index) {
+                        FindFriendsItemModel model = provider
+                            .findFriendsModelObj.findFriendsItemList[index];
+                        return Container(
+                          margin: EdgeInsets.only(bottom: 8.h),
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 16.h, vertical: 12.h),
+                          decoration: BoxDecoration(
+                            color: Color(0xFFE3F2FD),
+                            borderRadius: BorderRadius.circular(25.h),
+                          ),
+                          child: Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 20.h,
+                                backgroundImage: NetworkImage(
+                                    model.profileImage ??
+                                        ImageConstant.imgVector80x84),
+                              ),
+                              SizedBox(width: 12.h),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      model.fullName ?? '',
+                                      style: TextStyle(
+                                        fontSize: 16.h,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    if (model.username != null)
+                                      Text(
+                                        "@${model.username}",
+                                        style: TextStyle(
+                                          fontSize: 14.h,
+                                          color: Colors.grey[600],
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                              Icon(
+                                Icons.chevron_right,
+                                color: Colors.grey[400],
+                                size: 24.h,
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  // Constructs the app bar with a back button and title
+  PreferredSizeWidget _buildSearchAppbar(BuildContext context) {
+    return AppBar(
+      automaticallyImplyLeading: false,
+      backgroundColor: Colors.white,
+      elevation: 0,
+      title: Row(
+        children: [
+          GestureDetector(
+            onTap: () => Navigator.pushReplacementNamed(
+                context, AppRoutes.leaderboardScreen),
+            child: Row(
+              children: [
+                Icon(Icons.arrow_back_ios, size: 20.h, color: Colors.blue),
+                Text(
+                  "Leaderboard",
+                  style: TextStyle(fontSize: 16.h, color: Colors.blue),
+                ),
+              ],
+            ),
+          ),
+          Spacer(),
+          TextButton(
+            onPressed: () {
+              context.read<FindFriendsProvider>().cancelSearch();
+            },
+            child: Text(
+              "Cancel",
+              style: TextStyle(
+                color: Colors.blue,
+                fontSize: 14.h,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   PreferredSizeWidget _buildAppbar(BuildContext context) {
     return CustomAppBar(
       leadingWidth: 20.h,
@@ -124,7 +305,6 @@ class FindFriendsScreenState extends State<FindFriendsScreen> {
     );
   }
 
-  // Creates the scrollable list of friend suggestions
   Widget _buildFindfriends(BuildContext context) {
     return Consumer<FindFriendsProvider>(
       builder: (context, provider, child) {

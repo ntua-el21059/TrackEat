@@ -8,13 +8,26 @@ import '../../../../../models/user_model.dart';
 class FindFriendsProvider extends ChangeNotifier {
   FindFriendsModel _findFriendsModelObj = FindFriendsModel();
   TextEditingController searchController = TextEditingController();
+  FocusNode searchFocusNode = FocusNode();
+  bool _isSearching = false;
 
   FindFriendsModel get findFriendsModelObj => _findFriendsModelObj;
+  bool get isSearching => _isSearching;
 
   @override
   void dispose() {
     searchController.dispose();
+    searchFocusNode.dispose();
     super.dispose();
+  }
+
+  void startSearch() {
+    _isSearching = true;
+    notifyListeners();
+    // Delay focus to wait for the search UI to build
+    Future.delayed(Duration(milliseconds: 100), () {
+      searchFocusNode.requestFocus();
+    });
   }
 
   Future<void> fetchUsers() async {
@@ -41,6 +54,14 @@ class FindFriendsProvider extends ChangeNotifier {
   }
 
   void searchUsers(String query) {
+    if (query == " ") {
+      startSearch();
+      searchController.clear();
+      return;
+    }
+
+    _isSearching = query.isNotEmpty;
+
     if (query.isEmpty) {
       fetchUsers();
       return;
@@ -55,5 +76,12 @@ class FindFriendsProvider extends ChangeNotifier {
 
     _findFriendsModelObj.findFriendsItemList = filteredUsers;
     notifyListeners();
+  }
+
+  void cancelSearch() {
+    searchController.clear();
+    _isSearching = false;
+    searchFocusNode.unfocus();
+    fetchUsers();
   }
 }
