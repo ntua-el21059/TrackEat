@@ -19,7 +19,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:convert';
 
 class SocialProfileMyselfScreen extends StatefulWidget {
-  const SocialProfileMyselfScreen({super.key});
+  final String? backButtonText;
+  
+  const SocialProfileMyselfScreen({
+    Key? key,
+    this.backButtonText,
+  }) : super(key: key);
 
   @override
   SocialProfileMyselfScreenState createState() => SocialProfileMyselfScreenState();
@@ -38,6 +43,26 @@ class SocialProfileMyselfScreen extends StatefulWidget {
               .updateDietBox(diet ?? 'Carnivore');
           
           return const SocialProfileMyselfScreen();
+        },
+      ),
+    );
+  }
+
+  // Add a new builder method for navigation from leaderboard
+  static Widget builderFromLeaderboard(BuildContext context, {String? backButtonText}) {
+    return ChangeNotifierProvider(
+      create: (context) => SocialProfileMyselfProvider()..init(context),
+      child: Consumer<ProfileProvider>(
+        builder: (context, profileProvider, _) {
+          // Get current diet and update social provider
+          final diet = profileProvider.profileModelObj.profileItemList
+              .firstWhere((item) => item.title == "Diet")
+              .value;
+          
+          Provider.of<SocialProfileMyselfProvider>(context, listen: false)
+              .updateDietBox(diet ?? 'Carnivore');
+          
+          return SocialProfileMyselfScreen(backButtonText: backButtonText);
         },
       ),
     );
@@ -109,31 +134,6 @@ class SocialProfileMyselfScreenState extends State<SocialProfileMyselfScreen> {
           ),
         ),
       ),
-    );
-  }
-
-  /// Section Widget
-  PreferredSizeWidget _buildAppBar(BuildContext context) {
-    return CustomAppBar(
-      leadingWidth: 23.h,
-      leading: AppbarLeadingImage(
-        imagePath: ImageConstant.imgArrowLeftPrimary,
-        margin: EdgeInsets.only(left: 7.h),
-        onTap: () => Navigator.pop(context),
-      ),
-      title: AppbarSubtitle(
-        text: "Profile",
-        margin: EdgeInsets.only(left: 7.h),
-      ),
-      actions: [
-        AppbarSubtitleTwo(
-          text: "PROFILE PREVIEW".toUpperCase(),
-          margin: EdgeInsets.only(
-            right: 20.h,
-            bottom: 3.h,
-          ),
-        )
-      ],
     );
   }
 
@@ -263,11 +263,19 @@ class SocialProfileMyselfScreenState extends State<SocialProfileMyselfScreen> {
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            "$firstName $lastName",
-                            style: theme.textTheme.headlineMedium?.copyWith(
-                              color: const Color(0xFF37474F),
-                              fontWeight: FontWeight.w600,
+                          Container(
+                            width: MediaQuery.of(context).size.width * 0.6,
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                "$firstName $lastName",
+                                style: theme.textTheme.headlineMedium?.copyWith(
+                                  color: const Color(0xFF37474F),
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 24.h,
+                                ),
+                              ),
                             ),
                           ),
                           Text(
@@ -275,6 +283,7 @@ class SocialProfileMyselfScreenState extends State<SocialProfileMyselfScreen> {
                             style: theme.textTheme.titleMedium?.copyWith(
                               color: const Color(0xFF37474F),
                             ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ],
                       );
@@ -311,12 +320,14 @@ class SocialProfileMyselfScreenState extends State<SocialProfileMyselfScreen> {
                   height: 48.h,
                   rightIcon: Container(
                     margin: EdgeInsets.only(left: 6.h),
-                    child: CustomImageView(
-                      imagePath: ImageConstant.imgAddFriend,
+                    child: SizedBox(
                       height: 16.h,
                       width: 16.h,
-                      fit: BoxFit.contain,
-                      color: Colors.white,
+                      child: CustomImageView(
+                        imagePath: ImageConstant.imgAddFriend,
+                        fit: BoxFit.contain,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                   buttonStyle: CustomButtonStyles.fillBlueGrayTL16,
@@ -347,19 +358,27 @@ class SocialProfileMyselfScreenState extends State<SocialProfileMyselfScreen> {
           .doc(FirebaseAuth.instance.currentUser?.email)
           .snapshots(),
       builder: (context, snapshot) {
-        if (snapshot.hasData && snapshot.data != null && snapshot.data!.exists) {
-          final userData = snapshot.data!.data() as Map<String, dynamic>;
-          final firstName = userData['firstName']?.toString() ?? '';
-          final currentWeight = double.tryParse(userData['weight']?.toString() ?? '0') ?? 0;
-          final goalWeight = double.tryParse(userData['weightgoal']?.toString() ?? '0') ?? 0;
-          
-          // Calculate progress percentage
-          int progress = 0;
-          if (currentWeight > 0) {
-            double calculation = (1 - ((currentWeight - goalWeight) / currentWeight)) * 100;
-            progress = calculation.round().clamp(0, 100); // Ensure progress is between 0 and 100
+        if (!snapshot.hasData) {
+          return SizedBox();
+        }
+
+        final data = snapshot.data!.data() as Map<String, dynamic>?;
+        final firstName = data?['firstName']?.toString() ?? '';
+        final gender = data?['gender']?.toString().toLowerCase() ?? '';
+        final hasWeightGoal = data?.containsKey('weightgoal') ?? false;
+        
+        String getPronoun() {
+          switch (gender) {
+            case 'male':
+              return 'his';
+            case 'female':
+              return 'her';
+            default:
+              return 'their';
           }
-          
+        }
+        
+        if (!hasWeightGoal) {
           return Container(
             width: double.maxFinite,
             margin: EdgeInsets.symmetric(horizontal: 16.h),
@@ -381,7 +400,7 @@ class SocialProfileMyselfScreenState extends State<SocialProfileMyselfScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  "🎉 $firstName has hit $progress% of his weight goal!",
+                  "😕 $firstName has not set ${getPronoun()} weight goal yet",
                   style: theme.textTheme.bodyLarge?.copyWith(
                     color: Colors.white,
                   ),
@@ -396,7 +415,7 @@ class SocialProfileMyselfScreenState extends State<SocialProfileMyselfScreen> {
                   child: Row(
                     children: [
                       Expanded(
-                        flex: progress,
+                        flex: 0,
                         child: Container(
                           decoration: BoxDecoration(
                             color: Colors.blue,
@@ -405,7 +424,7 @@ class SocialProfileMyselfScreenState extends State<SocialProfileMyselfScreen> {
                         ),
                       ),
                       Expanded(
-                        flex: 100 - progress,
+                        flex: 100,
                         child: const SizedBox(),
                       ),
                     ],
@@ -415,6 +434,16 @@ class SocialProfileMyselfScreenState extends State<SocialProfileMyselfScreen> {
             ),
           );
         }
+
+        final currentWeight = double.tryParse(data?['weight']?.toString() ?? '0') ?? 0;
+        final goalWeight = double.tryParse(data?['weightgoal']?.toString() ?? '0') ?? 0;
+        
+        int progress = 0;
+        if (currentWeight > 0) {
+          double calculation = (1 - ((currentWeight - goalWeight) / currentWeight)) * 100;
+          progress = calculation.round().clamp(0, 100);
+        }
+
         return Container(
           width: double.maxFinite,
           margin: EdgeInsets.symmetric(horizontal: 16.h),
@@ -436,7 +465,7 @@ class SocialProfileMyselfScreenState extends State<SocialProfileMyselfScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                "Loading...",
+                "🎉 $firstName has hit $progress% of ${getPronoun()} weight goal!",
                 style: theme.textTheme.bodyLarge?.copyWith(
                   color: Colors.white,
                 ),
@@ -451,7 +480,7 @@ class SocialProfileMyselfScreenState extends State<SocialProfileMyselfScreen> {
                 child: Row(
                   children: [
                     Expanded(
-                      flex: 0,
+                      flex: progress,
                       child: Container(
                         decoration: BoxDecoration(
                           color: Colors.blue,
@@ -459,9 +488,9 @@ class SocialProfileMyselfScreenState extends State<SocialProfileMyselfScreen> {
                         ),
                       ),
                     ),
-                    const Expanded(
-                      flex: 100,
-                      child: SizedBox(),
+                    Expanded(
+                      flex: 100 - progress,
+                      child: const SizedBox(),
                     ),
                   ],
                 ),
@@ -470,6 +499,30 @@ class SocialProfileMyselfScreenState extends State<SocialProfileMyselfScreen> {
           ),
         );
       },
+    );
+  }
+
+  /// Section Widget
+  PreferredSizeWidget _buildAppBar(BuildContext context) {
+    return CustomAppBar(
+      leadingWidth: 23.h,
+      leading: AppbarLeadingImage(
+        imagePath: ImageConstant.imgArrowLeftPrimary,
+        margin: EdgeInsets.only(left: 7.h),
+        onTap: () => Navigator.pop(context),
+      ),
+      title: AppbarSubtitle(
+        text: widget.backButtonText ?? "Profile",
+        margin: EdgeInsets.only(left: 7.h),
+      ),
+      actions: [
+        AppbarSubtitleTwo(
+          text: "PROFILE PREVIEW",
+          margin: EdgeInsets.only(
+            right: 20.h,
+          ),
+        )
+      ],
     );
   }
 }

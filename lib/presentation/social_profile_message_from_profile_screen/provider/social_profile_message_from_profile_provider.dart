@@ -26,6 +26,30 @@ class SocialProfileMessageFromProfileProvider extends ChangeNotifier {
     _initializeReceiver();
   }
 
+  void setReceiverInfo({
+    String? receiverId,
+    String? receiverName,
+    String? receiverUsername,
+  }) {
+    if (receiverId != null) {
+      this.receiverId = receiverId;
+    }
+    if (receiverName != null) {
+      final names = receiverName.split(' ');
+      if (names.length > 1) {
+        recipientName = names[0];
+        recipientSurname = names.sublist(1).join(' ');
+      } else {
+        recipientName = receiverName;
+      }
+    }
+    if (receiverUsername != null) {
+      recipientUsername = receiverUsername;
+    }
+    _listenToRecipientInfo();
+    notifyListeners();
+  }
+
   void _initializeReceiver() {
     final currentUser = _auth.currentUser;
     if (currentUser != null) {

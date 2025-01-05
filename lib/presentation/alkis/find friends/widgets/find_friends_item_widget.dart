@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../../../../core/app_export.dart';
+import '../../../../core/app_export.dart';
 import '../models/find_friends_item_model.dart';
+import '../../../../routes/app_routes.dart';
+import 'dart:convert';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class FindFriendsItemWidget extends StatelessWidget {
   FindFriendsItemWidget(this.findFriendsItemModelObj, {Key? key})
@@ -21,12 +24,28 @@ class FindFriendsItemWidget extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          CustomImageView(
-            imagePath: findFriendsItemModelObj.profileImage,
-            height: 32.h,
-            width: 34.h,
-            radius: BorderRadius.circular(16.h),
-            margin: EdgeInsets.only(left: 20.h),
+          ClipOval(
+            child: (findFriendsItemModelObj.profileImage != null && findFriendsItemModelObj.profileImage!.isNotEmpty)
+              ? Image.memory(
+                  base64Decode(findFriendsItemModelObj.profileImage!),
+                  height: 32.h,
+                  width: 32.h,
+                  fit: BoxFit.cover,
+                )
+              : Container(
+                  height: 32.h,
+                  width: 32.h,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[200],
+                    shape: BoxShape.circle,
+                  ),
+                  child: SvgPicture.asset(
+                    'assets/images/person.crop.circle.fill.svg',
+                    height: 32.h,
+                    width: 32.h,
+                    fit: BoxFit.cover,
+                  ),
+                ),
           ),
           Expanded(
             child: Padding(
@@ -52,12 +71,25 @@ class FindFriendsItemWidget extends StatelessWidget {
               ),
             ),
           ),
-          CustomImageView(
-            imagePath: ImageConstant.imgArrowRight,
-            height: 24.h,
-            width: 24.h,
-            margin: EdgeInsets.only(right: 8.h),
-            color: appTheme.blue100,
+          GestureDetector(
+            onTap: () {
+              print('Tapped on user: ${findFriendsItemModelObj.username}');
+              if (findFriendsItemModelObj.username != null) {
+                print('Navigating to profile for user: ${findFriendsItemModelObj.username}');
+                Navigator.pushNamed(
+                  context,
+                  AppRoutes.socialProfileViewScreen,
+                  arguments: {'username': findFriendsItemModelObj.username},
+                );
+              }
+            },
+            child: CustomImageView(
+              imagePath: ImageConstant.imgArrowRight,
+              height: 24.h,
+              width: 24.h,
+              margin: EdgeInsets.only(right: 8.h),
+              color: appTheme.blue100,
+            ),
           )
         ],
       ),

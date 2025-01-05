@@ -4,12 +4,18 @@ import '../../../core/app_export.dart';
 import '../../../core/utils/size_utils.dart';
 import '../../../routes/app_routes.dart';
 import '../../../widgets/custom_bottom_bar.dart';
+import '../../../widgets/app_bar/appbar_leading_image.dart';
+import '../../../widgets/app_bar/appbar_subtitle.dart';
+import '../../../widgets/app_bar/custom_app_bar.dart';
+import '../../social_profile_myself_screen/social_profile_myself_screen.dart';
 import 'models/challenge_item_model.dart';
 import 'provider/leaderboard_provider.dart';
 import 'widgets/challenge_card.dart';
 import '../notifications/notifications_screen.dart';
 import '../notifications/provider/notifications_provider.dart';
 import '../../../widgets/custom_image_view.dart';
+import 'dart:convert';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class LeaderboardScreen extends StatefulWidget {
   const LeaderboardScreen({Key? key}) : super(key: key);
@@ -139,13 +145,74 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                                 ),
                               ],
                             ),
-                            child: Row(
-                              children: [
-                                // Ranking number
-                                Container(
-                                  width: 24.h,
-                                  child: Text(
-                                    '${index + 4}', // Starting from 4 as per design
+                            child: GestureDetector(
+                              onTap: () {
+                                if (user.isCurrentUser) {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => SocialProfileMyselfScreen.builderFromLeaderboard(
+                                        context,
+                                        backButtonText: "Leaderboard",
+                                      ),
+                                    ),
+                                  );
+                                } else {
+                                  Navigator.pushNamed(
+                                    context,
+                                    AppRoutes.socialProfileViewScreen,
+                                    arguments: {
+                                      'username': user.username,
+                                      'backButtonText': 'Preview Profile',
+                                      'appBarTitle': 'Preview Profile'
+                                    },
+                                  );
+                                }
+                              },
+                              child: Row(
+                                children: [
+                                  // Ranking number
+                                  Container(
+                                    width: 24.h,
+                                    child: Text(
+                                      '${index + 4}', // Starting from 4 as per design
+                                      style: TextStyle(
+                                        color: user.isCurrentUser
+                                            ? Colors.white
+                                            : Colors.black,
+                                        fontSize: 16.h,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
+                                  // Profile picture
+                                  ClipOval(
+                                    child: (user.profileImage != null && user.profileImage!.isNotEmpty)
+                                      ? Image.memory(
+                                          base64Decode(user.profileImage!),
+                                          height: 32.h,
+                                          width: 32.h,
+                                          fit: BoxFit.cover,
+                                        )
+                                      : Container(
+                                          height: 32.h,
+                                          width: 32.h,
+                                          decoration: BoxDecoration(
+                                            color: Colors.grey[200],
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: SvgPicture.asset(
+                                            'assets/images/person.crop.circle.fill.svg',
+                                            height: 32.h,
+                                            width: 32.h,
+                                            fit: BoxFit.cover,
+                                          ),
+                                        ),
+                                  ),
+                                  SizedBox(width: 12.h),
+                                  // Username
+                                  Text(
+                                    '@${user.username}',
                                     style: TextStyle(
                                       color: user.isCurrentUser
                                           ? Colors.white
@@ -154,40 +221,20 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                                       fontWeight: FontWeight.w500,
                                     ),
                                   ),
-                                ),
-                                // Profile picture
-                                CustomImageView(
-                                  imagePath: user.profileImage ??
-                                      ImageConstant.imgVector80x84,
-                                  height: 32.h,
-                                  width: 32.h,
-                                  radius: BorderRadius.circular(16.h),
-                                ),
-                                SizedBox(width: 12.h),
-                                // Username
-                                Text(
-                                  '@${user.username}',
-                                  style: TextStyle(
-                                    color: user.isCurrentUser
-                                        ? Colors.white
-                                        : Colors.black,
-                                    fontSize: 16.h,
-                                    fontWeight: FontWeight.w500,
+                                  Spacer(),
+                                  // Points
+                                  Text(
+                                    '${user.points} pts',
+                                    style: TextStyle(
+                                      color: user.isCurrentUser
+                                          ? Colors.white
+                                          : Colors.black,
+                                      fontSize: 16.h,
+                                      fontWeight: FontWeight.w500,
+                                    ),
                                   ),
-                                ),
-                                Spacer(),
-                                // Points
-                                Text(
-                                  '${user.points} pts',
-                                  style: TextStyle(
-                                    color: user.isCurrentUser
-                                        ? Colors.white
-                                        : Colors.black,
-                                    fontSize: 16.h,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           );
                         },
