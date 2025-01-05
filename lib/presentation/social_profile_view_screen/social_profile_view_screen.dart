@@ -4,6 +4,8 @@ import 'package:responsive_grid_list/responsive_grid_list.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:convert';
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../core/app_export.dart';
 import '../../theme/custom_button_style.dart';
@@ -17,9 +19,13 @@ import '../social_profile_myself_screen/widgets/gridvector_one_item_widget.dart'
 import '../social_profile_myself_screen/widgets/listvegan_item_widget.dart';
 import '../social_profile_myself_screen/models/gridvector_one_item_model.dart';
 import '../social_profile_myself_screen/models/listvegan_item_model.dart';
+import '../../services/friend_service.dart';
 
 class SocialProfileViewScreen extends StatefulWidget {
   final String username;
+  
+  // Static cache for profile pictures
+  static final Map<String, Uint8List> _profilePictureCache = {};
   
   const SocialProfileViewScreen({
     Key? key,
@@ -152,7 +158,17 @@ class SocialProfileViewScreenState extends State<SocialProfileViewScreen> {
     final firstName = data?['firstName']?.toString() ?? '';
     final lastName = data?['lastName']?.toString() ?? '';
     final username = data?['username']?.toString() ?? '';
+    final email = data?['email']?.toString() ?? '';
     final profilePicture = data?['profilePicture'] as String?;
+
+    // Check if we need to update the cache
+    if (profilePicture != null && profilePicture.isNotEmpty) {
+      final decodedImage = base64Decode(profilePicture);
+      if (!SocialProfileViewScreen._profilePictureCache.containsKey(username) ||
+          !listEquals(SocialProfileViewScreen._profilePictureCache[username]!, decodedImage)) {
+        SocialProfileViewScreen._profilePictureCache[username] = decodedImage;
+      }
+    }
 
     return Container(
       width: double.maxFinite,
@@ -163,9 +179,9 @@ class SocialProfileViewScreenState extends State<SocialProfileViewScreen> {
           Row(
             children: [
               ClipOval(
-                child: (profilePicture != null && profilePicture.isNotEmpty)
+                child: SocialProfileViewScreen._profilePictureCache.containsKey(username)
                     ? Image.memory(
-                        base64Decode(profilePicture),
+                        SocialProfileViewScreen._profilePictureCache[username]!,
                         height: 80.h,
                         width: 80.h,
                         fit: BoxFit.cover,
@@ -221,7 +237,7 @@ class SocialProfileViewScreenState extends State<SocialProfileViewScreen> {
           Row(
             children: [
               Expanded(
-                child: FriendButton(),
+                child: FriendButton(userId: email),
               ),
               SizedBox(width: 14.h),
               Expanded(
@@ -404,6 +420,7 @@ class SocialProfileViewScreenState extends State<SocialProfileViewScreen> {
     final firstName = data?['firstName']?.toString() ?? '';
     final diet = data?['diet']?.toString() ?? 'Balanced';
     final createdDate = data?['create']?.toString();
+    final username = data?['username']?.toString() ?? '';
 
     String getDietWithEmoji(String diet) {
       return switch (diet.trim()) {
@@ -454,9 +471,9 @@ class SocialProfileViewScreenState extends State<SocialProfileViewScreen> {
     final listveganItemList = [
       ListveganItemModel(title: getDietWithEmoji(diet), count: ""),
       ListveganItemModel(
-        title: "$firstName's been thriving \nwith us for $timeDifference!",
+        title: "$firstName has been thriving \nwith us for $timeDifference!",
         count: "⭐️",
-        username: widget.username,
+        username: username,
       ),
     ];
 
@@ -523,30 +540,78 @@ class SocialProfileViewScreenState extends State<SocialProfileViewScreen> {
 }
 
 class FriendButton extends StatefulWidget {
+  final String userId;
+
+  const FriendButton({
+    Key? key,
+    required this.userId,
+  }) : super(key: key);
+
   @override
   _FriendButtonState createState() => _FriendButtonState();
 }
 
 class _FriendButtonState extends State<FriendButton> {
+  final FriendService _friendService = FriendService();
   bool _isFriend = false;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkFriendStatus();
+  }
+
+  Future<void> _checkFriendStatus() async {
+    final isFollowing = await _friendService.isFollowing(widget.userId);
+    setState(() {
+      _isFriend = isFollowing;
+      _isLoading = false;
+    });
+  }
+
+  Future<void> _toggleFriendStatus() async {
+    setState(() => _isLoading = true);
+    try {
+      if (_isFriend) {
+        await _friendService.removeFriend(widget.userId);
+      } else {
+        await _friendService.addFriend(widget.userId);
+      }
+      setState(() => _isFriend = !_isFriend);
+    } catch (e) {
+      print('Error toggling friend status: $e');
+      // You might want to show an error message to the user here
+    }
+    setState(() => _isLoading = false);
+  }
 
   @override
   Widget build(BuildContext context) {
     return CustomElevatedButton(
-      text: _isFriend ? "Friends" : "Add Friend",
+      text: _isLoading ? "Loading..." : (_isFriend ? "Friends" : "Add Friend"),
       height: 48.h,
-      rightIcon: Container(
-        margin: EdgeInsets.only(left: 6.h),
-        child: SizedBox(
-          height: 16.h,
-          width: 16.h,
-          child: CustomImageView(
-            imagePath: _isFriend ? ImageConstant.imgFriendsIcon : ImageConstant.imgAddFriend,
-            fit: BoxFit.contain,
-            color: Colors.white,
-          ),
-        ),
-      ),
+      rightIcon: _isLoading 
+          ? SizedBox(
+              height: 16.h,
+              width: 16.h,
+              child: CircularProgressIndicator(
+                color: Colors.white,
+                strokeWidth: 2,
+              ),
+            )
+          : Container(
+              margin: EdgeInsets.only(left: 6.h),
+              child: SizedBox(
+                height: 16.h,
+                width: 16.h,
+                child: CustomImageView(
+                  imagePath: _isFriend ? ImageConstant.imgFriendsIcon : ImageConstant.imgAddFriend,
+                  fit: BoxFit.contain,
+                  color: Colors.white,
+                ),
+              ),
+            ),
       buttonStyle: ButtonStyle(
         backgroundColor: MaterialStateProperty.all(theme.colorScheme.primary),
         shape: MaterialStateProperty.all(
@@ -557,12 +622,7 @@ class _FriendButtonState extends State<FriendButton> {
         elevation: MaterialStateProperty.all(0),
       ),
       buttonTextStyle: CustomTextStyles.titleSmallSemiBold.copyWith(color: Colors.white),
-      onPressed: () {
-        setState(() {
-          _isFriend = !_isFriend;
-          // TODO: Implement friend status update in backend
-        });
-      },
+      onPressed: _isLoading ? null : _toggleFriendStatus,
     );
   }
 } 

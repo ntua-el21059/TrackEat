@@ -17,6 +17,7 @@ import '../../providers/profile_picture_provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:convert';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class SocialProfileMyselfScreen extends StatefulWidget {
   final String? backButtonText;
@@ -236,10 +237,19 @@ class SocialProfileMyselfScreenState extends State<SocialProfileMyselfScreen> {
                           }
                         }
                         
-                        return CustomImageView(
-                          imagePath: ImageConstant.imgVector80x84,
+                        return Container(
                           height: 80.h,
                           width: 80.h,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[200],
+                            shape: BoxShape.circle,
+                          ),
+                          child: SvgPicture.asset(
+                            'assets/images/person.crop.circle.fill.svg',
+                            height: 80.h,
+                            width: 80.h,
+                            fit: BoxFit.cover,
+                          ),
                         );
                       },
                     ),

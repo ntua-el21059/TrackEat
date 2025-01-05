@@ -59,7 +59,7 @@ class ListveganItemWidget extends StatelessWidget {
       return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
         stream: FirebaseFirestore.instance
             .collection('users')
-            .where('username', isEqualTo: model.username)
+            .where(model.username?.contains('@') == true ? 'email' : 'username', isEqualTo: model.username)
             .limit(1)
             .snapshots(),
         builder: (context, snapshot) {
@@ -78,9 +78,13 @@ class ListveganItemWidget extends StatelessWidget {
             
             if (createdDate != null && createdDate.isNotEmpty) {
               final timeDifference = _calculateTimeDifference(createdDate);
-              dietText = "$firstName's been thriving with us for $timeDifference! ⭐️";
+              if (!dietText!.contains(firstName)) {
+                dietText = "$firstName has been thriving with us for $timeDifference! ⭐️";
+              }
             } else {
-              dietText = "$firstName's been thriving with us! ⭐️";
+              if (!dietText!.contains(firstName)) {
+                dietText = "$firstName has been thriving with us! ⭐️";
+              }
             }
           } else {
             dietText = "Loading...";

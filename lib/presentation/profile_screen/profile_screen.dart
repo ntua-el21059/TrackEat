@@ -15,6 +15,7 @@ import '../../providers/user_info_provider.dart';
 import '../../models/user_model.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({Key? key}) : super(key: key);
@@ -332,10 +333,19 @@ class ProfileScreenState extends State<ProfileScreen> {
                         }
                       }
                       
-                      return CustomImageView(
-                        imagePath: ImageConstant.imgVector80x84,
+                      return Container(
                         height: 56.h,
                         width: 56.h,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[200],
+                          shape: BoxShape.circle,
+                        ),
+                        child: SvgPicture.asset(
+                          'assets/images/person.crop.circle.fill.svg',
+                          height: 56.h,
+                          width: 56.h,
+                          fit: BoxFit.cover,
+                        ),
                       );
                     },
                   ),

@@ -6,18 +6,58 @@ import '../../../../widgets/custom_elevated_button.dart';
 import '../../../../theme/custom_button_style.dart';
 import '../models/notifications_model.dart';
 import '../notifications_screen.dart';
+import '../../../../services/friend_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
-class ReadTwoItemWidget extends StatelessWidget {
+class ReadTwoItemWidget extends StatefulWidget {
   ReadTwoItemWidget(this.notification, {Key? key}) : super(key: key);
 
   final NotificationItem notification;
+
+  @override
+  State<ReadTwoItemWidget> createState() => _ReadTwoItemWidgetState();
+}
+
+class _ReadTwoItemWidgetState extends State<ReadTwoItemWidget> {
+  bool isAdded = false;
+  final FriendService _friendService = FriendService();
+
+  @override
+  void initState() {
+    super.initState();
+    _checkIfAlreadyFriends();
+  }
+
+  Future<void> _checkIfAlreadyFriends() async {
+    try {
+      final username = widget.notification.message.split(' ')[0].replaceAll('@', '');
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .where('username', isEqualTo: username)
+          .limit(1)
+          .get();
+      
+      if (userDoc.docs.isNotEmpty) {
+        final userEmail = userDoc.docs.first.data()['email'] as String;
+        final isFollowing = await _friendService.isFollowing(userEmail);
+        if (mounted) {
+          setState(() {
+            isAdded = isFollowing;
+          });
+        }
+      }
+    } catch (e) {
+      print('Error checking friend status: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 4.h),
       padding: EdgeInsets.all(8.h),
-      decoration: (notification.isRead
+      decoration: (widget.notification.isRead
               ? AppDecoration.lightGreyButtonsPadding
               : AppDecoration.lightBlueLayoutPadding)
           .copyWith(
@@ -31,7 +71,7 @@ class ReadTwoItemWidget extends StatelessWidget {
             child: Padding(
               padding: EdgeInsets.only(left: 4.h),
               child: Text(
-                notification.message,
+                widget.notification.message,
                 style: CustomTextStyles.titleSmallBold,
               ),
             ),
@@ -43,22 +83,130 @@ class ReadTwoItemWidget extends StatelessWidget {
   }
 
   Widget _buildButton(BuildContext context) {
-    final message = notification.message.toLowerCase();
+    final message = widget.notification.message.toLowerCase();
 
     if (message.contains("added you")) {
+      // Extract username from notification message (e.g., "@username added you as a friend")
+      final username = widget.notification.message.split(' ')[0].replaceAll('@', '');
+      
       return CustomElevatedButton(
         width: 74.h,
-        text: "Add",
+        text: isAdded ? "Added" : "Add",
+        onPressed: () async {
+          try {
+            if (!isAdded) {
+              // Get user email from username
+              final userDoc = await FirebaseFirestore.instance
+                  .collection('users')
+                  .where('username', isEqualTo: username)
+                  .limit(1)
+                  .get();
+              
+              if (userDoc.docs.isNotEmpty) {
+                final userEmail = userDoc.docs.first.data()['email'] as String;
+                await _friendService.addFriend(userEmail);
+                
+                // Mark notification as read
+                final currentUser = FirebaseAuth.instance.currentUser;
+                if (currentUser?.email != null) {
+                  await FirebaseFirestore.instance
+                      .collection('users')
+                      .doc(currentUser!.email)
+                      .collection('notifications')
+                      .doc(widget.notification.id)
+                      .update({'isRead': true});
+                }
+                
+                // Create notifications subcollection if it doesn't exist
+                final userRef = FirebaseFirestore.instance
+                    .collection('users')
+                    .doc(userEmail);
+                    
+                final notificationsCollection = userRef.collection('notifications');
+                
+                // Check if notifications subcollection exists
+                final notificationsQuery = await notificationsCollection.limit(1).get();
+                if (notificationsQuery.docs.isEmpty) {
+                  // Create an initial notification to ensure the subcollection exists
+                  await notificationsCollection.add({
+                    'message': 'Welcome to TrackEat!',
+                    'timestamp': FieldValue.serverTimestamp(),
+                    'isRead': false,
+                    'type': 'welcome',
+                  });
+                }
+                
+                setState(() {
+                  isAdded = true;
+                });
+              }
+            } else {
+              // Get user email from username
+              final userDoc = await FirebaseFirestore.instance
+                  .collection('users')
+                  .where('username', isEqualTo: username)
+                  .limit(1)
+                  .get();
+              
+              if (userDoc.docs.isNotEmpty) {
+                final userEmail = userDoc.docs.first.data()['email'] as String;
+                await _friendService.removeFriend(userEmail);
+                
+                // Get current user's username to find and delete the notification
+                final currentUser = FirebaseAuth.instance.currentUser;
+                if (currentUser?.email != null) {
+                  final currentUserDoc = await FirebaseFirestore.instance
+                      .collection('users')
+                      .doc(currentUser!.email)
+                      .get();
+                  
+                  if (currentUserDoc.exists) {
+                    final currentUsername = currentUserDoc.data()?['username'] as String?;
+                    if (currentUsername != null) {
+                      // Delete the notification from the other user's notifications
+                      final notificationsQuery = await FirebaseFirestore.instance
+                          .collection('users')
+                          .doc(userEmail)
+                          .collection('notifications')
+                          .where('message', isEqualTo: '@$currentUsername added you as a friend')
+                          .get();
+                          
+                      for (var doc in notificationsQuery.docs) {
+                        await doc.reference.delete();
+                      }
+                    }
+                  }
+                }
+                
+                setState(() {
+                  isAdded = false;
+                });
+              }
+            }
+          } catch (e) {
+            print('Error handling friend request: $e');
+          }
+        },
         rightIcon: Container(
           margin: EdgeInsets.only(left: 6.h),
           child: SvgPicture.asset(
-            "assets/images/add_friends.svg",
-            height: 20.h,
-            width: 20.h,
+            isAdded ? ImageConstant.imgFriendsIcon : "assets/images/add_friends.svg",
+            height: isAdded ? 10.h : 14.h,
+            width: isAdded ? 12.h : 16.h,
             fit: BoxFit.contain,
+            color: Colors.white,
           ),
         ),
-        buttonStyle: CustomButtonStyles.fillBlue,
+        buttonStyle: widget.notification.isRead 
+          ? ElevatedButton.styleFrom(
+              backgroundColor: appTheme.gray500,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16.h),
+              ),
+              elevation: 0,
+              padding: EdgeInsets.zero,
+            )
+          : CustomButtonStyles.fillBlue,
       );
     } else if (message.contains("sent a message")) {
       return CustomElevatedButton(
@@ -85,7 +233,7 @@ class ReadTwoItemWidget extends StatelessWidget {
               context.findAncestorStateOfType<NotificationsScreenState>();
           if (notificationsState != null) {
             notificationsState.showChallengeDialog(
-                context, notification.message);
+                context, widget.notification.message);
           }
         },
         rightIcon: Container(

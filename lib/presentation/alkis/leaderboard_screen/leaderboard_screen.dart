@@ -75,28 +75,40 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        title: Text('Leaderboard'),
+      backgroundColor: Colors.white,
+      appBar: CustomAppBar(
+        height: 70.h,
+        title: Padding(
+          padding: EdgeInsets.only(left: 19.h),
+          child: Text(
+            'Leaderboard',
+            style: theme.textTheme.headlineMedium!.copyWith(
+              color: appTheme.black900,
+            ),
+          ),
+        ),
         actions: [
           Consumer<NotificationsProvider>(
-            builder: (context, notificationsProvider, _) => IconButton(
-              icon: Icon(
-                notificationsProvider.hasUnreadNotifications
-                    ? Icons.notifications
-                    : Icons.notifications_outlined,
-                color: notificationsProvider.hasUnreadNotifications
-                    ? Colors.black
-                    : null,
+            builder: (context, notificationsProvider, _) => Padding(
+              padding: EdgeInsets.only(right: 16.h),
+              child: IconButton(
+                icon: CustomImageView(
+                  imagePath: ImageConstant.imgBell,
+                  height: 32.h,
+                  width: 32.h,
+                  color: notificationsProvider.hasUnreadNotifications
+                      ? Colors.black
+                      : null,
+                ),
+                onPressed: () async {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => NotificationsScreen(),
+                    ),
+                  );
+                },
               ),
-              onPressed: () async {
-                await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => NotificationsScreen(),
-                  ),
-                );
-              },
             ),
           ),
         ],

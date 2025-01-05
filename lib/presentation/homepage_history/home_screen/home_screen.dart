@@ -15,6 +15,7 @@ import '../../../presentation/profile_screen/profile_screen.dart';
 import '../../../providers/profile_picture_provider.dart';
 import '../../../services/meal_service.dart';
 import '../../../widgets/calories_macros_widget.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -241,42 +242,7 @@ class HomeScreenState extends State<HomeScreen> {
         ),
       ),
       actions: [
-        Padding(
-          padding: EdgeInsets.only(
-            left: 16.h,
-            right: 16.h,
-            bottom: 12.h,
-            top: 18.h,
-          ),
-          child: GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => ProfileScreen()),
-              );
-            },
-            child: Consumer<ProfilePictureProvider>(
-              builder: (context, profilePicProvider, _) {
-                return ClipOval(
-                  child: profilePicProvider.cachedProfilePicture != null
-                      ? Image.memory(
-                          base64Decode(
-                              profilePicProvider.cachedProfilePicture!),
-                          height: 40.h,
-                          width: 40.h,
-                          fit: BoxFit.cover,
-                          gaplessPlayback: true,
-                        )
-                      : CustomImageView(
-                          imagePath: ImageConstant.imgVector80x84,
-                          height: 40.h,
-                          width: 40.h,
-                        ),
-                );
-              },
-            ),
-          ),
-        ),
+        _buildProfilePicture(context),
       ],
     );
   }
@@ -358,6 +324,54 @@ class HomeScreenState extends State<HomeScreen> {
               break;
           }
         },
+      ),
+    );
+  }
+
+  Widget _buildProfilePicture(BuildContext context) {
+    return Container(
+      margin: EdgeInsets.only(
+        left: 16.h,
+        right: 16.h,
+        bottom: 12.h,
+        top: 18.h,
+      ),
+      child: GestureDetector(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => ProfileScreen()),
+          );
+        },
+        child: Consumer<ProfilePictureProvider>(
+          builder: (context, profilePicProvider, _) {
+            return ClipOval(
+              child: profilePicProvider.cachedProfilePicture != null &&
+                      profilePicProvider.cachedProfilePicture!.isNotEmpty
+                  ? Image.memory(
+                      base64Decode(profilePicProvider.cachedProfilePicture!),
+                      height: 40.h,
+                      width: 40.h,
+                      fit: BoxFit.cover,
+                      gaplessPlayback: true,
+                    )
+                  : Container(
+                      height: 40.h,
+                      width: 40.h,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[200],
+                        shape: BoxShape.circle,
+                      ),
+                      child: SvgPicture.asset(
+                        'assets/images/person.crop.circle.fill.svg',
+                        height: 40.h,
+                        width: 40.h,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+            );
+          },
+        ),
       ),
     );
   }

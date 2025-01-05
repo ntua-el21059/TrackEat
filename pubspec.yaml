@@ -75,5 +75,6 @@ flutter:
   # Assets
   assets:
     - assets/images/
+    - assets/images/person.crop.circle.fill.svg
     
     

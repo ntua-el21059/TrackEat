@@ -220,4 +220,5 @@ class ImageConstant {
   static String imgCarnivoreChallenge = '$imagePath/carnivore_challenge.png';
   static String imgAvocadoExcellence = '$imagePath/avocado_excellence.png';
   static String imgActivityLevel = '$imagePath/activity_level2.svg';
+  static String imgBell = '$imagePath/bell.fill.svg';
 }

@@ -8,7 +8,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class ProfilePictureProvider extends ChangeNotifier {
-  String _profileImagePath = 'assets/images/imgVector80x84.png';
+  String _profileImagePath = 'assets/images/person.crop.circle.fill.svg';
   String? _cachedProfilePicture;
   final SharedPreferences _prefs;
 
@@ -25,7 +25,7 @@ class ProfilePictureProvider extends ChangeNotifier {
     if (savedPath != null && File(savedPath).existsSync()) {
       _profileImagePath = savedPath;
     } else {
-      _profileImagePath = 'assets/images/imgVector80x84.png';
+      _profileImagePath = 'assets/images/person.crop.circle.fill.svg';
     }
     notifyListeners();
   }
@@ -98,7 +98,7 @@ class ProfilePictureProvider extends ChangeNotifier {
         await File(croppedFile.path).copy(localPath);
 
         // Delete old profile picture if it exists and is not the default one
-        if (_profileImagePath != 'assets/images/imgVector80x84.png' && File(_profileImagePath).existsSync()) {
+        if (_profileImagePath != 'assets/images/person.crop.circle.fill.svg' && File(_profileImagePath).existsSync()) {
           await File(_profileImagePath).delete();
         }
 

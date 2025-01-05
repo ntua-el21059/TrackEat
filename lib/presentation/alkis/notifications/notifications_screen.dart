@@ -79,25 +79,29 @@ class NotificationsScreenState extends State<NotificationsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<NotificationsProvider>(
-      builder: (context, provider, _) {
-        if (!provider.hasBeenViewed) {
-          Future.microtask(() => provider.markAllAsRead());
-        }
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: _buildAppBar(context),
+      body: Consumer<NotificationsProvider>(
+        builder: (context, provider, _) {
+          if (provider.isLoading) {
+            return Center(child: CircularProgressIndicator());
+          }
 
-        return Scaffold(
-          backgroundColor: theme.colorScheme.onErrorContainer,
-          appBar: _buildAppbar(context),
-          body: SafeArea(
-            top: false,
-            child: _buildBody(context, provider),
-          ),
-        );
-      },
+          switch (provider.screenState) {
+            case NotificationScreenState.empty:
+              return _buildEmptyState(context, provider);
+            case NotificationScreenState.unread:
+              return _buildUnreadState(context, provider);
+            case NotificationScreenState.read:
+              return _buildReadState(context, provider);
+          }
+        },
+      ),
     );
   }
 
-  PreferredSizeWidget _buildAppbar(BuildContext context) {
+  PreferredSizeWidget _buildAppBar(BuildContext context) {
     return CustomAppBar(
       height: 38.h,
       leadingWidth: 20.h,
@@ -114,18 +118,7 @@ class NotificationsScreenState extends State<NotificationsScreen> {
     );
   }
 
-  Widget _buildBody(BuildContext context, NotificationsProvider provider) {
-    switch (provider.screenState) {
-      case NotificationScreenState.empty:
-        return _buildEmptyState(context);
-      case NotificationScreenState.unread:
-        return _buildUnreadState(context, provider);
-      case NotificationScreenState.read:
-        return _buildReadState(context, provider);
-    }
-  }
-
-  Widget _buildEmptyState(BuildContext context) {
+  Widget _buildEmptyState(BuildContext context, NotificationsProvider provider) {
     return SizedBox(
       width: double.maxFinite,
       child: Column(
