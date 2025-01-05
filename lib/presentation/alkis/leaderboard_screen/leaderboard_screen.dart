@@ -187,7 +187,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                                   Container(
                                     width: 24.h,
                                     child: Text(
-                                      '${index + 4}', // Starting from 4 as per design
+                                      '${index + 1}', // Starting from 1 for proper ranking
                                       style: TextStyle(
                                         color: user.isCurrentUser
                                             ? Colors.white
