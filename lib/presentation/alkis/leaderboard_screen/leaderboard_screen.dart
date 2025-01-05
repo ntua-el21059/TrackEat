@@ -92,13 +92,12 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
             builder: (context, notificationsProvider, _) => Padding(
               padding: EdgeInsets.only(right: 16.h),
               child: IconButton(
-                icon: CustomImageView(
-                  imagePath: ImageConstant.imgBell,
+                icon: SvgPicture.asset(
+                  notificationsProvider.hasUnreadNotifications
+                      ? 'assets/images/bell_icon_unread.svg'
+                      : 'assets/images/bell_icon_read.svg',
                   height: 32.h,
                   width: 32.h,
-                  color: notificationsProvider.hasUnreadNotifications
-                      ? Colors.black
-                      : null,
                 ),
                 onPressed: () async {
                   await Navigator.push(
@@ -163,7 +162,9 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) => SocialProfileMyselfScreen.builderFromLeaderboard(
+                                      builder: (context) =>
+                                          SocialProfileMyselfScreen
+                                              .builderFromLeaderboard(
                                         context,
                                         backButtonText: "Leaderboard",
                                       ),
@@ -199,27 +200,28 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                                   ),
                                   // Profile picture
                                   ClipOval(
-                                    child: (user.profileImage != null && user.profileImage!.isNotEmpty)
-                                      ? Image.memory(
-                                          base64Decode(user.profileImage!),
-                                          height: 32.h,
-                                          width: 32.h,
-                                          fit: BoxFit.cover,
-                                        )
-                                      : Container(
-                                          height: 32.h,
-                                          width: 32.h,
-                                          decoration: BoxDecoration(
-                                            color: Colors.grey[200],
-                                            shape: BoxShape.circle,
-                                          ),
-                                          child: SvgPicture.asset(
-                                            'assets/images/person.crop.circle.fill.svg',
+                                    child: (user.profileImage != null &&
+                                            user.profileImage!.isNotEmpty)
+                                        ? Image.memory(
+                                            base64Decode(user.profileImage!),
                                             height: 32.h,
                                             width: 32.h,
                                             fit: BoxFit.cover,
+                                          )
+                                        : Container(
+                                            height: 32.h,
+                                            width: 32.h,
+                                            decoration: BoxDecoration(
+                                              color: Colors.grey[200],
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: SvgPicture.asset(
+                                              'assets/images/person.crop.circle.fill.svg',
+                                              height: 32.h,
+                                              width: 32.h,
+                                              fit: BoxFit.cover,
+                                            ),
                                           ),
-                                        ),
                                   ),
                                   SizedBox(width: 12.h),
                                   // Username
