@@ -14,6 +14,7 @@ import 'providers/profile_picture_provider.dart';
 import 'providers/user_info_provider.dart';
 import 'presentation/alkis/leaderboard_screen/provider/leaderboard_provider.dart';
 import 'presentation/alkis/notifications/provider/notifications_provider.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 var globalMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
@@ -143,6 +144,12 @@ class MyApp extends StatelessWidget {
               ),
             ),
             builder: (context, child) {
+              ScreenUtil.init(
+                context,
+                designSize: const Size(375, 812),
+                minTextAdapt: true,
+                splitScreenMode: true,
+              );
               return MediaQuery(
                 data: MediaQuery.of(context).copyWith(
                   textScaler: TextScaler.linear(themeProvider.textScaleFactor),

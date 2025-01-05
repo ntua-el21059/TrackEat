@@ -15,6 +15,7 @@ import '../../services/firebase/auth/auth_provider.dart' as auth;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../services/storage_service.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class ProfileStaticScreen extends StatefulWidget {
   const ProfileStaticScreen({Key? key}) : super(key: key);
@@ -27,7 +28,20 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> {
   // Add text controller
   final TextEditingController _textController = TextEditingController();
   StreamSubscription<DocumentSnapshot>? _userSubscription;
-  Widget? _currentProfileImage;
+  Widget _currentProfileImage = Container(
+    height: 72.h,
+    width: 72.h,
+    decoration: BoxDecoration(
+      color: Colors.grey[200],
+      shape: BoxShape.circle,
+    ),
+    child: SvgPicture.asset(
+      'assets/images/person.crop.circle.fill.svg',
+      height: 72.h,
+      width: 72.h,
+      fit: BoxFit.cover,
+    ),
+  );
 
   void _showTextInputDialog(BuildContext context, String title, String currentValue, bool isNameField) {
     // Get the current value from Firebase first
@@ -544,15 +558,6 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> {
   void initState() {
     super.initState();
     
-    // Initialize with default image
-    _currentProfileImage = ClipOval(
-      child: CustomImageView(
-        imagePath: ImageConstant.imgVector80x84,
-        height: 72.h,
-        width: 72.h,
-      ),
-    );
-    
     // Fetch initial profile picture
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser?.email != null) {
@@ -588,11 +593,11 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> {
   void _setupFirestoreListener() {
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser?.email != null) {
-      _userSubscription = FirebaseFirestore.instance
+      FirebaseFirestore.instance
           .collection('users')
           .doc(currentUser?.email)
           .snapshots()
-          .listen((snapshot) async {
+          .listen((snapshot) {
         if (snapshot.exists && mounted) {
           final userData = snapshot.data()!;
           final profilePicture = userData['profilePicture'] as String?;
@@ -610,28 +615,22 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> {
             });
           } else {
             setState(() {
-              _currentProfileImage = ClipOval(
-                child: CustomImageView(
-                  imagePath: ImageConstant.imgVector80x84,
+              _currentProfileImage = Container(
+                height: 72.h,
+                width: 72.h,
+                decoration: BoxDecoration(
+                  color: Colors.grey[200],
+                  shape: BoxShape.circle,
+                ),
+                child: SvgPicture.asset(
+                  'assets/images/person.crop.circle.fill.svg',
                   height: 72.h,
                   width: 72.h,
+                  fit: BoxFit.cover,
                 ),
               );
             });
           }
-          
-          // Update other user info
-          final userInfoProvider = Provider.of<UserInfoProvider>(context, listen: false);
-          await userInfoProvider.updateName(
-            userData['firstName']?.toString() ?? '',
-            userData['lastName']?.toString() ?? ''
-          );
-          
-          userInfoProvider.updateUsername(userData['username']?.toString() ?? '');
-          userInfoProvider.updateBirthdate(userData['birthdate']?.toString() ?? '');
-          userInfoProvider.updateGender(userData['gender']?.toString() ?? '');
-          userInfoProvider.updateHeight(userData['height']?.toString() ?? '');
-          userInfoProvider.updateDailyCalories(userData['dailyCalories']?.toString() ?? '');
         }
       });
     }

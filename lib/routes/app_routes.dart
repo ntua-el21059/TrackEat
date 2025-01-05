@@ -36,7 +36,9 @@ import '../presentation/alkis/leaderboard_screen/leaderboard_screen.dart';
 import '../presentation/alkis/find friends/find_friends_screen.dart';
 import '../presentation/alkis/notifications/notifications_screen.dart';
 import '../presentation/alkis/notifications/provider/notifications_provider.dart';
+import '../presentation/social_profile_view_screen/social_profile_view_screen.dart';
 import 'package:provider/provider.dart';
+import '../presentation/social_profile_view_screen/provider/social_profile_view_provider.dart';
 
 class AppRoutes {
   static const String createAccountScreen = '/create_account_screen';
@@ -103,6 +105,7 @@ class AppRoutes {
   static const String appNavigationScreen = '/app_navigation_screen';
   static const String initialRoute = '/initialRoute';
   static const String notificationsScreen = '/notifications_screen';
+  static String socialProfileViewScreen = '/social_profile_view_screen';
 
   static Map<String, WidgetBuilder> routes = {
     splashScreen: SplashScreen.builder,
@@ -134,5 +137,20 @@ class AppRoutes {
     leaderboardScreen: (context) => LeaderboardScreen.builder(context),
     findFriendsScreen: (context) => FindFriendsScreen.builder(context),
     notificationsScreen: (context) => const NotificationsScreen(),
+    socialProfileViewScreen: (context) {
+      final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>?;
+      if (args == null || args['username'] == null) {
+        print('No username provided in arguments');
+        return const Scaffold(
+          body: Center(
+            child: Text('Error: No username provided'),
+          ),
+        );
+      }
+      print('Route args: $args');
+      final username = args['username'] as String;
+      print('Username from args: $username');
+      return SocialProfileViewScreen.builder(context, username: username);
+    },
   };
 }

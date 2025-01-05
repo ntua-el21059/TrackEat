@@ -16,7 +16,7 @@ class FindFriendsItemModel {
 
   factory FindFriendsItemModel.fromUserModel(UserModel user) {
     return FindFriendsItemModel(
-      profileImage: user.profilePicture ?? ImageConstant.imgVector80x84,
+      profileImage: user.profilePicture,
       username: user.username,
       fullName: "${user.firstName ?? ''} ${user.lastName ?? ''}".trim(),
       email: user.email,

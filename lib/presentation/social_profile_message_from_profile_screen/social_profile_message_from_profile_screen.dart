@@ -10,16 +10,38 @@ import 'package:flutter/services.dart';
 import 'dart:convert';
 
 class SocialProfileMessageFromProfileScreen extends StatefulWidget {
-  const SocialProfileMessageFromProfileScreen({Key? key}) : super(key: key);
+  final String? receiverId;
+  final String? receiverName;
+  final String? receiverUsername;
+
+  const SocialProfileMessageFromProfileScreen({
+    Key? key,
+    this.receiverId,
+    this.receiverName,
+    this.receiverUsername,
+  }) : super(key: key);
 
   @override
   SocialProfileMessageFromProfileScreenState createState() =>
       SocialProfileMessageFromProfileScreenState();
 
-  static Widget builder(BuildContext context) {
+  static Widget builder(BuildContext context, {
+    String? receiverId,
+    String? receiverName,
+    String? receiverUsername,
+  }) {
     return ChangeNotifierProvider(
-      create: (context) => SocialProfileMessageFromProfileProvider(),
-      child: const SocialProfileMessageFromProfileScreen(),
+      create: (context) => SocialProfileMessageFromProfileProvider()
+        ..setReceiverInfo(
+          receiverId: receiverId,
+          receiverName: receiverName,
+          receiverUsername: receiverUsername,
+        ),
+      child: SocialProfileMessageFromProfileScreen(
+        receiverId: receiverId,
+        receiverName: receiverName,
+        receiverUsername: receiverUsername,
+      ),
     );
   }
 }

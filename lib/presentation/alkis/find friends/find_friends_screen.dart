@@ -8,6 +8,8 @@ import 'models/find_friends_item_model.dart';
 import 'models/find_friends_model.dart';
 import 'provider/find_friends_provider.dart';
 import 'widgets/find_friends_item_widget.dart';
+import 'dart:convert';
+import 'package:flutter_svg/flutter_svg.dart';
 
 // This screen allows users to discover and connect with potential friends.
 // It provides a search functionality and displays a list of suggested connections.
@@ -198,43 +200,71 @@ class FindFriendsScreenState extends State<FindFriendsScreen> {
                             color: Color(0xFFE3F2FD),
                             borderRadius: BorderRadius.circular(25.h),
                           ),
-                          child: Row(
-                            children: [
-                              CircleAvatar(
-                                radius: 20.h,
-                                backgroundImage: NetworkImage(
-                                    model.profileImage ??
-                                        ImageConstant.imgVector80x84),
-                              ),
-                              SizedBox(width: 12.h),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      model.fullName ?? '',
-                                      style: TextStyle(
-                                        fontSize: 16.h,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                    if (model.username != null)
-                                      Text(
-                                        "@${model.username}",
-                                        style: TextStyle(
-                                          fontSize: 14.h,
-                                          color: Colors.grey[600],
+                          child: GestureDetector(
+                            onTap: () {
+                              if (model.username != null) {
+                                Navigator.pushNamed(
+                                  context,
+                                  AppRoutes.socialProfileViewScreen,
+                                  arguments: {'username': model.username},
+                                );
+                              }
+                            },
+                            child: Row(
+                              children: [
+                                ClipOval(
+                                  child: (model.profileImage != null && model.profileImage!.isNotEmpty)
+                                    ? Image.memory(
+                                        base64Decode(model.profileImage!),
+                                        height: 40.h,
+                                        width: 40.h,
+                                        fit: BoxFit.cover,
+                                      )
+                                    : Container(
+                                        height: 40.h,
+                                        width: 40.h,
+                                        decoration: BoxDecoration(
+                                          color: Colors.grey[200],
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: SvgPicture.asset(
+                                          'assets/images/person.crop.circle.fill.svg',
+                                          height: 40.h,
+                                          width: 40.h,
+                                          fit: BoxFit.cover,
                                         ),
                                       ),
-                                  ],
                                 ),
-                              ),
-                              Icon(
-                                Icons.chevron_right,
-                                color: Colors.grey[400],
-                                size: 24.h,
-                              ),
-                            ],
+                                SizedBox(width: 12.h),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        model.fullName ?? '',
+                                        style: TextStyle(
+                                          fontSize: 16.h,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                      if (model.username != null)
+                                        Text(
+                                          "@${model.username}",
+                                          style: TextStyle(
+                                            fontSize: 14.h,
+                                            color: Colors.grey[600],
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                                Icon(
+                                  Icons.chevron_right,
+                                  color: Colors.grey[400],
+                                  size: 24.h,
+                                ),
+                              ],
+                            ),
                           ),
                         );
                       },
@@ -316,6 +346,7 @@ class FindFriendsScreenState extends State<FindFriendsScreen> {
           itemBuilder: (context, index) {
             FindFriendsItemModel model =
                 provider.findFriendsModelObj.findFriendsItemList[index];
+            print('Building item for user: ${model.username}'); // Debug print
             return FindFriendsItemWidget(model);
           },
         );

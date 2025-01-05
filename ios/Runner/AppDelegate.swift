@@ -19,24 +19,35 @@ import UIKit
       
       switch call.method {
       case "toggleVoiceOver":
-        // Try to open VoiceOver settings directly
-        if let url = URL(string: "App-Prefs:root=General&path=ACCESSIBILITY/VOICEOVER") {
-          if UIApplication.shared.canOpenURL(url) {
+        // Try multiple URL schemes to ensure compatibility
+        let urls = [
+          "App-Prefs:root=General&path=ACCESSIBILITY/VOICEOVER",
+          "app-settings:root=General&path=ACCESSIBILITY/VOICEOVER",
+          "prefs:root=General&path=ACCESSIBILITY/VOICEOVER"
+        ]
+        
+        var opened = false
+        for urlString in urls {
+          if let url = URL(string: urlString), UIApplication.shared.canOpenURL(url) {
             UIApplication.shared.open(url, options: [:]) { success in
+              if success {
+                opened = true
+                result(true)
+              }
+            }
+            break
+          }
+        }
+        
+        if !opened {
+          // Fallback to general settings
+          if let settingsUrl = URL(string: UIApplication.openSettingsURLString) {
+            UIApplication.shared.open(settingsUrl, options: [:]) { success in
               result(success)
             }
           } else {
-            // Fallback to general settings
-            if let settingsUrl = URL(string: UIApplication.openSettingsURLString) {
-              UIApplication.shared.open(settingsUrl, options: [:]) { success in
-                result(success)
-              }
-            } else {
-              result(false)
-            }
+            result(false)
           }
-        } else {
-          result(false)
         }
       case "isVoiceAssistantEnabled":
         result(UIAccessibility.isVoiceOverRunning)
