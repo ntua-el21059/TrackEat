@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../services/meal_service.dart';
 import '../../../../models/meal.dart';
+import '../../../../services/points_service.dart';
 
 /// A provider class for the HistoryTodayTabScreen.
 ///
@@ -14,10 +15,11 @@ class HistoryTodayTabProvider extends ChangeNotifier {
   final MealService _mealService = MealService();
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final PointsService _pointsService = PointsService();
   DateTime selectedDate = DateTime.now();
   List<Meal> _meals = [];
   bool _isLoading = true;
-  
+
   // User data
   double _proteinGoal = 0.0;
   double _fatGoal = 0.0;
@@ -32,24 +34,21 @@ class HistoryTodayTabProvider extends ChangeNotifier {
   int get dailyCalories => _dailyCalories;
 
   bool get hasBreakfast {
-    return _meals.any((meal) => 
-      meal.mealType.toLowerCase() == 'breakfast' && 
-      isSameDay(meal.date, selectedDate)
-    );
+    return _meals.any((meal) =>
+        meal.mealType.toLowerCase() == 'breakfast' &&
+        isSameDay(meal.date, selectedDate));
   }
 
   bool get hasLunch {
-    return _meals.any((meal) => 
-      meal.mealType.toLowerCase() == 'lunch' && 
-      isSameDay(meal.date, selectedDate)
-    );
+    return _meals.any((meal) =>
+        meal.mealType.toLowerCase() == 'lunch' &&
+        isSameDay(meal.date, selectedDate));
   }
 
   bool get hasDinner {
-    return _meals.any((meal) => 
-      meal.mealType.toLowerCase() == 'dinner' && 
-      isSameDay(meal.date, selectedDate)
-    );
+    return _meals.any((meal) =>
+        meal.mealType.toLowerCase() == 'dinner' &&
+        isSameDay(meal.date, selectedDate));
   }
 
   HistoryTodayTabProvider() {
@@ -67,9 +66,13 @@ class HistoryTodayTabProvider extends ChangeNotifier {
           .listen((snapshot) {
         if (snapshot.exists) {
           final userData = snapshot.data()!;
-          _proteinGoal = double.tryParse(userData['proteingoal']?.toString() ?? '0') ?? 0.0;
-          _fatGoal = double.tryParse(userData['fatgoal']?.toString() ?? '0') ?? 0.0;
-          _carbsGoal = double.tryParse(userData['carbsgoal']?.toString() ?? '0') ?? 0.0;
+          _proteinGoal =
+              double.tryParse(userData['proteingoal']?.toString() ?? '0') ??
+                  0.0;
+          _fatGoal =
+              double.tryParse(userData['fatgoal']?.toString() ?? '0') ?? 0.0;
+          _carbsGoal =
+              double.tryParse(userData['carbsgoal']?.toString() ?? '0') ?? 0.0;
           _dailyCalories = userData['dailyCalories'] as int? ?? 0;
           notifyListeners();
         }
@@ -80,7 +83,9 @@ class HistoryTodayTabProvider extends ChangeNotifier {
   void _initializeMeals() {
     final userEmail = _auth.currentUser?.email;
     if (userEmail != null) {
-      _mealService.getMealsByUserAndDate(userEmail, selectedDate).listen((meals) {
+      _mealService
+          .getMealsByUserAndDate(userEmail, selectedDate)
+          .listen((meals) {
         _meals = meals;
         _isLoading = false;
         notifyListeners();
@@ -93,16 +98,16 @@ class HistoryTodayTabProvider extends ChangeNotifier {
   }
 
   bool isSameDay(DateTime date1, DateTime date2) {
-    return date1.year == date2.year && 
-           date1.month == date2.month && 
-           date1.day == date2.day;
+    return date1.year == date2.year &&
+        date1.month == date2.month &&
+        date1.day == date2.day;
   }
 
   bool isToday() {
     final now = DateTime.now();
-    return selectedDate.year == now.year && 
-           selectedDate.month == now.month && 
-           selectedDate.day == now.day;
+    return selectedDate.year == now.year &&
+        selectedDate.month == now.month &&
+        selectedDate.day == now.day;
   }
 
   int getDaysDifference() {
@@ -140,36 +145,39 @@ class HistoryTodayTabProvider extends ChangeNotifier {
   Future<void> deleteMeal(String mealId) async {
     try {
       await _mealService.deleteMeal(mealId);
-      _meals.removeWhere((meal) => meal.id == mealId);
+
+      // Subtract points for deleting a meal
+      await _pointsService.removeMealPoints();
+
       notifyListeners();
     } catch (e) {
       print('Error deleting meal: $e');
-      rethrow;
     }
   }
 
   Meal? getMealByType(String mealType) {
     try {
-      return _meals.firstWhere(
-        (meal) => meal.mealType.toLowerCase() == mealType.toLowerCase() && 
-                  isSameDay(meal.date, selectedDate)
-      );
+      return _meals.firstWhere((meal) =>
+          meal.mealType.toLowerCase() == mealType.toLowerCase() &&
+          isSameDay(meal.date, selectedDate));
     } catch (e) {
       return null;
     }
   }
 
   List<Meal> getMealsByType(String mealType) {
-    return _meals.where(
-      (meal) => meal.mealType.toLowerCase() == mealType.toLowerCase() && 
-                isSameDay(meal.date, selectedDate)
-    ).toList();
+    return _meals
+        .where((meal) =>
+            meal.mealType.toLowerCase() == mealType.toLowerCase() &&
+            isSameDay(meal.date, selectedDate))
+        .toList();
   }
 
   Future<int> getTotalCalories() async {
     final userEmail = _auth.currentUser?.email;
     if (userEmail != null) {
-      return await _mealService.getTotalCaloriesForDate(userEmail, selectedDate);
+      return await _mealService.getTotalCaloriesForDate(
+          userEmail, selectedDate);
     }
     return 0;
   }

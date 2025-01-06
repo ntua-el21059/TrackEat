@@ -12,7 +12,7 @@ class HomeProvider extends ChangeNotifier {
   HomeModel homeModelObj = HomeModel();
   HomeInitialModel _homeInitialModelObj = HomeInitialModel();
   int _dailyCalories = 0;
-  
+
   // Keys for SharedPreferences
   static const String _rewardShownKey = 'reward_shown';
   static const String _ringsClosedKey = 'rings_closed';

@@ -8,12 +8,14 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import '../../../providers/user_info_provider.dart';
 import '../../../presentation/signup_login/login_screen/provider/login_provider.dart';
+import '../../../services/points_service.dart';
 
 class AuthProvider with ChangeNotifier {
   final AuthService _authService = AuthService();
   final FirestoreService _firestoreService = FirestoreService();
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final PointsService _pointsService = PointsService();
 
   User? _user;
   String? _lastError;
@@ -59,7 +61,7 @@ class AuthProvider with ChangeNotifier {
           final username = userData['username'] ?? '';
 
           // Add one point for logging in
-          await _firestoreService.addPoints(email, 1);
+          await _pointsService.addLoginPoints();
 
           if (context.mounted) {
             final userInfoProvider =

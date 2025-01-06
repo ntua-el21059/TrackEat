@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:convert';
 import '../../../../models/meal.dart';
 import '../../../../services/meal_service.dart';
+import '../../../../services/points_service.dart';
 import '../models/ai_chat_main_page_model.dart';
 
 const String apiKey = 'AIzaSyDe5fyQXDIfgZ1paU5Ax5HNj6gNyWA0MAA';
@@ -27,6 +28,7 @@ Always maintain a friendly, witty tone while guiding users back to food-related 
 
 class AiChatMainProvider extends ChangeNotifier {
   final MealService _mealService = MealService();
+  final PointsService _pointsService = PointsService();
   final FirebaseAuth _auth = FirebaseAuth.instance;
   TextEditingController messageController = TextEditingController();
   AiChatMainModel aiChatMainModelObj = AiChatMainModel();
@@ -38,7 +40,7 @@ class AiChatMainProvider extends ChangeNotifier {
   bool showMealTypeSelection = false;
   bool showTrackingSuccess = false;
   String? selectedMealType;
-  
+
   final GenerativeModel _model = GenerativeModel(
     model: modelName,
     apiKey: apiKey,
@@ -50,13 +52,12 @@ class AiChatMainProvider extends ChangeNotifier {
   Function? onMessageAdded;
 
   AiChatMainProvider() {
-    _chat = _model.startChat(history: [
-      Content.text(_systemPrompt)
-    ]);
+    _chat = _model.startChat(history: [Content.text(_systemPrompt)]);
   }
 
   Future<void> pickImage() async {
-    final XFile? image = await _imagePicker.pickImage(source: ImageSource.gallery);
+    final XFile? image =
+        await _imagePicker.pickImage(source: ImageSource.gallery);
     if (image != null) {
       setSelectedImage(image);
     }
@@ -86,8 +87,9 @@ class AiChatMainProvider extends ChangeNotifier {
       // If an image is selected
       if (selectedImage != null) {
         final userText = message.trim();
-        final imageMessage = '📸 Image${userText.isNotEmpty ? "\nUser note: $userText" : ""}\n${selectedImage!.path}';
-        
+        final imageMessage =
+            '📸 Image${userText.isNotEmpty ? "\nUser note: $userText" : ""}\n${selectedImage!.path}';
+
         // Add user's image message with any additional text
         messages.add({
           'role': 'user',
@@ -97,7 +99,8 @@ class AiChatMainProvider extends ChangeNotifier {
         if (onMessageAdded != null) onMessageAdded!();
 
         // Prepare image analysis prompt
-        final imagePrompt = """You are a nutrition analysis assistant. Look at this food image and respond ONLY with a valid JSON object in exactly this format, with no additional text or markdown:
+        final imagePrompt =
+            """You are a nutrition analysis assistant. Look at this food image and respond ONLY with a valid JSON object in exactly this format, with no additional text or markdown:
 {
   "food": "name of the food",
   "serving_size": "detected serving size",
@@ -125,16 +128,17 @@ Important: Respond with ONLY the JSON object, no other text.""";
                 .replaceAll('```json', '')
                 .replaceAll('```', '')
                 .trim();
-            
+
             Map<String, dynamic> nutritionData = jsonDecode(cleanedResponse);
             lastNutritionData = nutritionData;
-            
-            String formattedResponse = 'Food: ${nutritionData['food'].toString().split(' ').map((word) => word.substring(0, 1).toUpperCase() + word.substring(1)).join(' ')}\n' +
-                '🍽️ Serving Size: ${nutritionData['serving_size']}\n' +
-                '🔥 Calories: ${nutritionData['calories']}\n' +
-                '💪 Protein: ${nutritionData['protein']}g\n' +
-                '🌾 Carbs: ${nutritionData['carbs']}g\n' +
-                '🥑 Fat: ${nutritionData['fat']}g';
+
+            String formattedResponse =
+                'Food: ${nutritionData['food'].toString().split(' ').map((word) => word.substring(0, 1).toUpperCase() + word.substring(1)).join(' ')}\n' +
+                    '🍽️ Serving Size: ${nutritionData['serving_size']}\n' +
+                    '🔥 Calories: ${nutritionData['calories']}\n' +
+                    '💪 Protein: ${nutritionData['protein']}g\n' +
+                    '🌾 Carbs: ${nutritionData['carbs']}g\n' +
+                    '🥑 Fat: ${nutritionData['fat']}g';
 
             // Add the formatted response to messages
             messages.add({
@@ -149,14 +153,15 @@ Important: Respond with ONLY the JSON object, no other text.""";
               Content.text(_systemPrompt),
               ...messages.map((msg) => Content.text(msg['content']!)),
             ]);
-            
+
             // Show track dialog after response
             showTrackDialog = true;
           } catch (e) {
             print('Error parsing nutrition data: $e');
             messages.add({
               'role': 'assistant',
-              'content': 'Sorry, I had trouble analyzing the nutritional information. Please try again.',
+              'content':
+                  'Sorry, I had trouble analyzing the nutritional information. Please try again.',
             });
             notifyListeners();
             if (onMessageAdded != null) onMessageAdded!();
@@ -210,7 +215,7 @@ Important: Respond with ONLY the JSON object, no other text.""";
       // TODO: Implement tracking logic with selectedMealType
       showTrackingSuccess = true;
       notifyListeners();
-      
+
       // Auto-dismiss after 2 seconds
       Future.delayed(Duration(seconds: 2), () {
         showTrackDialog = false;
@@ -276,10 +281,13 @@ Important: Respond with ONLY the JSON object, no other text.""";
       // Save to Firebase
       await _mealService.addMeal(meal);
 
+      // Add points for logging a meal
+      await _pointsService.addMealPoints();
+
       // Show success message
       showTrackingSuccess = true;
       notifyListeners();
-      
+
       // Auto-dismiss after 2 seconds
       Future.delayed(Duration(seconds: 2), () {
         showTrackDialog = false;

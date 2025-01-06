@@ -45,12 +45,21 @@ class CaloriesMacrosWidget extends StatelessWidget {
                 .doc(FirebaseAuth.instance.currentUser?.email)
                 .snapshots(),
             builder: (context, userSnapshot) {
-              if (userSnapshot.hasData && userSnapshot.data != null && userSnapshot.data!.exists) {
-                final userData = userSnapshot.data!.data() as Map<String, dynamic>;
+              if (userSnapshot.hasData &&
+                  userSnapshot.data != null &&
+                  userSnapshot.data!.exists) {
+                final userData =
+                    userSnapshot.data!.data() as Map<String, dynamic>;
                 final dailyCalories = userData['dailyCalories'] as int? ?? 0;
-                final proteinGoal = double.tryParse(userData['proteingoal']?.toString() ?? '0') ?? 0.0;
-                final fatGoal = double.tryParse(userData['fatgoal']?.toString() ?? '0') ?? 0.0;
-                final carbsGoal = double.tryParse(userData['carbsgoal']?.toString() ?? '0') ?? 0.0;
+                final proteinGoal = double.tryParse(
+                        userData['proteingoal']?.toString() ?? '0') ??
+                    0.0;
+                final fatGoal =
+                    double.tryParse(userData['fatgoal']?.toString() ?? '0') ??
+                        0.0;
+                final carbsGoal =
+                    double.tryParse(userData['carbsgoal']?.toString() ?? '0') ??
+                        0.0;
 
                 return StreamBuilder<List<dynamic>>(
                   stream: Rx.zip2(
@@ -62,23 +71,33 @@ class CaloriesMacrosWidget extends StatelessWidget {
                       FirebaseAuth.instance.currentUser!.email!,
                       selectedDate,
                     ),
-                    (int calories, Map<String, double> macros) => [calories, macros],
+                    (int calories, Map<String, double> macros) =>
+                        [calories, macros],
                   ),
                   builder: (context, macrosSnapshot) {
                     final consumedCalories = macrosSnapshot.data?[0] ?? 0;
-                    final macros = macrosSnapshot.data?[1] as Map<String, double>? ?? {'protein': 0.0, 'fats': 0.0, 'carbs': 0.0};
+                    final macros =
+                        macrosSnapshot.data?[1] as Map<String, double>? ??
+                            {'protein': 0.0, 'fats': 0.0, 'carbs': 0.0};
                     final proteinConsumed = macros['protein'] ?? 0.0;
                     final fatConsumed = macros['fats'] ?? 0.0;
                     final carbsConsumed = macros['carbs'] ?? 0.0;
 
-                    final proteinPercent = (proteinConsumed / proteinGoal * 100).clamp(0, 100);
-                    final fatPercent = (fatConsumed / fatGoal * 100).clamp(0, 100);
-                    final carbsPercent = (carbsConsumed / carbsGoal * 100).clamp(0, 100);
-                    final caloriesPercent = ((consumedCalories / dailyCalories) * 100).clamp(0, 100);
-                    final remainingCalories = (dailyCalories - consumedCalories).clamp(0, dailyCalories);
+                    final proteinPercent =
+                        (proteinConsumed / proteinGoal * 100).clamp(0, 100);
+                    final fatPercent =
+                        (fatConsumed / fatGoal * 100).clamp(0, 100);
+                    final carbsPercent =
+                        (carbsConsumed / carbsGoal * 100).clamp(0, 100);
+                    final caloriesPercent =
+                        ((consumedCalories / dailyCalories) * 100)
+                            .clamp(0, 100);
+                    final remainingCalories = (dailyCalories - consumedCalories)
+                        .clamp(0, dailyCalories);
 
                     if (isHomeScreen) {
-                      (context as Element).findAncestorStateOfType<HomeScreenState>()
+                      (context as Element)
+                          .findAncestorStateOfType<HomeScreenState>()
                           ?.checkRingsAndShowReward(userData);
                     }
 
@@ -117,9 +136,13 @@ class CaloriesMacrosWidget extends StatelessWidget {
                                 return Row(
                                   children: [
                                     Container(
-                                      width: (constraints.maxWidth * (caloriesPercent / 100)).clamp(0, constraints.maxWidth),
+                                      width: (constraints.maxWidth *
+                                              (caloriesPercent / 100))
+                                          .clamp(0, constraints.maxWidth),
                                       decoration: BoxDecoration(
-                                        color: consumedCalories > dailyCalories ? Colors.red : const Color(0xFF4CD964),
+                                        color: consumedCalories > dailyCalories
+                                            ? Colors.red
+                                            : const Color(0xFF4CD964),
                                       ),
                                     ),
                                   ],
@@ -136,18 +159,28 @@ class CaloriesMacrosWidget extends StatelessWidget {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  _buildMacronutrientText("Protein", proteinConsumed, proteinGoal, const Color(0xFFFA114F)),
+                                  _buildMacronutrientText(
+                                      "Protein",
+                                      proteinConsumed,
+                                      proteinGoal,
+                                      const Color(0xFFFA114F)),
                                   SizedBox(height: 16.h),
-                                  _buildMacronutrientText("Fats", fatConsumed, fatGoal, const Color(0xFFA6FF00)),
+                                  _buildMacronutrientText("Fats", fatConsumed,
+                                      fatGoal, const Color(0xFFA6FF00)),
                                   SizedBox(height: 16.h),
-                                  _buildMacronutrientText("Carbs", carbsConsumed, carbsGoal, const Color(0xFF00FFF6)),
+                                  _buildMacronutrientText(
+                                      "Carbs",
+                                      carbsConsumed,
+                                      carbsGoal,
+                                      const Color(0xFF00FFF6)),
                                 ],
                               ),
                             ),
                             Expanded(
                               flex: 2,
                               child: Ring(
-                                percent: isLoading ? 0.0 : proteinPercent.toDouble(),
+                                percent:
+                                    isLoading ? 0.0 : proteinPercent.toDouble(),
                                 color: RingColorScheme(
                                   ringColor: Color(0xFFFA114F),
                                   backgroundColor: Colors.grey.withOpacity(0.2),
@@ -155,18 +188,23 @@ class CaloriesMacrosWidget extends StatelessWidget {
                                 radius: ringRadius,
                                 width: ringWidth,
                                 child: Ring(
-                                  percent: isLoading ? 0.0 : fatPercent.toDouble(),
+                                  percent:
+                                      isLoading ? 0.0 : fatPercent.toDouble(),
                                   color: RingColorScheme(
                                     ringColor: Color(0xFFA6FF00),
-                                    backgroundColor: Colors.grey.withOpacity(0.2),
+                                    backgroundColor:
+                                        Colors.grey.withOpacity(0.2),
                                   ),
                                   radius: ringRadius - 15,
                                   width: ringWidth,
                                   child: Ring(
-                                    percent: isLoading ? 0.0 : carbsPercent.toDouble(),
+                                    percent: isLoading
+                                        ? 0.0
+                                        : carbsPercent.toDouble(),
                                     color: RingColorScheme(
                                       ringColor: Color(0xFF00FFF6),
-                                      backgroundColor: Colors.grey.withOpacity(0.2),
+                                      backgroundColor:
+                                          Colors.grey.withOpacity(0.2),
                                     ),
                                     radius: ringRadius - 30,
                                     width: ringWidth,
@@ -184,7 +222,8 @@ class CaloriesMacrosWidget extends StatelessWidget {
                               children: [
                                 TextButton(
                                   onPressed: () {
-                                    Navigator.pushNamed(context, AppRoutes.historyTodayTabScreen);
+                                    Navigator.pushNamed(context,
+                                        AppRoutes.historyTodayTabScreen);
                                   },
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
@@ -198,7 +237,8 @@ class CaloriesMacrosWidget extends StatelessWidget {
                                           fontFamily: 'Inter',
                                         ),
                                       ),
-                                      Icon(Icons.chevron_right, color: Colors.white),
+                                      Icon(Icons.chevron_right,
+                                          color: Colors.white),
                                     ],
                                   ),
                                 ),
@@ -219,7 +259,8 @@ class CaloriesMacrosWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildMacronutrientText(String label, double consumed, double total, Color color) {
+  Widget _buildMacronutrientText(
+      String label, double consumed, double total, Color color) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -238,4 +279,4 @@ class CaloriesMacrosWidget extends StatelessWidget {
       ],
     );
   }
-} 
+}

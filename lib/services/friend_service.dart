@@ -1,9 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'points_service.dart';
 
 class FriendService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final PointsService _pointsService = PointsService();
 
   // Add points to a user
   Future<void> _updatePoints(String userEmail, int pointsToAdd) async {
@@ -51,8 +53,8 @@ class FriendService {
         'timestamps': FieldValue.serverTimestamp(),
       });
 
-      // Add 10 points for adding a friend
-      await _updatePoints(currentUserEmail, 10);
+      // Add points for adding a friend
+      await _pointsService.addFriendPoints();
 
       // Get the username of the follower (current user)
       print('Fetching follower username for: $currentUserEmail');
@@ -108,8 +110,8 @@ class FriendService {
         await doc.reference.delete();
       }
 
-      // Remove 10 points for removing a friend
-      await _updatePoints(currentUserEmail, -10);
+      // Remove points for removing a friend
+      await _pointsService.removeFriendPoints();
     } catch (e) {
       print('Error removing friend: $e');
       rethrow;
