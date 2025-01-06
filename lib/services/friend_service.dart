@@ -1,103 +1,117 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'points_service.dart';
 
 class FriendService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final PointsService _pointsService = PointsService();
 
-  Future<void> addFriend(String friendEmail) async {
+  // Add a friend/follow a user
+  Future<void> addFriend(String followingId) async {
+    final currentUser = _auth.currentUser;
+    if (currentUser == null) {
+      print('Error: No current user');
+      return;
+    }
+
+    final currentUserEmail = currentUser.email;
+    if (currentUserEmail == null) {
+      print('Error: Current user has no email');
+      return;
+    }
+
     try {
-      final currentUser = _auth.currentUser;
-      if (currentUser == null) return;
+      print('Adding friend relationship: $currentUserEmail -> $followingId');
 
-      // Get current user's username for notification
-      final currentUserDoc =
-          await _firestore.collection('users').doc(currentUser.email).get();
-      final currentUsername = currentUserDoc.data()?['username'];
-      if (currentUsername == null) return;
-
-      // Add friend to current user's friends list
-      await _firestore
-          .collection('users')
-          .doc(currentUser.email)
-          .collection('friends')
-          .doc(friendEmail)
-          .set({'timestamp': FieldValue.serverTimestamp()});
-
-      // Add current user to friend's friends list
-      await _firestore
-          .collection('users')
-          .doc(friendEmail)
-          .collection('friends')
-          .doc(currentUser.email)
-          .set({'timestamp': FieldValue.serverTimestamp()});
-
-      // Create notification for the friend
-      await _firestore
-          .collection('users')
-          .doc(friendEmail)
-          .collection('notifications')
-          .add({
-        'message': '@$currentUsername added you as a friend',
-        'timestamp': FieldValue.serverTimestamp(),
-        'isRead': false,
-        'type': 'friend_request',
+      // Add friend relationship
+      await _firestore.collection('friends').add({
+        'followerId': currentUserEmail,
+        'followingId': followingId,
+        'timestamps': FieldValue.serverTimestamp(),
       });
 
-      // Add points for making a new friend
-      await _pointsService.addNewFriendPoints();
+      // Get the username of the follower (current user)
+      print('Fetching follower username for: $currentUserEmail');
+      final followerDoc =
+          await _firestore.collection('users').doc(currentUserEmail).get();
 
-      print('Added friend and points successfully'); // Debug print
+      if (followerDoc.exists) {
+        final followerData = followerDoc.data() as Map<String, dynamic>;
+        final followerUsername = followerData['username'] as String?;
+        print('Found follower username: $followerUsername');
+
+        if (followerUsername != null) {
+          print('Creating notification for: $followingId');
+          // Create notification in the user's notifications subcollection
+          await _firestore
+              .collection('users')
+              .doc(followingId)
+              .collection('notifications')
+              .add({
+            'message': '@$followerUsername added you as a friend',
+            'timestamp': FieldValue.serverTimestamp(),
+            'isRead': false,
+            'type': 'friend_request',
+          });
+          print('Notification created successfully');
+        } else {
+          print('Error: Follower username is null');
+        }
+      } else {
+        print('Error: Follower document does not exist');
+      }
     } catch (e) {
       print('Error adding friend: $e');
-      throw e;
+      rethrow;
     }
   }
 
-  Future<void> removeFriend(String friendEmail) async {
-    try {
-      final currentUser = _auth.currentUser;
-      if (currentUser == null) return;
+  // Remove a friend/unfollow a user
+  Future<void> removeFriend(String followingId) async {
+    final currentUserEmail = _auth.currentUser?.email;
+    if (currentUserEmail == null) return;
 
-      // Remove friend from current user's friends list
-      await _firestore
-          .collection('users')
-          .doc(currentUser.email)
-          .collection('friends')
-          .doc(friendEmail)
-          .delete();
+    // Get the friend document
+    final querySnapshot = await _firestore
+        .collection('friends')
+        .where('followerId', isEqualTo: currentUserEmail)
+        .where('followingId', isEqualTo: followingId)
+        .get();
 
-      // Remove current user from friend's friends list
-      await _firestore
-          .collection('users')
-          .doc(friendEmail)
-          .collection('friends')
-          .doc(currentUser.email)
-          .delete();
-    } catch (e) {
-      print('Error removing friend: $e');
-      throw e;
+    // Delete all matching documents (should only be one)
+    for (var doc in querySnapshot.docs) {
+      await doc.reference.delete();
     }
   }
 
-  Future<bool> isFollowing(String friendEmail) async {
-    try {
-      final currentUser = _auth.currentUser;
-      if (currentUser == null) return false;
+  // Check if we're following a user
+  Future<bool> isFollowing(String followingId) async {
+    final currentUserEmail = _auth.currentUser?.email;
+    if (currentUserEmail == null) return false;
 
-      final doc = await _firestore
-          .collection('users')
-          .doc(currentUser.email)
-          .collection('friends')
-          .doc(friendEmail)
-          .get();
+    final querySnapshot = await _firestore
+        .collection('friends')
+        .where('followerId', isEqualTo: currentUserEmail)
+        .where('followingId', isEqualTo: followingId)
+        .get();
 
-      return doc.exists;
-    } catch (e) {
-      print('Error checking following status: $e');
-      return false;
-    }
+    return querySnapshot.docs.isNotEmpty;
+  }
+
+  // Get all friends/following of a user
+  Stream<QuerySnapshot> getFollowing(String userId) {
+    return _firestore
+        .collection('friends')
+        .where('followerId', isEqualTo: userId)
+        .orderBy('timestamps', descending: true)
+        .snapshots();
+  }
+
+  // Get all followers of a user
+  Stream<QuerySnapshot> getFollowers(String userId) {
+    return _firestore
+        .collection('friends')
+        .where('followingId', isEqualTo: userId)
+        .orderBy('timestamps', descending: true)
+        .snapshots();
   }
 }
