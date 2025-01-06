@@ -57,4 +57,48 @@ class PointsService {
   Future<void> removeMealPoints() async {
     await addPoints(POINTS_DELETE_MEAL);
   }
+
+  // Reset points to zero
+  Future<void> resetPoints() async {
+    final currentUser = _auth.currentUser;
+    if (currentUser?.email == null) return;
+
+    try {
+      final docRef = _firestore.collection('users').doc(currentUser!.email);
+      await docRef.update({'points': 0});
+    } catch (e) {
+      print('Error resetting points: $e');
+      rethrow;
+    }
+  }
+
+  // Check and handle monthly reset
+  Future<void> checkAndResetMonthlyPoints() async {
+    final currentUser = _auth.currentUser;
+    if (currentUser?.email == null) return;
+
+    try {
+      final docRef = _firestore.collection('users').doc(currentUser!.email);
+      final doc = await docRef.get();
+
+      if (!doc.exists) return;
+
+      final data = doc.data() as Map<String, dynamic>;
+      final lastResetDate = data['lastPointsReset'] as Timestamp?;
+      final now = DateTime.now();
+
+      // If no last reset date or it's a different month, reset points
+      if (lastResetDate == null ||
+          lastResetDate.toDate().month != now.month ||
+          lastResetDate.toDate().year != now.year) {
+        await resetPoints();
+        await docRef.update({
+          'lastPointsReset': Timestamp.now(),
+        });
+      }
+    } catch (e) {
+      print('Error checking monthly points reset: $e');
+      rethrow;
+    }
+  }
 }

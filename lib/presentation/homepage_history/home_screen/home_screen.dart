@@ -16,6 +16,7 @@ import '../../../providers/profile_picture_provider.dart';
 import '../../../services/meal_service.dart';
 import '../../../widgets/calories_macros_widget.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../../../services/points_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -34,10 +35,14 @@ class HomeScreen extends StatefulWidget {
 class HomeScreenState extends State<HomeScreen> {
   bool _isLoading = true;
   StreamSubscription<DocumentSnapshot>? _userSubscription;
+  final PointsService _pointsService = PointsService();
 
   @override
   void initState() {
     super.initState();
+
+    // Check for monthly points reset
+    _pointsService.checkAndResetMonthlyPoints();
 
     // Fetch current user data immediately
     _fetchInitialUserData();
