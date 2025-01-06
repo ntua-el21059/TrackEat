@@ -1,4 +1,3 @@
-import '../../../../../core/app_export.dart';
 import '../../../../../models/user_model.dart';
 
 class FindFriendsItemModel {

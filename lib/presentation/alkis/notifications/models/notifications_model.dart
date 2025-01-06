@@ -1,5 +1,3 @@
-import 'package:flutter/material.dart';
-
 class NotificationItem {
   final String message;
   final String id;

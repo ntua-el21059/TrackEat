@@ -5,8 +5,6 @@ import '../../../../widgets/app_bar/appbar_leading_image.dart';
 import '../../../../widgets/app_bar/appbar_subtitle.dart';
 import '../../../../widgets/app_bar/custom_app_bar.dart';
 import '../../../../widgets/custom_elevated_button.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'models/notifications_model.dart';
 import 'provider/notifications_provider.dart';
 import 'widgets/read_two_item_widget.dart';
 import '../challenges/avocado_challenge_dialog/avocado_challenge_dialog.dart';
@@ -118,7 +116,8 @@ class NotificationsScreenState extends State<NotificationsScreen> {
     );
   }
 
-  Widget _buildEmptyState(BuildContext context, NotificationsProvider provider) {
+  Widget _buildEmptyState(
+      BuildContext context, NotificationsProvider provider) {
     return SizedBox(
       width: double.maxFinite,
       child: Column(

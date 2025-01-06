@@ -4,16 +4,12 @@ import '../../../core/app_export.dart';
 import '../../../core/utils/size_utils.dart';
 import '../../../routes/app_routes.dart';
 import '../../../widgets/custom_bottom_bar.dart';
-import '../../../widgets/app_bar/appbar_leading_image.dart';
-import '../../../widgets/app_bar/appbar_subtitle.dart';
 import '../../../widgets/app_bar/custom_app_bar.dart';
 import '../../social_profile_myself_screen/social_profile_myself_screen.dart';
-import 'models/challenge_item_model.dart';
 import 'provider/leaderboard_provider.dart';
 import 'widgets/challenge_card.dart';
 import '../notifications/notifications_screen.dart';
 import '../notifications/provider/notifications_provider.dart';
-import '../../../widgets/custom_image_view.dart';
 import 'dart:convert';
 import 'package:flutter_svg/flutter_svg.dart';
 
