@@ -31,8 +31,7 @@ class BananaChallengeDialogState
 
   @override
   String get description => "Bake and enjoy a slice of homemade banana \n"
-      "bread every day for a week—comfort and \n"
-      "flavor in every bite! 🍌🍞✨";
+      "bread for 7 days! 🍌🍞✨";
 
   @override
   String get timeLeft => "10 days";

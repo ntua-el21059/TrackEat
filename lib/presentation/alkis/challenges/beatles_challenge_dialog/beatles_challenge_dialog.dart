@@ -23,8 +23,7 @@ class BeatlesChallengeDialogState
   String get title => "Beatles\nchallenge";
 
   @override
-  String get description =>
-      "Try a beetle salad—crunchy, unique, and packed with nutrients! 🥗✨";
+  String get description => "Try a beatle salad! 🥗✨";
 
   @override
   String get timeLeft => "12:00:00";

@@ -24,7 +24,7 @@ class AvocadoChallengeDialogState
 
   @override
   String get description =>
-      "Savor a slice of avocado toast every morning for 5 days—creamy, crunchy, and oh-so-good! 🥑🍞✨";
+      "Savor a slice of avocado toast every morning for 5 days! 🥑🍞✨";
 
   @override
   String get timeLeft => "29 days";

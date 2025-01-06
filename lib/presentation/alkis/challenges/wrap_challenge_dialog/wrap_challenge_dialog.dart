@@ -30,8 +30,7 @@ class WrapChallengeDialogState
   String get title => "Wrap\nchallenge";
 
   @override
-  String get description =>
-      "Enjoy a healthy burrito—full of\n flavor and goodness! 🌯✨";
+  String get description => "Enjoy a healthy burrito! 🌯✨";
 
   @override
   String get timeLeft => "1 day";

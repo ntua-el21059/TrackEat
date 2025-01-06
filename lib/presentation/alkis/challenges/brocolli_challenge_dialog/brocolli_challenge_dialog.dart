@@ -30,9 +30,7 @@ class BrocolliChallengeDialogState
   String get title => "Broccoli\nchallenge";
 
   @override
-  String get description =>
-      "Enjoy crispy roasted broccoli every day for 7 days\n"
-      "—crunch your way to better health! 🥦✨";
+  String get description => "Enjoy crispy roasted broccoli for 7 days! 🥦✨";
 
   @override
   String get timeLeft => "15 days";
