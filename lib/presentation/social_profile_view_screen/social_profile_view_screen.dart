@@ -1,20 +1,14 @@
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:responsive_grid_list/responsive_grid_list.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:convert';
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../core/app_export.dart';
-import '../../theme/custom_button_style.dart';
 import '../../widgets/app_bar/appbar_leading_image.dart';
 import '../../widgets/app_bar/appbar_subtitle.dart';
 import '../../widgets/app_bar/custom_app_bar.dart';
 import '../../widgets/custom_elevated_button.dart';
 import '../social_profile_message_from_profile_screen/social_profile_message_from_profile_screen.dart';
-import 'provider/social_profile_view_provider.dart';
 import '../social_profile_myself_screen/widgets/gridvector_one_item_widget.dart';
 import '../social_profile_myself_screen/widgets/listvegan_item_widget.dart';
 import '../social_profile_myself_screen/models/gridvector_one_item_model.dart';
@@ -315,7 +309,7 @@ class SocialProfileViewScreenState extends State<SocialProfileViewScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              "😕 ${data?['firstName']} has not set ${getPronoun()} weight goal yet",
+              "😕 $firstName has not set ${getPronoun()} weight goal yet",
               style: theme.textTheme.bodyLarge?.copyWith(
                 color: Colors.white,
               ),
@@ -380,7 +374,7 @@ class SocialProfileViewScreenState extends State<SocialProfileViewScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
-            "🎉 ${data?['firstName']} has hit $progress% of ${getPronoun()} weight goal!",
+            "🎉 $firstName has hit $progress% of ${getPronoun()} weight goal!",
             style: theme.textTheme.bodyLarge?.copyWith(
               color: Colors.white,
             ),

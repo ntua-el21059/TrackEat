@@ -35,10 +35,7 @@ import '../presentation/social_profile_message_from_profile_screen/social_profil
 import '../presentation/alkis/leaderboard_screen/leaderboard_screen.dart';
 import '../presentation/alkis/find friends/find_friends_screen.dart';
 import '../presentation/alkis/notifications/notifications_screen.dart';
-import '../presentation/alkis/notifications/provider/notifications_provider.dart';
 import '../presentation/social_profile_view_screen/social_profile_view_screen.dart';
-import 'package:provider/provider.dart';
-import '../presentation/social_profile_view_screen/provider/social_profile_view_provider.dart';
 
 class AppRoutes {
   static const String createAccountScreen = '/create_account_screen';
