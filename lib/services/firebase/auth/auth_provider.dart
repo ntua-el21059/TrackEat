@@ -14,7 +14,7 @@ class AuthProvider with ChangeNotifier {
   final FirestoreService _firestoreService = FirestoreService();
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  
+
   User? _user;
   String? _lastError;
   UserModel? _userData;
@@ -37,7 +37,8 @@ class AuthProvider with ChangeNotifier {
     });
   }
 
-  Future<bool> signIn(BuildContext context, String email, String password) async {
+  Future<bool> signIn(
+      BuildContext context, String email, String password) async {
     try {
       final result = await _authService.signIn(email, password);
       _user = result.user;
@@ -51,17 +52,22 @@ class AuthProvider with ChangeNotifier {
 
         if (userDoc.exists) {
           final userData = userDoc.data()!;
-          
+
           // Get all user data from Firestore document
           final firstName = userData['firstName'] ?? '';
           final lastName = userData['lastName'] ?? '';
           final username = userData['username'] ?? '';
 
+          // Add one point for logging in
+          await _firestoreService.addPoints(email, 1);
+
           if (context.mounted) {
-            final userInfoProvider = Provider.of<UserInfoProvider>(context, listen: false);
-            
+            final userInfoProvider =
+                Provider.of<UserInfoProvider>(context, listen: false);
+
             // Update all values in the provider
-            await userInfoProvider.updateName(firstName.toString(), lastName.toString());
+            await userInfoProvider.updateName(
+                firstName.toString(), lastName.toString());
             await userInfoProvider.updateUsername(username.toString());
             // Force UI update
             userInfoProvider.notifyListeners();
@@ -84,14 +90,14 @@ class AuthProvider with ChangeNotifier {
     try {
       final result = await _authService.signUp(email, password);
       _user = result.user;
-      
+
       final userModel = UserModel(
         email: email,
         username: email.split('@')[0],
       );
-      
+
       await _firestoreService.createUser(userModel);
-      
+
       _lastError = null;
       notifyListeners();
       return true;
@@ -111,13 +117,14 @@ class AuthProvider with ChangeNotifier {
       await _authService.signOut();
       _user = null;
       _lastError = null;
-      
-      final userInfoProvider = Provider.of<UserInfoProvider>(context, listen: false);
+
+      final userInfoProvider =
+          Provider.of<UserInfoProvider>(context, listen: false);
       await userInfoProvider.clearUserInfo();
-      
+
       // Clear login state from shared preferences
       await LoginProvider.clearLoginState();
-      
+
       notifyListeners();
     } catch (e) {
       _lastError = e.toString();
@@ -167,12 +174,12 @@ class AuthProvider with ChangeNotifier {
 
       if (userDoc.exists) {
         _userData = UserModel.fromJson(userDoc.data()!);
-        
+
         if (_userData?.diet == null) {
           await updateUserDiet('Balanced');
           _userData = _userData?.copyWith(diet: 'Balanced');
         }
-        
+
         notifyListeners();
       }
     } catch (e) {
@@ -187,7 +194,7 @@ class AuthProvider with ChangeNotifier {
           .collection('users')
           .doc(_auth.currentUser?.email)
           .update({'diet': newDiet});
-      
+
       _userData = _userData?.copyWith(diet: newDiet);
       notifyListeners();
     } catch (e) {
@@ -195,4 +202,4 @@ class AuthProvider with ChangeNotifier {
       rethrow;
     }
   }
-} 
+}

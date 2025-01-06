@@ -28,12 +28,18 @@ class FirestoreService {
       } else {
         // Calculate macronutrient goals based on user's daily calorie goal
         final dailyCalories = userData['dailyCalories'] as int? ?? 2000;
-        
+
         // Calculate macros: 30% protein, 45% carbs, 25% fat
-        userData['carbsgoal'] = ((0.45 * dailyCalories) / 4).round().toDouble();  // 45% of calories
-        userData['proteingoal'] = ((0.30 * dailyCalories) / 4).round().toDouble(); // 30% of calories
-        userData['fatgoal'] = ((0.25 * dailyCalories) / 9).round().toDouble();     // 25% of calories
-        
+        userData['carbsgoal'] =
+            ((0.45 * dailyCalories) / 4).round().toDouble(); // 45% of calories
+        userData['proteingoal'] =
+            ((0.30 * dailyCalories) / 4).round().toDouble(); // 30% of calories
+        userData['fatgoal'] =
+            ((0.25 * dailyCalories) / 9).round().toDouble(); // 25% of calories
+
+        // Initialize points to 0 for new users
+        userData['points'] = 0;
+
         // Set the document data for new users
         await docRef.set(userData);
       }
@@ -49,7 +55,7 @@ class FirestoreService {
   Future<UserModel?> getUser(String email) async {
     try {
       final doc = await _firestore.collection('users').doc(email).get();
-      
+
       if (doc.exists) {
         final data = doc.data() as Map<String, dynamic>;
         return UserModel(
@@ -85,6 +91,28 @@ class FirestoreService {
     } catch (e) {
       print('Firestore connection test failed: $e');
       return false;
+    }
+  }
+
+  // Add points to a user
+  Future<void> addPoints(String email, int pointsToAdd) async {
+    try {
+      final docRef = _firestore.collection('users').doc(email);
+
+      // Get current points
+      final doc = await docRef.get();
+      if (!doc.exists) {
+        throw Exception('User document not found');
+      }
+
+      final currentPoints = (doc.data()?['points'] as num?)?.toInt() ?? 0;
+      final newPoints = currentPoints + pointsToAdd;
+
+      // Update points in Firestore
+      await docRef.update({'points': newPoints});
+    } catch (e) {
+      print('Error updating points: $e');
+      rethrow;
     }
   }
 }

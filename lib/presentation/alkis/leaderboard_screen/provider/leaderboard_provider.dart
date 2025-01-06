@@ -65,9 +65,7 @@ class LeaderboardProvider extends ChangeNotifier {
               fullName:
                   "${data['firstName'] ?? ''} ${data['lastName'] ?? ''}".trim(),
               points: (data['points'] as num?)?.toInt() ??
-                  (45 +
-                      DateTime.now().microsecond %
-                          5), // Random points under 50 if not set
+                  0, // Default to 0 if not set
               email: doc.id,
               isCurrentUser: doc.id == currentUser.email,
               profileImage: data['profilePicture'],
