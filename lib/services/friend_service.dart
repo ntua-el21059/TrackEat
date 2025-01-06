@@ -5,6 +5,28 @@ class FriendService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
+  // Add points to a user
+  Future<void> _updatePoints(String userEmail, int pointsToAdd) async {
+    try {
+      final docRef = _firestore.collection('users').doc(userEmail);
+
+      // Get current points
+      final doc = await docRef.get();
+      if (!doc.exists) {
+        throw Exception('User document not found');
+      }
+
+      final currentPoints = (doc.data()?['points'] as num?)?.toInt() ?? 0;
+      final newPoints = currentPoints + pointsToAdd;
+
+      // Update points in Firestore
+      await docRef.update({'points': newPoints});
+    } catch (e) {
+      print('Error updating points: $e');
+      rethrow;
+    }
+  }
+
   // Add a friend/follow a user
   Future<void> addFriend(String followingId) async {
     final currentUser = _auth.currentUser;
@@ -28,6 +50,9 @@ class FriendService {
         'followingId': followingId,
         'timestamps': FieldValue.serverTimestamp(),
       });
+
+      // Add 10 points for adding a friend
+      await _updatePoints(currentUserEmail, 10);
 
       // Get the username of the follower (current user)
       print('Fetching follower username for: $currentUserEmail');
@@ -70,16 +95,24 @@ class FriendService {
     final currentUserEmail = _auth.currentUser?.email;
     if (currentUserEmail == null) return;
 
-    // Get the friend document
-    final querySnapshot = await _firestore
-        .collection('friends')
-        .where('followerId', isEqualTo: currentUserEmail)
-        .where('followingId', isEqualTo: followingId)
-        .get();
+    try {
+      // Get the friend document
+      final querySnapshot = await _firestore
+          .collection('friends')
+          .where('followerId', isEqualTo: currentUserEmail)
+          .where('followingId', isEqualTo: followingId)
+          .get();
 
-    // Delete all matching documents (should only be one)
-    for (var doc in querySnapshot.docs) {
-      await doc.reference.delete();
+      // Delete all matching documents (should only be one)
+      for (var doc in querySnapshot.docs) {
+        await doc.reference.delete();
+      }
+
+      // Remove 10 points for removing a friend
+      await _updatePoints(currentUserEmail, -10);
+    } catch (e) {
+      print('Error removing friend: $e');
+      rethrow;
     }
   }
 
