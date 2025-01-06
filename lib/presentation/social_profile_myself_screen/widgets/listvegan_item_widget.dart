@@ -1,10 +1,6 @@
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import '../../../core/app_export.dart';
 import '../models/listvegan_item_model.dart';
-import '../provider/social_profile_myself_provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 class ListveganItemWidget extends StatelessWidget {
   final ListveganItemModel model;
@@ -32,9 +28,6 @@ class ListveganItemWidget extends StatelessWidget {
       // Calculate years more accurately by checking actual days
       final years = days ~/ 365;
       // Calculate remaining days after years
-      final remainingDays = days % 365;
-      // Calculate months from remaining days
-      final months = remainingDays ~/ 30;
       
       if (days >= 365) {
         return "$years year${years > 1 ? 's' : ''}";
