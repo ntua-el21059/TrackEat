@@ -81,9 +81,13 @@ class AiChatMainProvider extends ChangeNotifier {
     2. Indirect tracking requests ("can you add this", "put this in my log")
     3. Context-dependent phrases ("write this down", "save this")
     4. Tracking-related verbs (log, track, add, save, write, put, record)
+    5. Statements about eating food ("I ate", "I had", "I consumed", "just ate", "just had")
+    6. Past tense food consumption ("ate a sandwich", "had some pasta")
 
-    Important: If the message doesn't specify WHAT food to track (e.g., "log this", "save it"), respond with "false".
-    Only respond "true" if there's a clear food item mentioned.
+    Important: 
+    1. If the message doesn't specify WHAT food to track (e.g., "log this", "save it"), respond with "false"
+    2. Only respond "true" if there's a clear food item mentioned
+    3. Statements about eating specific food should be considered as tracking intents
 
     Respond with only "true" or "false":
     Message: "$message"
@@ -100,7 +104,8 @@ class AiChatMainProvider extends ChangeNotifier {
 
   Future<bool> _isDirectLoggingCommand(String message) async {
     final directCommandPrompt = '''
-    Does this message directly command to log/track/add food (e.g. "log a big mac", "add an apple", "track my sandwich")? 
+    Does this message contain a direct command to log/track/add food (e.g. "log a big mac", "add an apple", "track my sandwich")?
+    Note: Statements about eating (e.g. "I ate a sandwich") should return false.
     Note: If it's just "log it" or "track it" without specifying what food, respond with "false".
     Respond with only "true" or "false":
     Message: "$message"
@@ -115,10 +120,56 @@ class AiChatMainProvider extends ChangeNotifier {
     }
   }
 
-  Future<String> _getFoodInfo(String message, {bool isDirectCommand = false}) async {
+  Future<bool> _isEatingStatement(String message) async {
+    final eatingPrompt = '''
+    Does this message state that food was eaten (e.g. "I ate a sandwich", "just had pasta", "I had some pizza")?
+    Note: Direct commands (e.g. "log a sandwich") should return false.
+    Respond with only "true" or "false":
+    Message: "$message"
+    ''';
+
+    try {
+      final response = await _model.generateContent([Content.text(eatingPrompt)]);
+      return response.text?.trim().toLowerCase() == 'true';
+    } catch (e) {
+      print('Error detecting eating statement: $e');
+      return false;
+    }
+  }
+
+  Future<String> _getFoodInfo(String message, {bool isDirectCommand = false, bool isEatingStatement = false}) async {
+    if (isDirectCommand || isEatingStatement) {
+      // For direct commands and eating statements, skip food facts and go straight to nutrition questions
+      final askForNutritionPrompt = '''
+      Ask for nutritional information in a friendly way. Include these points:
+      - Serving size
+      - Calories
+      - Protein (g)
+      - Carbs (g)
+      - Fat (g)
+      
+      Important:
+      1. Make it clear that providing the information is optional
+      2. Mention that you'll make your best estimate if they don't know
+      3. Keep the tone friendly and conversational
+      4. Ask directly without any meta-commentary or self-talk
+      5. DO NOT mention how you'll phrase the question or your thought process
+      
+      Example good response:
+      "Can you tell me any nutritional information about this? Like serving size, calories, protein, carbs, or fat? Don't worry if you're not sure - I can estimate!"
+      
+      Example bad response:
+      "Okay, I'm ready to ask for nutritional info. Here's how I'll phrase it: Can you tell me..."
+      ''';
+
+      final response = await _model.generateContent([Content.text(askForNutritionPrompt)]);
+      return response.text?.trim() ?? "Can you tell me any nutritional information about this? Don't worry if you're not sure - I can estimate!";
+    }
+
+    // Original food facts for non-direct interactions
     final infoPrompt = '''
     You are TrackEat AI. Share 2-3 interesting or fun facts about this food in a witty way.
-    Keep it concise and engaging. ${!isDirectCommand ? 'End with "Would you like me to log this for you?"' : ''}
+    Keep it concise and engaging. End with "Would you like me to log this for you?"
     
     Food: "$message"
     ''';
@@ -198,12 +249,102 @@ class AiChatMainProvider extends ChangeNotifier {
     }
   }
 
+  Future<bool> _isSpecifyingFood(String message, String previousFood) async {
+    final specifyingFoodPrompt = '''
+    Determine if this message is specifying or modifying a food type rather than providing nutritional information.
+    Previous food: "${previousFood}"
+    Message: "${message}"
+    
+    Examples of food specification:
+    - Previous: "sandwich" Message: "it was a BLT" -> true
+    - Previous: "pasta" Message: "spaghetti bolognese" -> true
+    - Previous: "chicken" Message: "grilled chicken breast" -> true
+    - Previous: "burger" Message: "it was a quarter pounder" -> true
+    - Previous: "apple" Message: "it was green" -> true
+    - Previous: "apple" Message: "red delicious" -> true
+    - Previous: "banana" Message: "it was ripe" -> true
+    
+    Examples of nutrition info (should return false):
+    - "about 500 calories"
+    - "100g serving"
+    - "20g of protein"
+    - "medium size"
+    
+    Important: Consider color, variety, and state (ripe, cooked, etc.) as food specifications when they help identify a specific type of food.
+    
+    Respond with only "true" or "false":
+    ''';
+
+    try {
+      final response = await _model.generateContent([Content.text(specifyingFoodPrompt)]);
+      return response.text?.trim().toLowerCase() == 'true';
+    } catch (e) {
+      print('Error detecting food specification: $e');
+      return false;
+    }
+  }
+
+  Future<String?> _extractSpecifiedFood(String message) async {
+    final extractFoodPrompt = '''
+    Extract the complete food name including any specifications (color, variety, state, etc.) from this message.
+    If the message only contains a specification (like "it was green"), respond with "null".
+    
+    Examples:
+    - "it was a BLT" -> "BLT"
+    - "grilled chicken breast" -> "grilled chicken breast"
+    - "it was green" -> "null"
+    - "red delicious" -> "null"
+    
+    Respond with ONLY the food name or "null":
+    Message: "${message}"
+    ''';
+
+    try {
+      final response = await _model.generateContent([Content.text(extractFoodPrompt)]);
+      final extractedFood = response.text?.trim();
+      if (extractedFood == "null") {
+        return null;
+      }
+      return extractedFood;
+    } catch (e) {
+      print('Error extracting specified food: $e');
+      return null;
+    }
+  }
+
+  Future<String> _combineWithPreviousFood(String specification, String previousFood) async {
+    final combinePrompt = '''
+    Combine the previous food with its specification to create a complete food name.
+    Previous food: "${previousFood}"
+    Specification: "${specification}"
+    
+    Examples:
+    - Previous: "apple" + "it was green" -> "green apple"
+    - Previous: "apple" + "red delicious" -> "red delicious apple"
+    - Previous: "banana" + "it was ripe" -> "ripe banana"
+    
+    Respond with ONLY the combined food name:
+    ''';
+
+    try {
+      final response = await _model.generateContent([Content.text(combinePrompt)]);
+      return response.text?.trim() ?? previousFood;
+    } catch (e) {
+      print('Error combining food names: $e');
+      return previousFood;
+    }
+  }
+
   Future<void> sendMessage(String message) async {
     if (message.trim().isEmpty && selectedImage == null) return;
 
     try {
       isLoading = true;
       notifyListeners();
+
+      // Clear message box and close keyboard
+      messageController.clear();
+      FocusManager.instance.primaryFocus?.unfocus();
 
       // Add user message to chat once
       messages.add({
@@ -212,6 +353,32 @@ class AiChatMainProvider extends ChangeNotifier {
       });
       notifyListeners();
       if (onMessageAdded != null) onMessageAdded!();
+
+      // If tracking dialog is visible and they're specifying a different food
+      if (showTrackDialog && _previousFood != null && await _isSpecifyingFood(message, _previousFood!)) {
+        final specifiedFood = await _extractSpecifiedFood(message);
+        final combinedFood = specifiedFood ?? await _combineWithPreviousFood(message, _previousFood!);
+        
+        // Get nutrition data for the specified food
+        final nutritionData = await _getNutritionFromText(combinedFood);
+        lastNutritionData = nutritionData;
+
+        String formattedResponse =
+            'Food: ${nutritionData['food'].toString().split(' ').map((word) => word.substring(0, 1).toUpperCase() + word.substring(1)).join(' ')}\n'
+            '🍽️ Serving Size: ${nutritionData['serving_size']}\n'
+            '🔥 Calories: ${nutritionData['calories']}\n'
+            '💪 Protein: ${nutritionData['protein']}g\n'
+            '🌾 Carbs: ${nutritionData['carbs']}g\n'
+            '🥑 Fat: ${nutritionData['fat']}g';
+
+        messages.add({
+          'role': 'assistant',
+          'content': formattedResponse,
+        });
+        notifyListeners();
+        if (onMessageAdded != null) onMessageAdded!();
+        return;
+      }
 
       // Handle tracking requests without food context
       if (!_isTrackingFlow && await _model.generateContent([Content.text('''
@@ -386,6 +553,7 @@ Important: Respond with ONLY the JSON object, no other text.""";
         if (!_isTrackingFlow && await _isTrackingIntent(message)) {
           _previousFood = message; // Store the food name
           final isDirectCommand = await _isDirectLoggingCommand(message);
+          final isEatingStatement = await _isEatingStatement(message);
           
           if (isDirectCommand) {
             // Extract the food name from the command
@@ -421,7 +589,7 @@ Important: Respond with ONLY the JSON object, no other text.""";
               _isTrackingFlow = false;
               _userProvidedNutrition = null;
             } else {
-              // For non-common foods, still show facts but go straight to nutrition questions
+              // For non-common foods, show facts but go straight to nutrition questions
               final foodInfo = await _getFoodInfo(foodName, isDirectCommand: true);
               messages.add({
                 'role': 'assistant',
@@ -429,32 +597,30 @@ Important: Respond with ONLY the JSON object, no other text.""";
               });
               notifyListeners();
               if (onMessageAdded != null) onMessageAdded!();
-
-              // Ask for nutritional information
-              final askForNutritionPrompt = '''
-              Ask them if they can provide any of these values (but make it clear it's optional):
-              - Serving size
-              - Calories
-              - Protein (g)
-              - Carbs (g)
-              - Fat (g)
-              
-              If they can't provide some or all values, let them know you'll make the best estimate.
-              ''';
-
-              final response = await _model.generateContent([Content.text(askForNutritionPrompt)]);
-              if (response.text != null) {
-                messages.add({
-                  'role': 'assistant',
-                  'content': response.text!.trim(),
-                });
-                notifyListeners();
-                if (onMessageAdded != null) onMessageAdded!();
-              }
             }
+          } else if (isEatingStatement) {
+            // Extract the food name from the eating statement
+            final foodNamePrompt = '''
+            Extract just the food name from this eating statement. Respond with ONLY the food name:
+            Statement: "$message"
+            ''';
+            final foodResponse = await _model.generateContent([Content.text(foodNamePrompt)]);
+            final foodName = foodResponse.text?.trim() ?? message;
+            _previousFood = foodName;
+
+            // Always ask for nutrition info for eating statements
+            final foodInfo = await _getFoodInfo(foodName, isEatingStatement: true);
+            messages.add({
+              'role': 'assistant',
+              'content': foodInfo,
+            });
+            notifyListeners();
+            if (onMessageAdded != null) onMessageAdded!();
+            
+            _isTrackingFlow = true;
           } else {
             // Regular flow - show facts and ask for confirmation
-            final foodInfo = await _getFoodInfo(message, isDirectCommand: false);
+            final foodInfo = await _getFoodInfo(message);
             messages.add({
               'role': 'assistant',
               'content': foodInfo,
@@ -465,6 +631,65 @@ Important: Respond with ONLY the JSON object, no other text.""";
             _isTrackingFlow = true;
           }
         } else if (_isTrackingFlow) {
+          // First check if they're specifying a different food
+          if (_previousFood != null && await _isSpecifyingFood(message, _previousFood!)) {
+            final specifiedFood = await _extractSpecifiedFood(message);
+            final combinedFood = specifiedFood ?? await _combineWithPreviousFood(message, _previousFood!);
+            
+            // Get nutrition data for the specified food and show track dialog
+            final nutritionData = await _getNutritionFromText(combinedFood);
+            lastNutritionData = nutritionData;
+
+            String formattedResponse =
+                'Food: ${nutritionData['food'].toString().split(' ').map((word) => word.substring(0, 1).toUpperCase() + word.substring(1)).join(' ')}\n'
+                '🍽️ Serving Size: ${nutritionData['serving_size']}\n'
+                '🔥 Calories: ${nutritionData['calories']}\n'
+                '💪 Protein: ${nutritionData['protein']}g\n'
+                '🌾 Carbs: ${nutritionData['carbs']}g\n'
+                '🥑 Fat: ${nutritionData['fat']}g';
+
+            messages.add({
+              'role': 'assistant',
+              'content': formattedResponse,
+            });
+            notifyListeners();
+            if (onMessageAdded != null) onMessageAdded!();
+
+            showTrackDialog = true;
+            _isTrackingFlow = false;
+            _userProvidedNutrition = null;
+            return;
+          }
+
+          // Check if user doesn't know nutritional info
+          if (await _isDontKnowResponse(message)) {
+            // Get nutrition data for the previous food
+            final nutritionData = await _getNutritionFromText(_previousFood ?? message);
+            lastNutritionData = nutritionData;
+
+            String formattedResponse =
+                'No problem! I\'ll estimate the nutritional values:\n\n' +
+                'Food: ${nutritionData['food'].toString().split(' ').map((word) => word.substring(0, 1).toUpperCase() + word.substring(1)).join(' ')}\n'
+                '🍽️ Serving Size: ${nutritionData['serving_size']}\n'
+                '🔥 Calories: ${nutritionData['calories']}\n'
+                '💪 Protein: ${nutritionData['protein']}g\n'
+                '🌾 Carbs: ${nutritionData['carbs']}g\n'
+                '🥑 Fat: ${nutritionData['fat']}g';
+
+            messages.add({
+              'role': 'assistant',
+              'content': formattedResponse,
+            });
+            notifyListeners();
+            if (onMessageAdded != null) onMessageAdded!();
+
+            showTrackDialog = true;
+            _isTrackingFlow = false;
+            _userProvidedNutrition = null;
+            return;
+          }
+
+          // If not specifying food or saying idk, continue with normal flow
           // Check if user wants to proceed with logging
           if (await _isAffirmativeResponse(message)) {
             // Check if it's a common food
@@ -550,9 +775,6 @@ Important: Respond with ONLY the JSON object, no other text.""";
           }
         }
       }
-
-      messageController.clear();
-      removeImage();
     } catch (e, stackTrace) {
       print('Error sending message: $e');
       print('Stacktrace: $stackTrace');
@@ -602,12 +824,14 @@ Important: Respond with ONLY the JSON object, no other text.""";
   }
 
   void updateSlideProgress(double progress) {
-    slideProgress = progress.clamp(0.0, 1.0);
-    notifyListeners();
-    if (slideProgress >= 1.0) {
+    // Snap to complete when progress is close to 1.0
+    if (progress > 0.85) {
+      slideProgress = 1.0;
       showMealTypeSelection = true;
-      notifyListeners();
+    } else {
+      slideProgress = progress.clamp(0.0, 1.0);
     }
+    notifyListeners();
   }
 
   void resetSlideProgress() {
@@ -678,6 +902,29 @@ Important: Respond with ONLY the JSON object, no other text.""";
     }
     // If no numbers found, return default serving size
     return 100.0;
+  }
+
+  Future<bool> _isDontKnowResponse(String message) async {
+    final dontKnowPrompt = '''
+    Does this message indicate the user doesn't know or is unsure? Consider variations like:
+    - "idk"
+    - "I don't know"
+    - "not sure"
+    - "no idea"
+    - "dunno"
+    - "🤷‍♂️" or "🤷‍♀️"
+    
+    Respond with only "true" or "false":
+    Message: "$message"
+    ''';
+
+    try {
+      final response = await _model.generateContent([Content.text(dontKnowPrompt)]);
+      return response.text?.trim().toLowerCase() == 'true';
+    } catch (e) {
+      print('Error detecting don\'t know response: $e');
+      return false;
+    }
   }
 
   @override
