@@ -244,6 +244,9 @@ class ProfileScreenState extends State<ProfileScreen> {
       title: AppbarSubtitle(
         text: "Home",
         margin: EdgeInsets.only(left: 7.h),
+        onTap: () {
+          Navigator.pop(context);
+        },
       ),
     );
   }

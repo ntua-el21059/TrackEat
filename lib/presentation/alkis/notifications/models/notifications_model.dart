@@ -1,12 +1,14 @@
 class NotificationItem {
   final String message;
   final String id;
+  final String? senderId;
   bool isRead;
 
   NotificationItem({
     required this.message,
     required this.id,
     required this.isRead,
+    this.senderId,
   });
 }
 

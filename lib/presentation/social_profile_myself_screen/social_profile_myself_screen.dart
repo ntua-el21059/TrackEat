@@ -82,54 +82,60 @@ class SocialProfileMyselfScreenState extends State<SocialProfileMyselfScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: _buildAppBar(context),
-      body: Container(
-        width: double.maxFinite,
-        height: MediaQuery.of(context).size.height,
-        decoration: BoxDecoration(
-          color: const Color(0xFFB2D7FF),
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(54.h),
-            topRight: Radius.circular(54.h),
+    return WillPopScope(
+      onWillPop: () async {
+        Navigator.pop(context);
+        return false;
+      },
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        appBar: _buildAppBar(context),
+        body: Container(
+          width: double.maxFinite,
+          height: MediaQuery.of(context).size.height,
+          decoration: BoxDecoration(
+            color: const Color(0xFFB2D7FF),
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(54.h),
+              topRight: Radius.circular(54.h),
+            ),
           ),
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(54.h),
-            topRight: Radius.circular(54.h),
-          ),
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: EdgeInsets.only(
-                left: 8.h,
-                top: 8.h,
-                right: 8.h,
-                bottom: MediaQuery.of(context).padding.bottom + 18.h,
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.max,
-                children: [
-                  _buildRowvectorone(context),
-                  SizedBox(height: 6.h),
-                  _buildWeightgoal(context),
-                  SizedBox(height: 12.h),
-                  _buildListvegan(context),
-                  SizedBox(height: 8.h),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Padding(
-                      padding: EdgeInsets.only(left: 16.h),
-                      child: Text(
-                        "Awards",
-                        style: CustomTextStyles.headlineSmallOnErrorContainerBold,
+          child: ClipRRect(
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(54.h),
+              topRight: Radius.circular(54.h),
+            ),
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: EdgeInsets.only(
+                  left: 8.h,
+                  top: 8.h,
+                  right: 8.h,
+                  bottom: MediaQuery.of(context).padding.bottom + 18.h,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.max,
+                  children: [
+                    _buildRowvectorone(context),
+                    SizedBox(height: 6.h),
+                    _buildWeightgoal(context),
+                    SizedBox(height: 12.h),
+                    _buildListvegan(context),
+                    SizedBox(height: 8.h),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Padding(
+                        padding: EdgeInsets.only(left: 16.h),
+                        child: Text(
+                          "Awards",
+                          style: CustomTextStyles.headlineSmallOnErrorContainerBold,
+                        ),
                       ),
                     ),
-                  ),
-                  SizedBox(height: 6.h),
-                  _buildGridvectorone(context)
-                ],
+                    SizedBox(height: 6.h),
+                    _buildGridvectorone(context)
+                  ],
+                ),
               ),
             ),
           ),
@@ -521,9 +527,19 @@ class SocialProfileMyselfScreenState extends State<SocialProfileMyselfScreen> {
         margin: EdgeInsets.only(left: 7.h),
         onTap: () => Navigator.pop(context),
       ),
-      title: AppbarSubtitle(
-        text: widget.backButtonText ?? "Profile",
-        margin: EdgeInsets.only(left: 7.h),
+      title: TextButton(
+        onPressed: () => Navigator.pop(context),
+        style: TextButton.styleFrom(
+          padding: EdgeInsets.only(left: 7.h),
+          minimumSize: Size.zero,
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        ),
+        child: Text(
+          widget.backButtonText ?? "Profile",
+          style: theme.textTheme.bodyLarge!.copyWith(
+            color: theme.colorScheme.primary,
+          ),
+        ),
       ),
       actions: [
         AppbarSubtitleTwo(

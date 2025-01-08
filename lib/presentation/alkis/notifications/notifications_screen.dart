@@ -82,9 +82,9 @@ class NotificationsScreenState extends State<NotificationsScreen> {
       appBar: _buildAppBar(context),
       body: Consumer<NotificationsProvider>(
         builder: (context, provider, _) {
-          if (provider.isLoading) {
-            return Center(child: CircularProgressIndicator());
-          }
+          print('Building notifications screen with state: ${provider.screenState}');
+          print('Unread notifications: ${provider.unreadNotifications.length}');
+          print('Read notifications: ${provider.readNotifications.length}');
 
           switch (provider.screenState) {
             case NotificationScreenState.empty:

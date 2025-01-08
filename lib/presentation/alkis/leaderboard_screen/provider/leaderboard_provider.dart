@@ -3,12 +3,14 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/leaderboard_user_model.dart';
 import '../models/challenge_item_model.dart';
+import '../../../../services/profile_picture_cache_service.dart';
 
 class LeaderboardProvider extends ChangeNotifier {
   List<LeaderboardUserModel> _users = [];
   bool _isLoading = true;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final ProfilePictureCacheService _profilePictureCache = ProfilePictureCacheService();
 
   List<LeaderboardUserModel> get users => _users;
   bool get isLoading => _isLoading;
@@ -78,6 +80,9 @@ class LeaderboardProvider extends ChangeNotifier {
           final data = userDoc.data()!;
           if (data['username'] != null &&
               data['username'].toString().isNotEmpty) {
+            // Get profile picture from cache or fetch it
+            String? profilePicture = await _profilePictureCache.getProfilePicture(email);
+            
             allUsers.add(LeaderboardUserModel(
               username: data['username'] ?? '',
               fullName:
@@ -85,7 +90,7 @@ class LeaderboardProvider extends ChangeNotifier {
               points: (data['points'] as num?)?.toInt() ?? 0,
               email: email,
               isCurrentUser: email == currentUser.email,
-              profileImage: data['profilePicture'],
+              profileImage: profilePicture,
             ));
           }
         }
@@ -102,5 +107,11 @@ class LeaderboardProvider extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  @override
+  void dispose() {
+    // No need to clear cache here as it's a singleton and might be used elsewhere
+    super.dispose();
   }
 }

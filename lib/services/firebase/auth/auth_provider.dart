@@ -9,6 +9,8 @@ import 'package:provider/provider.dart';
 import '../../../providers/user_info_provider.dart';
 import '../../../presentation/signup_login/login_screen/provider/login_provider.dart';
 import '../../../services/points_service.dart';
+import '../../../providers/profile_picture_provider.dart';
+import '../../../services/profile_picture_cache_service.dart';
 
 class AuthProvider with ChangeNotifier {
   final AuthService _authService = AuthService();
@@ -16,6 +18,7 @@ class AuthProvider with ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final PointsService _pointsService = PointsService();
+  final ProfilePictureCacheService _profilePictureCache = ProfilePictureCacheService();
 
   User? _user;
   String? _lastError;
@@ -66,6 +69,11 @@ class AuthProvider with ChangeNotifier {
           if (context.mounted) {
             final userInfoProvider =
                 Provider.of<UserInfoProvider>(context, listen: false);
+            final loginProvider =
+                Provider.of<LoginProvider>(context, listen: false);
+
+            // Save login state and email
+            await loginProvider.saveLoginState(email);
 
             // Update all values in the provider
             await userInfoProvider.updateName(
@@ -116,6 +124,13 @@ class AuthProvider with ChangeNotifier {
 
   Future<void> signOut(BuildContext context) async {
     try {
+      // Clear profile picture cache from the provider
+      final profilePicProvider = Provider.of<ProfilePictureProvider>(context, listen: false);
+      await profilePicProvider.clearCache();
+
+      // Clear the global profile picture cache
+      _profilePictureCache.clearCache();
+
       await _authService.signOut();
       _user = null;
       _lastError = null;

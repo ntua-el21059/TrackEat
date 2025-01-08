@@ -351,29 +351,43 @@ class HomeScreenState extends State<HomeScreen> {
         child: Consumer<ProfilePictureProvider>(
           builder: (context, profilePicProvider, _) {
             return ClipOval(
-              child: profilePicProvider.cachedProfilePicture != null &&
-                      profilePicProvider.cachedProfilePicture!.isNotEmpty
-                  ? Image.memory(
-                      base64Decode(profilePicProvider.cachedProfilePicture!),
-                      height: 40.h,
-                      width: 40.h,
-                      fit: BoxFit.cover,
-                      gaplessPlayback: true,
-                    )
-                  : Container(
-                      height: 40.h,
-                      width: 40.h,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[200],
-                        shape: BoxShape.circle,
-                      ),
-                      child: SvgPicture.asset(
-                        'assets/images/person.crop.circle.fill.svg',
+              child: StreamBuilder<DocumentSnapshot>(
+                stream: FirebaseFirestore.instance
+                    .collection('users')
+                    .doc(FirebaseAuth.instance.currentUser?.email)
+                    .snapshots(),
+                builder: (context, snapshot) {
+                  if (snapshot.hasData && snapshot.data != null && snapshot.data!.exists) {
+                    final userData = snapshot.data!.data() as Map<String, dynamic>;
+                    final profilePicture = userData['profilePicture'] as String?;
+                    
+                    if (profilePicture != null && profilePicture.isNotEmpty) {
+                      return Image.memory(
+                        base64Decode(profilePicture),
                         height: 40.h,
                         width: 40.h,
                         fit: BoxFit.cover,
-                      ),
+                        gaplessPlayback: true,
+                      );
+                    }
+                  }
+                  
+                  return Container(
+                    height: 40.h,
+                    width: 40.h,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[200],
+                      shape: BoxShape.circle,
                     ),
+                    child: SvgPicture.asset(
+                      'assets/images/person.crop.circle.fill.svg',
+                      height: 40.h,
+                      width: 40.h,
+                      fit: BoxFit.cover,
+                    ),
+                  );
+                },
+              ),
             );
           },
         ),

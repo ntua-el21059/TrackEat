@@ -140,9 +140,19 @@ class SocialProfileViewScreenState extends State<SocialProfileViewScreen> {
         margin: EdgeInsets.only(left: 7.h),
         onTap: () => Navigator.pop(context),
       ),
-      title: AppbarSubtitle(
-        text: "Profile",
-        margin: EdgeInsets.only(left: 7.h),
+      title: TextButton(
+        onPressed: () => Navigator.pop(context),
+        style: TextButton.styleFrom(
+          padding: EdgeInsets.only(left: 7.h),
+          minimumSize: Size.zero,
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        ),
+        child: Text(
+          "Profile",
+          style: theme.textTheme.bodyLarge!.copyWith(
+            color: theme.colorScheme.primary,
+          ),
+        ),
       ),
     );
   }

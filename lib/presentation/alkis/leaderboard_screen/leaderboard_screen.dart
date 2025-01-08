@@ -12,6 +12,7 @@ import '../notifications/notifications_screen.dart';
 import '../notifications/provider/notifications_provider.dart';
 import 'dart:convert';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../../../services/profile_picture_cache_service.dart';
 
 class LeaderboardScreen extends StatefulWidget {
   const LeaderboardScreen({Key? key}) : super(key: key);
@@ -20,8 +21,15 @@ class LeaderboardScreen extends StatefulWidget {
   _LeaderboardScreenState createState() => _LeaderboardScreenState();
 
   static Widget builder(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (context) => LeaderboardProvider(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+          create: (context) => LeaderboardProvider(),
+        ),
+        ChangeNotifierProvider.value(
+          value: ProfilePictureCacheService(),
+        ),
+      ],
       child: LeaderboardScreen(),
     );
   }
@@ -68,6 +76,33 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
     }
   }
 
+  Widget _buildProfilePicture(String? profileImage, double size) {
+    if (profileImage != null && profileImage.isNotEmpty) {
+      final decodedImage = base64Decode(profileImage);
+      return Image.memory(
+        decodedImage,
+        height: size,
+        width: size,
+        fit: BoxFit.cover,
+        gaplessPlayback: true,
+      );
+    }
+    return Container(
+      height: size,
+      width: size,
+      decoration: BoxDecoration(
+        color: Colors.grey[200],
+        shape: BoxShape.circle,
+      ),
+      child: SvgPicture.asset(
+        'assets/images/person.crop.circle.fill.svg',
+        height: size,
+        width: size,
+        fit: BoxFit.cover,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -108,17 +143,17 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
           ),
         ],
       ),
-      body: Consumer<LeaderboardProvider>(
-        builder: (context, provider, _) => Column(
+      body: Consumer2<LeaderboardProvider, ProfilePictureCacheService>(
+        builder: (context, provider, cacheService, _) => Column(
           children: [
             // Leaderboard list
             Expanded(
               flex: 2,
               child: Container(
-                margin: EdgeInsets.symmetric(horizontal: 16),
+                margin: EdgeInsets.symmetric(horizontal: 9.h),
                 decoration: BoxDecoration(
-                  color: Color(0xFFE3F2FD), // Light blue background
-                  borderRadius: BorderRadius.circular(10),
+                  color: appTheme.blue100,
+                  borderRadius: BorderRadius.circular(13.6),
                 ),
                 child: provider.isLoading
                     ? Center(child: CircularProgressIndicator())
@@ -127,7 +162,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                         padding: EdgeInsets.only(
                           left: 16.h,
                           right: 16.h,
-                          top: 32.h, // Add significant top padding
+                          top: 32.h,
                           bottom: 16.h,
                         ),
                         separatorBuilder: (context, index) =>
@@ -180,11 +215,10 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                               },
                               child: Row(
                                 children: [
-                                  // Ranking number
                                   Container(
                                     width: 24.h,
                                     child: Text(
-                                      '${index + 1}', // Starting from 1 for proper ranking
+                                      '${index + 1}',
                                       style: TextStyle(
                                         color: user.isCurrentUser
                                             ? Colors.white
@@ -196,31 +230,12 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                                   ),
                                   // Profile picture
                                   ClipOval(
-                                    child: (user.profileImage != null &&
-                                            user.profileImage!.isNotEmpty)
-                                        ? Image.memory(
-                                            base64Decode(user.profileImage!),
-                                            height: 32.h,
-                                            width: 32.h,
-                                            fit: BoxFit.cover,
-                                          )
-                                        : Container(
-                                            height: 32.h,
-                                            width: 32.h,
-                                            decoration: BoxDecoration(
-                                              color: Colors.grey[200],
-                                              shape: BoxShape.circle,
-                                            ),
-                                            child: SvgPicture.asset(
-                                              'assets/images/person.crop.circle.fill.svg',
-                                              height: 32.h,
-                                              width: 32.h,
-                                              fit: BoxFit.cover,
-                                            ),
-                                          ),
+                                    child: _buildProfilePicture(
+                                      cacheService.getCachedProfilePicture(user.email) ?? user.profileImage,
+                                      32.h,
+                                    ),
                                   ),
                                   SizedBox(width: 12.h),
-                                  // Username
                                   Text(
                                     '@${user.username}',
                                     style: TextStyle(
@@ -232,7 +247,6 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                                     ),
                                   ),
                                   Spacer(),
-                                  // Points
                                   Text(
                                     '${user.points} pts',
                                     style: TextStyle(
@@ -254,14 +268,15 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
 
             // Find Friends button
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
+              padding: EdgeInsets.symmetric(vertical: 2.h),
               child: ElevatedButton(
                 onPressed: () {
                   Navigator.pushNamed(context, AppRoutes.findFriendsScreen);
                 },
                 child: Text('Find Friends'),
                 style: ElevatedButton.styleFrom(
-                  minimumSize: Size(200, 40),
+                  minimumSize: Size(150, 32),
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 ),
               ),
             ),
@@ -273,7 +288,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+                    padding: EdgeInsets.fromLTRB(16.h, 0, 16.h, 2.h),
                     child: Text(
                       'Challenges',
                       style: Theme.of(context).textTheme.titleLarge,
@@ -294,21 +309,21 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                       },
                     ),
                   ),
-                  Center(
+                  Padding(
+                    padding: EdgeInsets.only(bottom: 8.h),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: List.generate(
                         provider.challengePages.length,
                         (index) => Container(
-                          width: 8.0,
-                          height: 8.0,
-                          margin: EdgeInsets.symmetric(horizontal: 4.0),
+                          width: 6.0,
+                          height: 6.0,
+                          margin: EdgeInsets.symmetric(horizontal: 3.0),
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             color: _currentPage == index
-                                ? Color(0xFF9747FF) // Purple for active dot
-                                : Colors.grey.withOpacity(
-                                    0.3), // More transparent grey for inactive
+                                ? Color(0xFF000000)
+                                : Color(0xFFD8D8D8),
                           ),
                         ),
                       ),
@@ -318,8 +333,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
               ),
             ),
 
-            // Spacer to push content up from bottom bar
-            SizedBox(height: 16),
+            SizedBox(height: 8.h),
           ],
         ),
       ),

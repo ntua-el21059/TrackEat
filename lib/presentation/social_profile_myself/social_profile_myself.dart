@@ -6,11 +6,14 @@ class SocialProfileMyself extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Consumer<UserInfoProvider>(
-      builder: (context, userInfo, _) => Text(
-        userInfo.firstName,
-        style: TextStyle(
-          fontSize: 16,
-          color: Colors.black87,
+      builder: (context, userInfo, _) => GestureDetector(
+        onTap: () => Navigator.of(context).pop(),
+        child: Text(
+          userInfo.firstName,
+          style: TextStyle(
+            fontSize: 16,
+            color: Colors.black87,
+          ),
         ),
       ),
     );

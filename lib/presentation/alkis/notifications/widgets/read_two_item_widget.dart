@@ -9,6 +9,7 @@ import '../notifications_screen.dart';
 import '../../../../services/friend_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../../../../presentation/social_profile_message_from_profile_screen/social_profile_message_from_profile_screen.dart';
 
 class ReadTwoItemWidget extends StatefulWidget {
   ReadTwoItemWidget(this.notification, {Key? key}) : super(key: key);
@@ -208,10 +209,57 @@ class _ReadTwoItemWidgetState extends State<ReadTwoItemWidget> {
             )
           : CustomButtonStyles.fillBlue,
       );
-    } else if (message.contains("sent a message")) {
+    } else if (message.contains("sent you a message")) {
       return CustomElevatedButton(
         width: 74.h,
         text: "Open",
+        onPressed: () async {
+          try {
+            // Extract username from notification message
+            final username = widget.notification.message.split(' ')[0].replaceAll('@', '');
+            
+            // Get user info from username
+            final userDoc = await FirebaseFirestore.instance
+                .collection('users')
+                .where('username', isEqualTo: username)
+                .limit(1)
+                .get();
+            
+            if (userDoc.docs.isNotEmpty) {
+              final userData = userDoc.docs.first.data();
+              final userEmail = userData['email'] as String;
+              final firstName = userData['firstName'] as String? ?? '';
+              final lastName = userData['lastName'] as String? ?? '';
+              final receiverName = '$firstName $lastName'.trim();
+
+              // Navigate to message screen first
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => SocialProfileMessageFromProfileScreen.builder(
+                    context,
+                    receiverId: userEmail,
+                    receiverName: receiverName,
+                    receiverUsername: username,
+                  ),
+                ),
+              );
+
+              // Mark notification as read in the background
+              final currentUser = FirebaseAuth.instance.currentUser;
+              if (currentUser?.email != null) {
+                await FirebaseFirestore.instance
+                    .collection('users')
+                    .doc(currentUser!.email)
+                    .collection('notifications')
+                    .doc(widget.notification.id)
+                    .update({'isRead': true});
+              }
+            }
+          } catch (e) {
+            print('Error navigating to message screen: $e');
+          }
+        },
         rightIcon: Container(
           margin: EdgeInsets.only(left: 4.h),
           child: SvgPicture.asset(
@@ -221,7 +269,16 @@ class _ReadTwoItemWidgetState extends State<ReadTwoItemWidget> {
             fit: BoxFit.contain,
           ),
         ),
-        buttonStyle: CustomButtonStyles.fillBlue,
+        buttonStyle: widget.notification.isRead 
+          ? ElevatedButton.styleFrom(
+              backgroundColor: appTheme.gray500,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16.h),
+              ),
+              elevation: 0,
+              padding: EdgeInsets.zero,
+            )
+          : CustomButtonStyles.fillBlue,
       );
     } else {
       return CustomElevatedButton(

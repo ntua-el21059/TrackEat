@@ -5,6 +5,8 @@ import '../../core/app_export.dart';
 import 'provider/reward_screen_rings_closed_provider.dart';
 import 'package:confetti/confetti.dart';
 import '../homepage_history/home_screen/provider/home_provider.dart';
+import 'package:sensors_plus/sensors_plus.dart';
+import 'package:provider/provider.dart';
 
 class RewardScreenRingsClosedScreen extends StatefulWidget {
   const RewardScreenRingsClosedScreen({Key? key}) : super(key: key);
@@ -14,8 +16,15 @@ class RewardScreenRingsClosedScreen extends StatefulWidget {
       RewardScreenRingsClosedScreenState();
 
   static Widget builder(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (context) => RewardScreenRingsClosedProvider(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+          create: (context) => RewardScreenRingsClosedProvider(),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => HomeProvider(),
+        ),
+      ],
       child: const RewardScreenRingsClosedScreen(),
     );
   }
@@ -25,12 +34,26 @@ class RewardScreenRingsClosedScreenState
     extends State<RewardScreenRingsClosedScreen> {
   late ConfettiController _confettiController;
   bool _isNavigating = false;
+  double _accelerometerX = 0;
+  double _accelerometerY = 0;
+  final double _parallaxFactor = 15.0; // Adjust this to control parallax intensity
 
   @override
   void initState() {
     super.initState();
     _confettiController = ConfettiController(duration: const Duration(seconds: 30));
     _confettiController.play();
+
+    // Start listening to accelerometer events
+    accelerometerEvents.listen((AccelerometerEvent event) {
+      if (mounted) {
+        setState(() {
+          // Smoothing the values for better visual effect and inverting direction
+          _accelerometerX = (-event.x * 0.3 + _accelerometerX * 0.7);
+          _accelerometerY = (-event.y * 0.3 + _accelerometerY * 0.7);
+        });
+      }
+    });
   }
 
   @override
@@ -85,35 +108,44 @@ class RewardScreenRingsClosedScreenState
                       // Multiple confetti sources across the top
                       Positioned(
                         top: 0,
-                        child: SizedBox(
-                          width: screenWidth,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: List.generate(8, (index) => // 8 sources across the screen
-                              SizedBox(
-                                width: screenWidth / 8,
-                                child: ConfettiWidget(
-                                  confettiController: _confettiController,
-                                  blastDirection: pi/2,
-                                  blastDirectionality: BlastDirectionality.directional,
-                                  maxBlastForce: 20.0,
-                                  minBlastForce: 10.0,
-                                  emissionFrequency: 0.05,
-                                  numberOfParticles: 5,
-                                  gravity: 0.1,
-                                  shouldLoop: true,
-                                  colors: const [
-                                    Colors.green,
-                                    Colors.blue,
-                                    Colors.pink,
-                                    Colors.orange,
-                                    Colors.purple,
-                                    Colors.yellow,
-                                    Colors.red,
-                                    Colors.teal,
-                                  ],
-                                  minimumSize: const Size(8, 8),
-                                  maximumSize: const Size(15, 15),
+                        child: Transform(
+                          transform: Matrix4.identity()
+                            ..setEntry(3, 2, 0.001) // perspective
+                            ..translate(
+                              _accelerometerX * 20.0,
+                              _accelerometerY * 20.0,
+                            ),
+                          alignment: Alignment.center,
+                          child: SizedBox(
+                            width: screenWidth,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: List.generate(8, (index) => // 8 sources across the screen
+                                SizedBox(
+                                  width: screenWidth / 8,
+                                  child: ConfettiWidget(
+                                    confettiController: _confettiController,
+                                    blastDirection: pi/2,
+                                    blastDirectionality: BlastDirectionality.directional,
+                                    maxBlastForce: 20.0,
+                                    minBlastForce: 10.0,
+                                    emissionFrequency: 0.05,
+                                    numberOfParticles: 5,
+                                    gravity: 0.1,
+                                    shouldLoop: true,
+                                    colors: const [
+                                      Colors.green,
+                                      Colors.blue,
+                                      Colors.pink,
+                                      Colors.orange,
+                                      Colors.purple,
+                                      Colors.yellow,
+                                      Colors.red,
+                                      Colors.teal,
+                                    ],
+                                    minimumSize: const Size(8, 8),
+                                    maximumSize: const Size(15, 15),
+                                  ),
                                 ),
                               ),
                             ),
@@ -149,12 +181,7 @@ class RewardScreenRingsClosedScreenState
                             child: Material(
                               color: Colors.transparent,
                               child: InkWell(
-                                onTap: () {
-                                  Navigator.of(context).pushNamedAndRemoveUntil(
-                                    AppRoutes.homeScreen,
-                                    (route) => false,
-                                  );
-                                },
+                                onTap: _navigateToHome,
                                 child: Container(
                                   padding: EdgeInsets.symmetric(
                                     horizontal: 32.h,

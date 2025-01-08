@@ -53,12 +53,6 @@ class SocialProfileMessageFromProfileProvider extends ChangeNotifier {
   void _initializeReceiver() {
     final currentUser = _auth.currentUser;
     if (currentUser != null) {
-      // Set receiver based on who is logged in
-      if (currentUser.email == 'vchristou32@gmail.com') {
-        receiverId = 'admin@admin.com';
-      } else if (currentUser.email == 'admin@admin.com') {
-        receiverId = 'vchristou32@gmail.com';
-      }
       _listenToRecipientInfo();
       notifyListeners();
     }
@@ -142,6 +136,26 @@ class SocialProfileMessageFromProfileProvider extends ChangeNotifier {
         }
       }, SetOptions(merge: true));
 
+      // Get sender's username from their user document
+      final senderDoc = await _firestore.collection('users').doc(currentUser.email!).get();
+      if (senderDoc.exists) {
+        final senderUsername = senderDoc.data()?['username'];
+        if (senderUsername != null) {
+          // Create notification for the recipient
+          await _firestore
+              .collection('users')
+              .doc(receiverId)
+              .collection('notifications')
+              .add({
+                'isRead': false,
+                'message': '@$senderUsername sent you a message',
+                'timestamp': Timestamp.now(),
+                'type': 'message',
+                'senderId': currentUser.email
+              });
+        }
+      }
+
       // Clear the input field
       messageoneController.clear();
       notifyListeners();
@@ -155,8 +169,12 @@ class SocialProfileMessageFromProfileProvider extends ChangeNotifier {
     final currentUser = _auth.currentUser;
     if (currentUser == null || receiverId == null) return Stream.value([]);
 
+    // Create a unique chat room ID by sorting and combining user IDs
     final List<String> ids = [currentUser.email!, receiverId!]..sort();
     final String chatRoomId = ids.join('_');
+
+    // Mark messages as read when they are viewed
+    _markMessagesAsRead(chatRoomId, currentUser.email!);
 
     return _firestore
         .collection('chats')
@@ -164,35 +182,42 @@ class SocialProfileMessageFromProfileProvider extends ChangeNotifier {
         .collection('messages')
         .orderBy('timestamp', descending: false)
         .snapshots()
-        .distinct()
         .map((snapshot) {
-          return snapshot.docs
-              .map((doc) => Message.fromMap(doc.data()))
-              .toList();
+          return snapshot.docs.map((doc) {
+            final data = doc.data();
+            return Message.fromMap({...data, 'id': doc.id});
+          }).toList();
         });
   }
 
   // Mark messages as read
-  Future<void> markMessagesAsRead() async {
-    final currentUser = _auth.currentUser;
-    if (currentUser == null || receiverId == null) return;
+  Future<void> _markMessagesAsRead(String chatRoomId, String currentUserId) async {
+    try {
+      // Get unread messages sent to current user
+      final unreadMessages = await _firestore
+          .collection('chats')
+          .doc(chatRoomId)
+          .collection('messages')
+          .where('receiverId', isEqualTo: currentUserId)
+          .where('isRead', isEqualTo: false)
+          .get();
 
-    final List<String> ids = [currentUser.email!, receiverId!]..sort();
-    final String chatRoomId = ids.join('_');
+      // Mark each message as read
+      final batch = _firestore.batch();
+      for (var doc in unreadMessages.docs) {
+        batch.update(doc.reference, {'isRead': true});
+      }
+      await batch.commit();
 
-    final unreadMessages = await _firestore
-        .collection('chats')
-        .doc(chatRoomId)
-        .collection('messages')
-        .where('receiverId', isEqualTo: currentUser.email!)
-        .where('isRead', isEqualTo: false)
-        .get();
-
-    final batch = _firestore.batch();
-    for (var doc in unreadMessages.docs) {
-      batch.update(doc.reference, {'isRead': true});
+      // Reset unread count for current user in chat room
+      await _firestore.collection('chats').doc(chatRoomId).set({
+        'unreadCount': {
+          currentUserId: 0,
+        }
+      }, SetOptions(merge: true));
+    } catch (e) {
+      print('Error marking messages as read: $e');
     }
-    await batch.commit();
   }
 
   @override

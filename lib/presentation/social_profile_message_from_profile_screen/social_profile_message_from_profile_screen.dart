@@ -223,12 +223,29 @@ class SocialProfileMessageFromProfileScreenState
                                                     right: isMe ? 8.h : 60.h,
                                                     bottom: 4.h,
                                                   ),
-                                                  child: Text(
-                                                    _formatTimestamp(message.timestamp),
-                                                    style: theme.textTheme.bodySmall?.copyWith(
-                                                      color: Colors.black54,
-                                                      fontSize: 10.h,
-                                                    ),
+                                                  child: Row(
+                                                    mainAxisSize: MainAxisSize.min,
+                                                    children: [
+                                                      Text(
+                                                        _formatTimestamp(message.timestamp),
+                                                        style: theme.textTheme.bodySmall?.copyWith(
+                                                          color: Colors.black54,
+                                                          fontSize: 10.h,
+                                                        ),
+                                                      ),
+                                                      if (isMe) ...[
+                                                        SizedBox(width: 4.h),
+                                                        Icon(
+                                                          message.isRead 
+                                                              ? Icons.done_all 
+                                                              : Icons.done,
+                                                          size: 14.h,
+                                                          color: message.isRead 
+                                                              ? Color(0xFF0084FF) 
+                                                              : Colors.black54,
+                                                        ),
+                                                      ],
+                                                    ],
                                                   ),
                                                 ),
                                             ],

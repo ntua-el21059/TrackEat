@@ -50,9 +50,9 @@ class ChallengeCard extends StatelessWidget {
     return GestureDetector(
       onTap: () => _showChallengeDialog(context),
       child: Container(
-        width: 100,
-        height: 100,
-        margin: EdgeInsets.symmetric(horizontal: 8),
+        width: 105,
+        height: 105,
+        margin: EdgeInsets.symmetric(horizontal: 6),
         decoration: BoxDecoration(
           color: challenge.backgroundColor,
           borderRadius: BorderRadius.circular(16),
@@ -62,8 +62,8 @@ class ChallengeCard extends StatelessWidget {
           children: [
             Image.asset(
               challenge.imageUrl,
-              width: 40,
-              height: 40,
+              width: 45,
+              height: 45,
             ),
             SizedBox(height: 8),
             Text(
