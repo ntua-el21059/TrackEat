@@ -10,7 +10,6 @@ class NotificationsProvider extends ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   List<NotificationItem> _notifications = [];
   bool _hasBeenViewed = false;
-  NotificationScreenState _screenState = NotificationScreenState.empty;
   StreamSubscription<QuerySnapshot>? _notificationsSubscription;
 
   bool get hasBeenViewed => _hasBeenViewed;
@@ -34,7 +33,6 @@ class NotificationsProvider extends ChangeNotifier {
     _notificationsSubscription?.cancel();
     _notifications.clear();  // Use clear() instead of reassignment
     _hasBeenViewed = false;
-    _screenState = NotificationScreenState.empty;
     notifyListeners();
   }
 
@@ -79,7 +77,6 @@ class NotificationsProvider extends ChangeNotifier {
       }).toList();
 
       print('Total notifications after processing for ${currentUser.email}: ${_notifications.length}');
-      _updateScreenState();
       notifyListeners();
     }, onError: (error) {
       print('Error listening to notifications: $error');
@@ -146,19 +143,6 @@ class NotificationsProvider extends ChangeNotifier {
     await batch.commit();
     _hasBeenViewed = true;
     notifyListeners();
-  }
-
-  void _updateScreenState() {
-    if (_notifications.isEmpty) {
-      _screenState = NotificationScreenState.empty;
-      print('Screen state set to empty');
-    } else if (unreadNotifications.isNotEmpty) {
-      _screenState = NotificationScreenState.unread;
-      print('Screen state set to unread');
-    } else {
-      _screenState = NotificationScreenState.read;
-      print('Screen state set to read');
-    }
   }
 
   @override

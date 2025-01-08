@@ -7,28 +7,6 @@ class FriendService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final PointsService _pointsService = PointsService();
 
-  // Add points to a user
-  Future<void> _updatePoints(String userEmail, int pointsToAdd) async {
-    try {
-      final docRef = _firestore.collection('users').doc(userEmail);
-
-      // Get current points
-      final doc = await docRef.get();
-      if (!doc.exists) {
-        throw Exception('User document not found');
-      }
-
-      final currentPoints = (doc.data()?['points'] as num?)?.toInt() ?? 0;
-      final newPoints = currentPoints + pointsToAdd;
-
-      // Update points in Firestore
-      await docRef.update({'points': newPoints});
-    } catch (e) {
-      print('Error updating points: $e');
-      rethrow;
-    }
-  }
-
   // Add a friend/follow a user
   Future<void> addFriend(String followingId) async {
     final currentUser = _auth.currentUser;

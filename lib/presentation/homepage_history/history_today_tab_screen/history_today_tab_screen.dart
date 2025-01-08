@@ -252,6 +252,9 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> with Singl
       title: AppbarSubtitle(
         text: "Home",
         margin: EdgeInsets.only(left: 4.h),
+        onTap: () {
+          Navigator.pop(context);
+        },
       ),
     );
   }

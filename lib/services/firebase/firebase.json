@@ -1,1 +1,30 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"trackeat-cf212","appId":"1:764421229444:android:b1539ebae942eae8d86bd1","fileOutput":"android/app/google-services.json"}},"ios":{"default":{"projectId":"trackeat-cf212","appId":"1:764421229444:ios:f30a0030c71ef1fed86bd1","uploadDebugSymbols":false,"fileOutput":"ios/Runner/GoogleService-Info.plist"}},"dart":{"lib/firebase_options.dart":{"projectId":"trackeat-cf212","configurations":{"android":"1:764421229444:android:b1539ebae942eae8d86bd1","ios":"1:764421229444:ios:f30a0030c71ef1fed86bd1"}}}}}}
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "trackeat-cf212",
+          "appId": "1:764421229444:android:b1539ebae942eae8d86bd1",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "ios": {
+        "default": {
+          "projectId": "trackeat-cf212",
+          "appId": "1:764421229444:ios:f30a0030c71ef1fed86bd1",
+          "uploadDebugSymbols": false,
+          "fileOutput": "ios/Runner/GoogleService-Info.plist"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "trackeat-cf212",
+          "configurations": {
+            "android": "1:764421229444:android:b1539ebae942eae8d86bd1",
+            "ios": "1:764421229444:ios:f30a0030c71ef1fed86bd1"
+          }
+        }
+      }
+    }
+  }
+}
