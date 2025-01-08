@@ -8,9 +8,4 @@ import '../models/ai_chat_splash_model.dart';
 // ignore_for_file: must_be_immutable
 class AiChatSplashProvider extends ChangeNotifier {
   AiChatSplashModel aiChatSplashModelObj = AiChatSplashModel();
-
-  @override
-  void dispose() {
-    super.dispose();
-  }
 }

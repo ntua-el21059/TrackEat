@@ -1,17 +1,5 @@
 import 'package:flutter/material.dart';
-//import '../presentation/accessibility_settings_screen/accessibility_settings_screen.dart';
-//import '../presentation/ai_chat_camera_flash_on_screen/ai_chat_camera_flash_on_screen.dart';
-//import '../presentation/ai_chat_camera_screen/ai_chat_camera_screen.dart';
-//import '../presentation/ai_chat_food_logging_as_screen/ai_chat_food_logging_as_screen.dart';
-//import '../presentation/ai_chat_food_logging_confirmation_screen/ai_chat_food_logging_confirmation_screen.dart';
-//import '../presentation/ai_chat_food_track_successful_screen/ai_chat_food_track_successful_screen.dart';
-//import '../presentation/ai_chat_info_screen/ai_chat_info_screen.dart';
-//import '../presentation/ai_chat_main_screen/ai_chat_main_screen.dart';
-//import '../presentation/ai_chat_photo_confirmation_screen/ai_chat_photo_confirmation_screen.dart';
-//import '../presentation/ai_chat_splash_screen/ai_chat_splash_screen.dart';
-//import '../presentation/app_navigation_screen/app_navigation_screen.dart';
 import '../presentation/signup_login/calorie_calculator_screen/calorie_calculator_screen.dart';
-//import '../presentation/challenge_award_screen/challenge_award_screen.dart';
 import '../presentation/signup_login/create_account_screen/create_account_screen.dart';
 import '../presentation/signup_login/create_profile_1_2_screen/create_profile_1_2_screen.dart';
 import '../presentation/signup_login/create_profile_2_2_screen/create_profile_2_2_screen.dart';
@@ -26,7 +14,6 @@ import '../presentation/homepage_history/history_today_tab_screen/history_today_
 import '../presentation/profile_screen/profile_screen.dart';
 import '../presentation/profile_static_screen/profile_static_screen.dart';
 import '../presentation/accessibility_settings_screen/accessibility_settings_screen.dart';
-// import '../presentation/ai_chat/ai_chat_splash_screen/ai_chat_splash_screen.dart';
 import '../presentation/ai_chat/ai_chat_main_page/ai_chat_main_page_screen.dart';
 import '../presentation/social_profile_myself_screen/social_profile_myself_screen.dart';
 import '../presentation/challenge_award_screen/challenge_award_screen.dart';

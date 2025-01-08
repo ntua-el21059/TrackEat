@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../models/accessibility_settings_model.dart';
-import '../../../theme/theme_provider.dart' as app_theme;
+import '../../../theme/provider/theme_provider.dart' as app_theme;
 import 'package:provider/provider.dart';
 import 'dart:io';
 

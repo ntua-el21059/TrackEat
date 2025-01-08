@@ -347,12 +347,12 @@ Important: Respond with ONLY the JSON object, no other text.""";
             lastNutritionData = nutritionData;
 
             String formattedResponse =
-                'Food: ${nutritionData['food'].toString().split(' ').map((word) => word.substring(0, 1).toUpperCase() + word.substring(1)).join(' ')}\n' +
-                    '🍽️ Serving Size: ${nutritionData['serving_size']}\n' +
-                    '🔥 Calories: ${nutritionData['calories']}\n' +
-                    '💪 Protein: ${nutritionData['protein']}g\n' +
-                    '🌾 Carbs: ${nutritionData['carbs']}g\n' +
-                    '🥑 Fat: ${nutritionData['fat']}g';
+                'Food: ${nutritionData['food'].toString().split(' ').map((word) => word.substring(0, 1).toUpperCase() + word.substring(1)).join(' ')}\n'
+                '🍽️ Serving Size: ${nutritionData['serving_size']}\n'
+                '🔥 Calories: ${nutritionData['calories']}\n'
+                '💪 Protein: ${nutritionData['protein']}g\n'
+                '🌾 Carbs: ${nutritionData['carbs']}g\n'
+                '🥑 Fat: ${nutritionData['fat']}g';
 
             // Add the formatted response to messages
             messages.add({
@@ -403,12 +403,12 @@ Important: Respond with ONLY the JSON object, no other text.""";
               lastNutritionData = nutritionData;
 
               String formattedResponse =
-                  'Food: ${nutritionData['food'].toString().split(' ').map((word) => word.substring(0, 1).toUpperCase() + word.substring(1)).join(' ')}\n' +
-                      '🍽️ Serving Size: ${nutritionData['serving_size']}\n' +
-                      '🔥 Calories: ${nutritionData['calories']}\n' +
-                      '💪 Protein: ${nutritionData['protein']}g\n' +
-                      '🌾 Carbs: ${nutritionData['carbs']}g\n' +
-                      '🥑 Fat: ${nutritionData['fat']}g';
+                  'Food: ${nutritionData['food'].toString().split(' ').map((word) => word.substring(0, 1).toUpperCase() + word.substring(1)).join(' ')}\n'
+                  '🍽️ Serving Size: ${nutritionData['serving_size']}\n'
+                  '🔥 Calories: ${nutritionData['calories']}\n'
+                  '💪 Protein: ${nutritionData['protein']}g\n'
+                  '🌾 Carbs: ${nutritionData['carbs']}g\n'
+                  '🥑 Fat: ${nutritionData['fat']}g';
 
               messages.add({
                 'role': 'assistant',
@@ -474,12 +474,12 @@ Important: Respond with ONLY the JSON object, no other text.""";
               lastNutritionData = nutritionData;
 
               String formattedResponse =
-                  'Food: ${nutritionData['food'].toString().split(' ').map((word) => word.substring(0, 1).toUpperCase() + word.substring(1)).join(' ')}\n' +
-                      '🍽️ Serving Size: ${nutritionData['serving_size']}\n' +
-                      '🔥 Calories: ${nutritionData['calories']}\n' +
-                      '💪 Protein: ${nutritionData['protein']}g\n' +
-                      '🌾 Carbs: ${nutritionData['carbs']}g\n' +
-                      '🥑 Fat: ${nutritionData['fat']}g';
+                  'Food: ${nutritionData['food'].toString().split(' ').map((word) => word.substring(0, 1).toUpperCase() + word.substring(1)).join(' ')}\n'
+                  '🍽️ Serving Size: ${nutritionData['serving_size']}\n'
+                  '🔥 Calories: ${nutritionData['calories']}\n'
+                  '💪 Protein: ${nutritionData['protein']}g\n'
+                  '🌾 Carbs: ${nutritionData['carbs']}g\n'
+                  '🥑 Fat: ${nutritionData['fat']}g';
 
               messages.add({
                 'role': 'assistant',

@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -8,7 +7,7 @@ import 'services/firebase/auth/auth_provider.dart' as app_auth;
 import 'services/firebase/firebase_options.dart';
 import 'presentation/profile_screen/provider/profile_provider.dart';
 import 'presentation/profile_static_screen/provider/profile_static_provider.dart';
-import 'theme/theme_provider.dart' as app_theme;
+import 'theme/provider/theme_provider.dart' as app_theme;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'providers/profile_picture_provider.dart';
 import 'providers/user_info_provider.dart';
@@ -24,12 +23,6 @@ void main() async {
 
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
-  );
-
-  // Set status bar to be visible and transparent
-  SystemChrome.setEnabledSystemUIMode(
-    SystemUiMode.manual,
-    overlays: [SystemUiOverlay.top, SystemUiOverlay.bottom],
   );
 
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
@@ -49,100 +42,63 @@ void main() async {
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider<app_theme.ThemeProvider>(
+        ChangeNotifierProvider(
           create: (_) => app_theme.ThemeProvider(),
         ),
-        ChangeNotifierProvider<app_auth.AuthProvider>(
-          create: (context) => app_auth.AuthProvider(),
+        ChangeNotifierProvider(
+          create: (_) => app_auth.AuthProvider(),
         ),
-        ChangeNotifierProvider<UserProvider>(
-          create: (context) => UserProvider(),
+        ChangeNotifierProvider(
+          create: (_) => UserProvider(),
         ),
-        ChangeNotifierProvider(create: (_) => ProfileProvider()),
-        ChangeNotifierProvider(create: (_) => ProfileStaticProvider()),
+        ChangeNotifierProvider(
+          create: (_) => ProfileProvider(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => ProfileStaticProvider(),
+        ),
         ChangeNotifierProvider(
           create: (_) => ProfilePictureProvider(prefs),
         ),
         ChangeNotifierProvider(
           create: (_) => UserInfoProvider(),
         ),
-        ChangeNotifierProvider<LeaderboardProvider>(
+        ChangeNotifierProvider(
           create: (_) => LeaderboardProvider(),
         ),
         ChangeNotifierProvider(
           create: (_) => NotificationsProvider(),
         ),
       ],
-      child: MyApp(),
+      child: const MyApp(),
     ),
   );
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Consumer<app_theme.ThemeProvider>(
       builder: (context, themeProvider, _) {
         return ColorFiltered(
-          colorFilter: ColorFilter.matrix(
-            themeProvider.invertColors
-                ? [
-                    -1,
-                    0,
-                    0,
-                    0,
-                    255,
-                    0,
-                    -1,
-                    0,
-                    0,
-                    255,
-                    0,
-                    0,
-                    -1,
-                    0,
-                    255,
-                    0,
-                    0,
-                    0,
-                    1,
-                    0,
-                  ]
-                : [
-                    1,
-                    0,
-                    0,
-                    0,
-                    0,
-                    0,
-                    1,
-                    0,
-                    0,
-                    0,
-                    0,
-                    0,
-                    1,
-                    0,
-                    0,
-                    0,
-                    0,
-                    0,
-                    1,
-                    0,
-                  ],
-          ),
+          colorFilter: themeProvider.invertColors
+              ? const ColorFilter.matrix([
+                  -1, 0, 0, 0, 255,
+                  0, -1, 0, 0, 255,
+                  0, 0, -1, 0, 255,
+                  0, 0, 0, 1, 0,
+                ])
+              : const ColorFilter.matrix([
+                  1, 0, 0, 0, 0,
+                  0, 1, 0, 0, 0,
+                  0, 0, 1, 0, 0,
+                  0, 0, 0, 1, 0,
+                ]),
           child: MaterialApp(
             title: 'trackeat',
             debugShowCheckedModeBanner: false,
-            theme: ThemeData(
-              appBarTheme: AppBarTheme(
-                systemOverlayStyle: SystemUiOverlayStyle.dark.copyWith(
-                  statusBarColor: Colors.transparent,
-                  systemNavigationBarColor: Colors.transparent,
-                  systemNavigationBarDividerColor: Colors.transparent,
-                ),
-              ),
-            ),
             builder: (context, child) {
               ScreenUtil.init(
                 context,
@@ -154,23 +110,16 @@ class MyApp extends StatelessWidget {
                 data: MediaQuery.of(context).copyWith(
                   textScaler: TextScaler.linear(themeProvider.textScaleFactor),
                 ),
-                child: AnnotatedRegion<SystemUiOverlayStyle>(
-                  value: SystemUiOverlayStyle.dark.copyWith(
-                    statusBarColor: Colors.transparent,
-                    systemNavigationBarColor: Colors.transparent,
-                    systemNavigationBarDividerColor: Colors.transparent,
-                  ),
-                  child: child!,
-                ),
+                child: child!,
               );
             },
             navigatorKey: NavigatorService.navigatorKey,
-            localizationsDelegates: [
+            localizationsDelegates: const [
               GlobalMaterialLocalizations.delegate,
               GlobalWidgetsLocalizations.delegate,
               GlobalCupertinoLocalizations.delegate
             ],
-            supportedLocales: [Locale('en', '')],
+            supportedLocales: const [Locale('en', '')],
             initialRoute: AppRoutes.initialRoute,
             routes: AppRoutes.routes,
           ),

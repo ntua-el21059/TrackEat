@@ -1,11 +1,10 @@
-import 'package:flutter/material.dart';
 import '../../../core/app_export.dart';
 import '../../../theme/custom_button_style.dart';
 import '../../../widgets/custom_elevated_button.dart';
 import 'provider/ai_chat_splash_provider.dart';
 
 class AiChatSplashScreen extends StatefulWidget {
-  const AiChatSplashScreen({Key? key}) : super(key: key);
+  const AiChatSplashScreen({super.key});
 
   @override
   AiChatSplashScreenState createState() => AiChatSplashScreenState();
@@ -30,7 +29,7 @@ class AiChatSplashScreenState extends State<AiChatSplashScreen> {
       extendBody: true,
       extendBodyBehindAppBar: true,
       backgroundColor: Colors.white,
-      body: Container(
+      body: SizedBox(
         width: double.maxFinite,
         height: SizeUtils.height,
         child: SafeArea(

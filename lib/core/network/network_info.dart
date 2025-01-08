@@ -17,9 +17,7 @@ class NetworkInfo implements NetworkInfoI {
     return _networkInfo;
   }
 
-  NetworkInfo._internal(this.connectivity) {
-    connectivity = this.connectivity;
-  }
+  NetworkInfo._internal(this.connectivity);
 
   /// Checks if the internet is connected or not
   /// Returns [true] if the internet is connected
@@ -66,7 +64,7 @@ class NoInternetException implements Exception {
       globalMessengerKey.currentState!
           .showSnackBar(SnackBar(content: Text(message)));
     }
-    this._message = message;
+    _message = message;
   }
 
   @override

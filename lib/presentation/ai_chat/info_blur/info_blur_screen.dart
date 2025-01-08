@@ -1,9 +1,8 @@
 import 'dart:ui';
-import 'package:flutter/material.dart';
 import '../../../core/app_export.dart';
 
 class InfoBlurScreen extends StatelessWidget {
-  const InfoBlurScreen({Key? key}) : super(key: key);
+  const InfoBlurScreen({super.key});
 
   @override
   Widget build(BuildContext context) {

@@ -1,5 +1,4 @@
 import 'package:camera/camera.dart';
-import 'package:flutter/material.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import '../../../../core/app_export.dart';
 import '../../../../widgets/custom_bottom_bar.dart';
@@ -9,7 +8,7 @@ import 'provider/ai_chat_main_page_provider.dart';
 import 'dart:io';
 
 class AiChatMainScreen extends StatefulWidget {
-  const AiChatMainScreen({Key? key}) : super(key: key);
+  const AiChatMainScreen({super.key});
 
   @override
   AiChatMainScreenState createState() => AiChatMainScreenState();
@@ -52,23 +51,24 @@ class AiChatMainScreenState extends State<AiChatMainScreen> {
   }
 
   Future<void> _listen() async {
+    if (!mounted) return;
     final provider = Provider.of<AiChatMainProvider>(context, listen: false);
     
     if (!_isListening) {
       try {
         bool available = await _speech.initialize(
           onStatus: (status) {
+            if (!mounted) return;
             print('Speech recognition status: $status');
-            // Update UI based on status
             setState(() {
               _isListening = status == 'listening';
             });
           },
           onError: (errorNotification) {
+            if (!mounted) return;
             print('Speech recognition error: ${errorNotification.errorMsg}');
             setState(() => _isListening = false);
             
-            // Show a more user-friendly error message
             String errorMessage = 'Could not recognize speech. Please try again.';
             if (errorNotification.errorMsg.contains('timeout')) {
               errorMessage = 'Please start speaking when you see "Listening..."';
@@ -87,6 +87,7 @@ class AiChatMainScreenState extends State<AiChatMainScreen> {
           setState(() => _isListening = true);
           
           // Show visual indicator that we're about to listen
+          if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Listening...'),
@@ -109,12 +110,14 @@ class AiChatMainScreenState extends State<AiChatMainScreen> {
             localeId: 'en_US', // Explicitly set to English
           );
         } else {
+          if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Speech recognition not available on this device')),
           );
         }
       } catch (e) {
         print('Speech recognition initialization error: $e');
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Could not initialize speech recognition. Please check app permissions.')),
         );
@@ -133,8 +136,10 @@ class AiChatMainScreenState extends State<AiChatMainScreen> {
   }
 
   Future<void> _openCamera() async {
+    if (!mounted) return;
     // Get the list of available cameras
     final cameras = await availableCameras();
+    if (!mounted) return;
     
     // Use the first available camera (usually the back camera)
     final firstCamera = cameras.first;
@@ -148,7 +153,7 @@ class AiChatMainScreenState extends State<AiChatMainScreen> {
     );
 
     // If an image was captured and kept, handle it
-    if (imagePath != null) {
+    if (imagePath != null && mounted) {
       final provider = Provider.of<AiChatMainProvider>(context, listen: false);
       provider.setSelectedImage(XFile(imagePath));
     }
@@ -549,7 +554,7 @@ class AiChatMainScreenState extends State<AiChatMainScreen> {
                                     ),
                                   ),
                                   SizedBox(height: 12.h),
-                                  Container(
+                                  SizedBox(
                                     height: 50.h,
                                     child: Row(
                                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,

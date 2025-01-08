@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import '../core/app_export.dart';
 
 /// Extension on [TextStyle] to easily apply specific font families.
