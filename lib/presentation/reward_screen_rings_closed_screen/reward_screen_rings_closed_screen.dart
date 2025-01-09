@@ -34,7 +34,7 @@ class Particle {
   double velocityY;
   double rotation;
   int shape; // 0: rectangle, 1: diamond
-  
+
   Particle({
     required this.position,
     required this.color,
@@ -53,44 +53,46 @@ class RewardScreenRingsClosedScreenState
   double _smoothX = 0.0;
   double _smoothY = 0.0;
   static const double _sensitivity = 0.8; // Decreased sensitivity
-  static const double _smoothingFactor = 0.7; // Less smoothing for faster response
+  static const double _smoothingFactor =
+      0.7; // Less smoothing for faster response
   bool _isInitialized = false;
-  
+
   final List<Particle> _particles = [];
   late AnimationController _animationController;
   final Random _random = Random();
-  
+
   static const List<Color> _colors = [
-    Color(0xFFFF1D44),  // Red
-    Color(0xFFFFD100),  // Gold
-    Color(0xFF00E0FF),  // Blue
-    Color(0xFFFF8D00),  // Orange
-    Color(0xFFFFFFFF),  // White
-    Color(0xFF00FF94),  // Green
+    Color(0xFFFF1D44), // Red
+    Color(0xFFFFD100), // Gold
+    Color(0xFF00E0FF), // Blue
+    Color(0xFFFF8D00), // Orange
+    Color(0xFFFFFFFF), // White
+    Color(0xFF00FF94), // Green
   ];
 
   @override
   void initState() {
     super.initState();
-    
+
     // Create animation controller
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 1),
     )..repeat();
-    
+
     // Add listener for animation updates
     _animationController.addListener(_updateParticles);
-    
+
     // Listen to accelerometer events with smoothing
     accelerometerEvents.listen((AccelerometerEvent event) {
       if (mounted) {
         setState(() {
           // Only use X-axis for side-to-side movement
           final targetX = (-event.x * _sensitivity).clamp(-1.0, 1.0);
-          
+
           // Apply smoothing only to X movement
-          _smoothX = _smoothX * _smoothingFactor + targetX * (1 - _smoothingFactor);
+          _smoothX =
+              _smoothX * _smoothingFactor + targetX * (1 - _smoothingFactor);
           _alignX = _smoothX;
         });
       }
@@ -100,9 +102,10 @@ class RewardScreenRingsClosedScreenState
   void _generateParticles(BuildContext context) {
     final size = MediaQuery.of(context).size;
     _particles.clear();
-    
+
     // Create particles distributed across the screen vertically
-    for (int i = 0; i < 100; i++) { // Increased from 50 to 100 particles
+    for (int i = 0; i < 100; i++) {
+      // Increased from 50 to 100 particles
       _particles.add(
         Particle(
           position: Offset(
@@ -111,7 +114,8 @@ class RewardScreenRingsClosedScreenState
             -size.height + (_random.nextDouble() * size.height * 2),
           ),
           color: _colors[_random.nextInt(_colors.length)],
-          size: 2 + _random.nextDouble() * 3, // Slightly smaller size for denser look
+          size: 2 +
+              _random.nextDouble() * 3, // Slightly smaller size for denser look
           shape: _random.nextInt(2),
           rotation: _random.nextDouble() * pi * 2,
         ),
@@ -121,20 +125,22 @@ class RewardScreenRingsClosedScreenState
 
   void _updateParticles() {
     if (!mounted || !_isInitialized) return;
-    
+
     final size = MediaQuery.of(context).size;
     for (var particle in _particles) {
       // Add some natural swaying motion
       final swayAmount = sin(_animationController.value * pi * 2) * 0.5;
-      
+
       particle.position = Offset(
-        particle.position.dx + _alignX * 6 + swayAmount, // Reduced horizontal movement speed from 12 to 6
+        particle.position.dx +
+            _alignX * 6 +
+            swayAmount, // Reduced horizontal movement speed from 12 to 6
         particle.position.dy + particle.velocityY,
       );
-      
+
       // Rotate based on movement
       particle.rotation += 0.05 + (swayAmount.abs() * 0.05);
-      
+
       // Reset particle position when it goes off screen
       if (particle.position.dy > size.height) {
         // Reset to above the screen at a random x position
@@ -144,10 +150,11 @@ class RewardScreenRingsClosedScreenState
         );
         particle.rotation = _random.nextDouble() * pi * 2;
       }
-      
+
       // Wrap particles horizontally (appear on opposite side)
       if (particle.position.dx < -particle.size * 3) {
-        particle.position = Offset(size.width + particle.size * 3, particle.position.dy);
+        particle.position =
+            Offset(size.width + particle.size * 3, particle.position.dy);
       } else if (particle.position.dx > size.width + particle.size * 3) {
         particle.position = Offset(-particle.size * 3, particle.position.dy);
       }
@@ -163,7 +170,7 @@ class RewardScreenRingsClosedScreenState
 
   void _navigateToHome() async {
     if (_isNavigating) return;
-    
+
     setState(() {
       _isNavigating = true;
     });
@@ -204,7 +211,7 @@ class RewardScreenRingsClosedScreenState
                 painter: ParticlePainter(particles: _particles),
                 size: Size.infinite,
               ),
-              
+
               // Main content
               Container(
                 width: double.maxFinite,
@@ -222,8 +229,18 @@ class RewardScreenRingsClosedScreenState
                     ),
                     SizedBox(height: 16.h),
                     Text(
-                      "You closed your rings!",
+                      "You reached your daily calorie goal!",
                       style: theme.textTheme.headlineSmall,
+                      textAlign: TextAlign.center,
+                    ),
+                    SizedBox(height: 16.h),
+                    Text(
+                      "+50 points",
+                      style: TextStyle(
+                        fontSize: 24.h,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF4CD964),
+                      ),
                       textAlign: TextAlign.center,
                     ),
                   ],
@@ -315,7 +332,7 @@ class ParticlePainter extends CustomPainter {
         path.close();
         canvas.drawPath(path, paint);
       }
-      
+
       canvas.restore();
     }
   }
@@ -323,4 +340,3 @@ class ParticlePainter extends CustomPainter {
   @override
   bool shouldRepaint(ParticlePainter oldDelegate) => true;
 }
-

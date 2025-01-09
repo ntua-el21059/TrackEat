@@ -11,6 +11,8 @@ class PointsService {
   static const int POINTS_REMOVE_FRIEND = -10;
   static const int POINTS_LOG_MEAL = 15;
   static const int POINTS_DELETE_MEAL = -15;
+  static const int POINTS_CALORIES_COMPLETE = 50;
+  static const int POINTS_CALORIES_DROP = -50;
 
   // Generic method to add/subtract points
   Future<void> addPoints(int points) async {
@@ -56,6 +58,14 @@ class PointsService {
 
   Future<void> removeMealPoints() async {
     await addPoints(POINTS_DELETE_MEAL);
+  }
+
+  Future<void> addCaloriesCompletePoints() async {
+    await addPoints(POINTS_CALORIES_COMPLETE);
+  }
+
+  Future<void> removeCaloriesCompletePoints() async {
+    await addPoints(POINTS_CALORIES_DROP);
   }
 
   // Reset points to zero

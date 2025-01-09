@@ -1,5 +1,3 @@
-
-
 class RewardScreenRingsClosedModel {
   // Add properties for the reward screen
   final String title;
@@ -9,7 +7,7 @@ class RewardScreenRingsClosedModel {
 
   RewardScreenRingsClosedModel({
     this.title = "Congratulations!",
-    this.subtitle = "You closed your rings!",
+    this.subtitle = "You reached your daily calorie goal!",
     this.imagePath = "",
     this.isCompleted = true,
   });

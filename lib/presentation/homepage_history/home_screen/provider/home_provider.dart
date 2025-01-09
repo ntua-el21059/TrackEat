@@ -15,8 +15,8 @@ class HomeProvider extends ChangeNotifier {
 
   // Keys for SharedPreferences
   static const String _rewardShownKey = 'reward_shown';
-  static const String _ringsClosedKey = 'rings_closed';
-  static const String _ringChangedKey = 'ring_changed';
+  static const String _caloriesGoalReachedKey = 'calories_goal_reached';
+  static const String _caloriesGoalChangedKey = 'calories_goal_changed';
 
   int get dailyCalories => _dailyCalories;
 
@@ -52,28 +52,28 @@ class HomeProvider extends ChangeNotifier {
     return prefs.getBool(_rewardShownKey) ?? false;
   }
 
-  Future<void> setRingsClosed(bool closed) async {
+  Future<void> setRingsClosed(bool reached) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_ringsClosedKey, closed);
-    if (!closed) {
-      // If rings are not closed, mark that a ring has changed
+    await prefs.setBool(_caloriesGoalReachedKey, reached);
+    if (!reached) {
+      // If calories goal is not reached, mark that it has changed
       await setRingChanged(true);
     }
   }
 
   Future<bool> areRingsClosed() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool(_ringsClosedKey) ?? false;
+    return prefs.getBool(_caloriesGoalReachedKey) ?? false;
   }
 
   Future<void> setRingChanged(bool changed) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_ringChangedKey, changed);
+    await prefs.setBool(_caloriesGoalChangedKey, changed);
   }
 
   Future<bool> hasRingChanged() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool(_ringChangedKey) ?? false;
+    return prefs.getBool(_caloriesGoalChangedKey) ?? false;
   }
 
   @override

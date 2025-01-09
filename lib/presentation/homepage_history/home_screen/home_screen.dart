@@ -37,6 +37,7 @@ class HomeScreenState extends State<HomeScreen> {
   bool _isLoading = true;
   StreamSubscription<DocumentSnapshot>? _userSubscription;
   final PointsService _pointsService = PointsService();
+  DateTime? _lastPointsUpdate;
 
   @override
   void initState() {
@@ -132,39 +133,46 @@ class HomeScreenState extends State<HomeScreen> {
   }
 
   void checkRingsAndShowReward(Map<String, dynamic> userData) async {
-    final proteinGoal =
-        double.tryParse(userData['proteingoal']?.toString() ?? '0') ?? 0.0;
-    final fatGoal =
-        double.tryParse(userData['fatgoal']?.toString() ?? '0') ?? 0.0;
-    final carbsGoal =
-        double.tryParse(userData['carbsgoal']?.toString() ?? '0') ?? 0.0;
-
-    // Get consumed macros from meal history
-    final userEmail = FirebaseAuth.instance.currentUser?.email;
+    // Prevent multiple updates within 2 seconds
     final now = DateTime.now();
+    if (_lastPointsUpdate != null &&
+        now.difference(_lastPointsUpdate!) < Duration(seconds: 2)) {
+      return;
+    }
+    _lastPointsUpdate = now;
+
+    final dailyCalories = userData['dailyCalories'] as int? ?? 0;
+
+    // Get consumed calories from meal history
+    final userEmail = FirebaseAuth.instance.currentUser?.email;
     final mealService = MealService();
-    final macros = await mealService.getTotalMacrosForDate(userEmail!, now);
+    final consumedCalories =
+        await mealService.getTotalCaloriesForDate(userEmail!, now);
 
-    final proteinConsumed = macros['protein'] ?? 0.0;
-    final fatConsumed = macros['fats'] ?? 0.0;
-    final carbsConsumed = macros['carbs'] ?? 0.0;
-
-    final proteinPercent = (proteinConsumed / proteinGoal * 100).clamp(0, 100);
-    final fatPercent = (fatConsumed / fatGoal * 100).clamp(0, 100);
-    final carbsPercent = (carbsConsumed / carbsGoal * 100).clamp(0, 100);
+    final caloriesPercent =
+        ((consumedCalories / dailyCalories) * 100).clamp(0, 100);
 
     final homeProvider = Provider.of<HomeProvider>(context, listen: false);
-    final bool ringsAreNowClosed =
-        proteinPercent >= 100 && fatPercent >= 100 && carbsPercent >= 100;
+    final bool caloriesGoalReached = caloriesPercent >= 100;
     final bool hasRingChanged = await homeProvider.hasRingChanged();
+    final bool wereRingsClosed = await homeProvider.areRingsClosed();
+
+    // If calories goal was not reached before but is now reached, award points
+    if (!wereRingsClosed && caloriesGoalReached) {
+      await _pointsService.addCaloriesCompletePoints();
+    }
+    // If calories goal was reached before but is now not reached, deduct points
+    else if (wereRingsClosed && !caloriesGoalReached) {
+      await _pointsService.removeCaloriesCompletePoints();
+    }
 
     // Update rings closed state
-    await homeProvider.setRingsClosed(ringsAreNowClosed);
+    await homeProvider.setRingsClosed(caloriesGoalReached);
 
     // Show reward screen only if:
-    // 1. Rings are now closed AND
-    // 2. Either rings were previously changed (not closed) or not shown yet
-    if (ringsAreNowClosed && hasRingChanged) {
+    // 1. Calories goal is reached AND
+    // 2. Either rings were previously changed (not reached) or not shown yet
+    if (caloriesGoalReached && hasRingChanged) {
       // Reset the ring changed state since we're showing the reward
       await homeProvider.setRingChanged(false);
 
@@ -333,7 +341,8 @@ class HomeScreenState extends State<HomeScreen> {
                     separatorBuilder: (context, index) {
                       return SizedBox(height: 5.h);
                     },
-                    itemCount: provider.homeInitialModelObj.cardsItemList.length,
+                    itemCount:
+                        provider.homeInitialModelObj.cardsItemList.length,
                     itemBuilder: (context, index) {
                       CardsItemModel model =
                           provider.homeInitialModelObj.cardsItemList[index];
@@ -395,10 +404,14 @@ class HomeScreenState extends State<HomeScreen> {
                     .doc(FirebaseAuth.instance.currentUser?.email)
                     .snapshots(),
                 builder: (context, snapshot) {
-                  if (snapshot.hasData && snapshot.data != null && snapshot.data!.exists) {
-                    final userData = snapshot.data!.data() as Map<String, dynamic>;
-                    final profilePicture = userData['profilePicture'] as String?;
-                    
+                  if (snapshot.hasData &&
+                      snapshot.data != null &&
+                      snapshot.data!.exists) {
+                    final userData =
+                        snapshot.data!.data() as Map<String, dynamic>;
+                    final profilePicture =
+                        userData['profilePicture'] as String?;
+
                     if (profilePicture != null && profilePicture.isNotEmpty) {
                       return Image.memory(
                         base64Decode(profilePicture),
@@ -409,7 +422,7 @@ class HomeScreenState extends State<HomeScreen> {
                       );
                     }
                   }
-                  
+
                   return Container(
                     height: 40.h,
                     width: 40.h,
