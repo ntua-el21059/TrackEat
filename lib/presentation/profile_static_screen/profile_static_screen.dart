@@ -3,10 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'dart:io';
-import 'dart:convert';
 import '../../core/app_export.dart';
 import '../../widgets/app_bar/appbar_leading_image.dart';
-import '../../widgets/app_bar/appbar_subtitle.dart';
 import '../../widgets/app_bar/custom_app_bar.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../providers/profile_picture_provider.dart';
@@ -558,8 +556,7 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> {
           .listen((snapshot) {
         if (!mounted) return;
         if (snapshot.exists) {
-          final userData = snapshot.data()!;
-          // Handle other user data updates here if needed
+          // Handle any future snapshot updates here
         }
       });
     }

@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:responsive_grid_list/responsive_grid_list.dart';
 import '../../core/app_export.dart';
 import '../../theme/custom_button_style.dart';
@@ -12,12 +11,9 @@ import 'models/listvegan_item_model.dart';
 import 'provider/social_profile_myself_provider.dart';
 import 'widgets/gridvector_one_item_widget.dart';
 import 'widgets/listvegan_item_widget.dart';
-import '../../providers/profile_picture_provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'dart:convert';
 import 'package:flutter_svg/flutter_svg.dart';
-import '../../services/profile_picture_cache_service.dart';
 import '../../widgets/cached_profile_picture.dart';
 
 class SocialProfileMyselfScreen extends StatefulWidget {
