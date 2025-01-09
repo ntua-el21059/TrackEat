@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:activity_ring/activity_ring.dart';
@@ -17,7 +16,7 @@ class CaloriesMacrosWidget extends StatelessWidget {
   final bool showHistoryButton;
 
   const CaloriesMacrosWidget({
-    Key? key,
+    super.key,
     this.isHomeScreen = true,
     required this.selectedDate,
     this.isLoading = false,
@@ -25,7 +24,7 @@ class CaloriesMacrosWidget extends StatelessWidget {
     this.ringWidth = 15,
     this.padding = const EdgeInsets.all(22),
     this.showHistoryButton = true,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -275,36 +274,6 @@ class CaloriesMacrosWidget extends StatelessWidget {
             color: color,
             fontSize: 24,
             fontWeight: FontWeight.w500,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildCaloriesRemaining(int dailyCalories, int consumedCalories) {
-    final remaining = dailyCalories - consumedCalories;
-    final isExceeded = remaining < 0;
-    
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          isExceeded ? "exceeded" : "remaining",
-          style: TextStyle(
-            color: isExceeded ? Colors.red : Colors.grey,
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        SizedBox(height: 4.h),
-        Text(
-          isExceeded 
-            ? "${remaining.abs()} kcal"
-            : "$remaining kcal",
-          style: TextStyle(
-            color: Colors.black,
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
           ),
         ),
       ],
