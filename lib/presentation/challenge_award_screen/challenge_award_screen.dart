@@ -1,9 +1,5 @@
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
 import '../../core/app_export.dart';
-import '../../widgets/app_bar/custom_app_bar.dart';
-import '../../widgets/custom_image_view.dart';
 import 'provider/challenge_award_provider.dart';
 
 class ChallengeAwardScreen extends StatefulWidget {

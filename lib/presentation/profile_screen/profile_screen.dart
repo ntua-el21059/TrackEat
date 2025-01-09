@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'dart:io' show Platform;
-import 'dart:convert';
 import '../../core/app_export.dart';
 import '../../widgets/app_bar/appbar_leading_image.dart';
 import '../../widgets/app_bar/appbar_subtitle.dart';
@@ -11,13 +10,11 @@ import '../../widgets/cached_profile_picture.dart';
 import 'models/profile_item_model.dart';
 import 'provider/profile_provider.dart';
 import 'widgets/profile_item_widget.dart';
-import '../../providers/profile_picture_provider.dart';
 import '../../providers/user_info_provider.dart';
 import '../../models/user_model.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import '../../services/profile_picture_cache_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({Key? key}) : super(key: key);
