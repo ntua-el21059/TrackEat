@@ -8,6 +8,7 @@ import '../../../widgets/custom_bottom_bar.dart';
 import '../../../widgets/app_bar/appbar_subtitle_one.dart';
 import '../../../widgets/app_bar/appbar_title.dart';
 import '../../../widgets/app_bar/custom_app_bar.dart';
+import '../../../widgets/motion_widget.dart';
 import 'models/cards_item_model.dart';
 import 'provider/home_provider.dart';
 import 'widgets/cards_item_widget.dart';
@@ -177,6 +178,7 @@ class HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: theme.colorScheme.onErrorContainer,
+      extendBodyBehindAppBar: false,
       appBar: _buildAppbar(context),
       body: Container(
         width: double.maxFinite,
@@ -254,59 +256,95 @@ class HomeScreenState extends State<HomeScreen> {
 
   /// Section Widget
   Widget _buildCalories(BuildContext context) {
-    return CaloriesMacrosWidget(
-      selectedDate: DateTime.now(),
-      isLoading: _isLoading,
-      isHomeScreen: true,
-      showHistoryButton: true,
-      ringRadius: 60,
-      ringWidth: 15,
-      padding: EdgeInsets.all(22.h),
+    return MotionWidget(
+      sensitivity: 4.0,
+      duration: const Duration(milliseconds: 150),
+      curve: Curves.easeOutQuad,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(21),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.25),
+              blurRadius: 30,
+              offset: const Offset(0, 15),
+              spreadRadius: 4,
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(21),
+          child: CaloriesMacrosWidget(
+            selectedDate: DateTime.now(),
+            isLoading: _isLoading,
+            isHomeScreen: true,
+            showHistoryButton: true,
+            ringRadius: 60,
+            ringWidth: 15,
+            padding: EdgeInsets.all(22.h),
+          ),
+        ),
+      ),
     );
   }
 
   Widget _buildSuggestionsone(BuildContext context) {
-    return Container(
-      width: double.maxFinite,
-      padding: EdgeInsets.only(
-        bottom: 22.h,
-      ),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFBAB2),
-        borderRadius: BorderRadius.circular(21),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: EdgeInsets.only(left: 17.h, top: 22.h),
-            child: Text(
-              "Suggestions",
-              style: CustomTextStyles.titleMediumGray90001Bold.copyWith(
-                fontSize: 22,
-              ),
+    return MotionWidget(
+      sensitivity: 4.0,
+      duration: const Duration(milliseconds: 150),
+      curve: Curves.easeOutQuad,
+      child: Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFBAB2),
+          borderRadius: BorderRadius.circular(21),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.25),
+              blurRadius: 30,
+              offset: const Offset(0, 15),
+              spreadRadius: 4,
             ),
+          ],
+        ),
+        child: Container(
+          width: double.maxFinite,
+          padding: EdgeInsets.only(
+            bottom: 22.h,
           ),
-          SizedBox(height: 16.h),
-          Consumer<HomeProvider>(
-            builder: (context, provider, child) {
-              return ListView.separated(
-                physics: NeverScrollableScrollPhysics(),
-                shrinkWrap: true,
-                separatorBuilder: (context, index) {
-                  return SizedBox(height: 5.h);
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: EdgeInsets.only(left: 17.h, top: 22.h),
+                child: Text(
+                  "Suggestions",
+                  style: CustomTextStyles.titleMediumGray90001Bold.copyWith(
+                    fontSize: 22,
+                  ),
+                ),
+              ),
+              SizedBox(height: 16.h),
+              Consumer<HomeProvider>(
+                builder: (context, provider, child) {
+                  return ListView.separated(
+                    physics: NeverScrollableScrollPhysics(),
+                    shrinkWrap: true,
+                    separatorBuilder: (context, index) {
+                      return SizedBox(height: 5.h);
+                    },
+                    itemCount: provider.homeInitialModelObj.cardsItemList.length,
+                    itemBuilder: (context, index) {
+                      CardsItemModel model =
+                          provider.homeInitialModelObj.cardsItemList[index];
+                      return CardsItemWidget(model);
+                    },
+                  );
                 },
-                itemCount: provider.homeInitialModelObj.cardsItemList.length,
-                itemBuilder: (context, index) {
-                  CardsItemModel model =
-                      provider.homeInitialModelObj.cardsItemList[index];
-                  return CardsItemWidget(model);
-                },
-              );
-            },
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

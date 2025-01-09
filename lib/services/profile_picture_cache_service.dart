@@ -9,76 +9,69 @@ class ProfilePictureCacheService extends ChangeNotifier {
 
   final Map<String, String> _cache = {};
   final Map<String, StreamSubscription<DocumentSnapshot>> _subscriptions = {};
+  final Map<String, String> _lastKnownProfilePictures = {};
 
   String? getCachedProfilePicture(String email) {
+    if (!_subscriptions.containsKey(email)) {
+      _setupListener(email);
+    }
     return _cache[email];
   }
 
-  void cacheProfilePicture(String email, String? profilePicture) {
-    if (profilePicture != null && profilePicture.isNotEmpty) {
-      _cache[email] = profilePicture;
-    } else {
-      _cache.remove(email);
-    }
-    notifyListeners();
-  }
-
-  Future<String?> getProfilePicture(String email) async {
-    // First check cache
-    if (_cache.containsKey(email)) {
-      return _cache[email];
-    }
-
-    // If not in cache, fetch from Firestore
-    try {
-      final doc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(email)
-          .get();
-
-      if (doc.exists) {
-        final profilePicture = doc.data()?['profilePicture'] as String?;
-        if (profilePicture != null && profilePicture.isNotEmpty) {
-          _cache[email] = profilePicture;
-          _setupListener(email);
-        }
-        return profilePicture;
-      }
-    } catch (e) {
-      print('Error fetching profile picture: $e');
-    }
-    return null;
-  }
-
   void _setupListener(String email) {
-    // Cancel existing subscription if any
     _subscriptions[email]?.cancel();
-
-    // Setup new subscription
+    
     _subscriptions[email] = FirebaseFirestore.instance
         .collection('users')
         .doc(email)
         .snapshots()
         .listen((snapshot) {
-      if (snapshot.exists) {
-        final newProfilePicture = snapshot.data()?['profilePicture'] as String?;
-        final currentCached = _cache[email];
+      if (!snapshot.exists) return;
+      
+      final data = snapshot.data() as Map<String, dynamic>;
+      if (!data.containsKey('profilePicture')) return;
+      
+      final newProfilePicture = data['profilePicture'] as String?;
+      
+      // Only update if the profile picture has actually changed
+      if (newProfilePicture != _lastKnownProfilePictures[email]) {
+        _lastKnownProfilePictures[email] = newProfilePicture ?? '';
+        
+        if (newProfilePicture == null || newProfilePicture.isEmpty) {
+          _cache.remove(email);
+          notifyListeners();
+          return;
+        }
 
-        // Only update cache if the profile picture has changed
-        if (newProfilePicture != currentCached) {
-          if (newProfilePicture != null && newProfilePicture.isNotEmpty) {
-            _cache[email] = newProfilePicture;
-          } else {
-            _cache.remove(email);
-          }
+        if (_cache[email] != newProfilePicture) {
+          _cache[email] = newProfilePicture;
           notifyListeners();
         }
       }
     });
   }
 
+  Future<String?> getOrUpdateCache(String email, String? newProfilePicture) async {
+    // If new picture is null or empty, return cached value
+    if (newProfilePicture == null || newProfilePicture.isEmpty) {
+      return getCachedProfilePicture(email);
+    }
+
+    // If we don't have a cached value or it's different, update it
+    if (_cache[email] != newProfilePicture) {
+      _cache[email] = newProfilePicture;
+      _lastKnownProfilePictures[email] = newProfilePicture;
+      if (!_subscriptions.containsKey(email)) {
+        _setupListener(email);
+      }
+    }
+
+    return _cache[email];
+  }
+
   void clearCache() {
     _cache.clear();
+    _lastKnownProfilePictures.clear();
     for (var subscription in _subscriptions.values) {
       subscription.cancel();
     }
@@ -88,6 +81,7 @@ class ProfilePictureCacheService extends ChangeNotifier {
 
   void clearCacheForUser(String email) {
     _cache.remove(email);
+    _lastKnownProfilePictures.remove(email);
     _subscriptions[email]?.cancel();
     _subscriptions.remove(email);
     notifyListeners();

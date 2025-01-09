@@ -7,6 +7,7 @@ import '../../core/app_export.dart';
 import '../../widgets/app_bar/appbar_leading_image.dart';
 import '../../widgets/app_bar/appbar_subtitle.dart';
 import '../../widgets/app_bar/custom_app_bar.dart';
+import '../../widgets/cached_profile_picture.dart';
 import 'models/profile_item_model.dart';
 import 'provider/profile_provider.dart';
 import 'widgets/profile_item_widget.dart';
@@ -16,6 +17,7 @@ import '../../models/user_model.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../../services/profile_picture_cache_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({Key? key}) : super(key: key);
@@ -313,48 +315,12 @@ class ProfileScreenState extends State<ProfileScreen> {
             width: 72.h,
             height: 72.h,
             alignment: Alignment.center,
-            child: Consumer<ProfilePictureProvider>(
-              builder: (context, profilePicProvider, _) {
-                return ClipOval(
-                  child: StreamBuilder<DocumentSnapshot>(
-                    stream: FirebaseFirestore.instance
-                        .collection('users')
-                        .doc(FirebaseAuth.instance.currentUser?.email)
-                        .snapshots(),
-                    builder: (context, snapshot) {
-                      if (snapshot.hasData && snapshot.data != null && snapshot.data!.exists) {
-                        final userData = snapshot.data!.data() as Map<String, dynamic>;
-                        final profilePicture = userData['profilePicture'] as String?;
-                        
-                        if (profilePicture != null && profilePicture.isNotEmpty) {
-                          return Image.memory(
-                            base64Decode(profilePicture),
-                            height: 56.h,
-                            width: 56.h,
-                            fit: BoxFit.cover,
-                          );
-                        }
-                      }
-                      
-                      return Container(
-                        height: 56.h,
-                        width: 56.h,
-                        decoration: BoxDecoration(
-                          color: Colors.grey[200],
-                          shape: BoxShape.circle,
-                        ),
-                        child: SvgPicture.asset(
-                          'assets/images/person.crop.circle.fill.svg',
-                          height: 56.h,
-                          width: 56.h,
-                          fit: BoxFit.cover,
-                        ),
-                      );
-                    },
-                  ),
-                );
-              },
-            ),
+            child: FirebaseAuth.instance.currentUser?.email != null
+              ? CachedProfilePicture(
+                  email: FirebaseAuth.instance.currentUser!.email!,
+                  size: 56.h,
+                )
+              : _buildDefaultProfilePicture(),
           ),
           Expanded(
             child: Container(
@@ -387,68 +353,54 @@ class ProfileScreenState extends State<ProfileScreen> {
                                   "$firstName $lastName",
                                   style: theme.textTheme.titleLarge?.copyWith(
                                     color: Colors.white,
-                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
-                                Transform.translate(
-                                  offset: Offset(0, -6.h),
-                                  child: Text(
-                                    "@$username",
-                                    style: theme.textTheme.bodyMedium?.copyWith(
-                                      color: Colors.white,
-                                    ),
+                                Text(
+                                  "@$username",
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    color: Colors.white.withOpacity(0.8),
                                   ),
                                 ),
                               ],
                             );
                           }
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                "Loading...",
-                                style: theme.textTheme.titleLarge?.copyWith(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              SizedBox(height: 4.h),
-                              Text(
-                                "@...",
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ],
-                          );
+                          return Container();
                         },
                       ),
                     ),
                   ),
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.pushNamed(context, AppRoutes.profileStaticScreen);
-                    },
-                    child: Container(
-                      padding: EdgeInsets.only(bottom: 5.h),
-                      child: CustomImageView(
-                        imagePath: ImageConstant.imgArrowRight,
-                        height: 30.h,
-                        width: 18.h,
-                        alignment: Alignment.center,
-                        margin: EdgeInsets.only(
-                          right: 2.h,
-                        ),
-                        color: Colors.white,
-                      ),
+                  CustomImageView(
+                    imagePath: ImageConstant.imgArrowRight,
+                    height: 18.h,
+                    width: 18.h,
+                    alignment: Alignment.center,
+                    margin: EdgeInsets.only(
+                      right: 2.h,
                     ),
+                    color: Colors.white,
                   ),
                 ],
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildDefaultProfilePicture() {
+    return Container(
+      height: 56.h,
+      width: 56.h,
+      decoration: BoxDecoration(
+        color: Colors.grey[200],
+        shape: BoxShape.circle,
+      ),
+      child: SvgPicture.asset(
+        'assets/images/person.crop.circle.fill.svg',
+        height: 56.h,
+        width: 56.h,
+        fit: BoxFit.cover,
       ),
     );
   }

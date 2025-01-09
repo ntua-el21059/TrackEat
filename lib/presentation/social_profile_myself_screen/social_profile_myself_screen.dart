@@ -17,6 +17,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:convert';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../../services/profile_picture_cache_service.dart';
+import '../../widgets/cached_profile_picture.dart';
 
 class SocialProfileMyselfScreen extends StatefulWidget {
   final String? backButtonText;
@@ -219,48 +221,12 @@ class SocialProfileMyselfScreenState extends State<SocialProfileMyselfScreen> {
         children: [
           Row(
             children: [
-              Consumer<ProfilePictureProvider>(
-                builder: (context, profilePicProvider, _) {
-                  return ClipOval(
-                    child: StreamBuilder<DocumentSnapshot>(
-                      stream: FirebaseFirestore.instance
-                          .collection('users')
-                          .doc(FirebaseAuth.instance.currentUser?.email)
-                          .snapshots(),
-                      builder: (context, snapshot) {
-                        if (snapshot.hasData && snapshot.data != null && snapshot.data!.exists) {
-                          final userData = snapshot.data!.data() as Map<String, dynamic>;
-                          final profilePicture = userData['profilePicture'] as String?;
-                          
-                          if (profilePicture != null && profilePicture.isNotEmpty) {
-                            return Image.memory(
-                              base64Decode(profilePicture),
-                              height: 80.h,
-                              width: 80.h,
-                              fit: BoxFit.cover,
-                            );
-                          }
-                        }
-                        
-                        return Container(
-                          height: 80.h,
-                          width: 80.h,
-                          decoration: BoxDecoration(
-                            color: Colors.grey[200],
-                            shape: BoxShape.circle,
-                          ),
-                          child: SvgPicture.asset(
-                            'assets/images/person.crop.circle.fill.svg',
-                            height: 80.h,
-                            width: 80.h,
-                            fit: BoxFit.cover,
-                          ),
-                        );
-                      },
-                    ),
-                  );
-                },
-              ),
+              FirebaseAuth.instance.currentUser?.email != null
+                ? CachedProfilePicture(
+                    email: FirebaseAuth.instance.currentUser!.email!,
+                    size: 80.h,
+                  )
+                : _buildDefaultProfilePicture(),
               SizedBox(width: 12.h),
               Expanded(
                 child: StreamBuilder<DocumentSnapshot>(
@@ -288,39 +254,20 @@ class SocialProfileMyselfScreenState extends State<SocialProfileMyselfScreen> {
                                 style: theme.textTheme.headlineMedium?.copyWith(
                                   color: const Color(0xFF37474F),
                                   fontWeight: FontWeight.w600,
-                                  fontSize: 24.h,
                                 ),
                               ),
                             ),
                           ),
                           Text(
                             "@$username",
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              color: const Color(0xFF37474F),
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: const Color(0xFF37474F).withOpacity(0.7),
                             ),
-                            overflow: TextOverflow.ellipsis,
                           ),
                         ],
                       );
                     }
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "Loading...",
-                          style: theme.textTheme.headlineMedium?.copyWith(
-                            color: const Color(0xFF37474F),
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        Text(
-                          "@...",
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            color: const Color(0xFF37474F),
-                          ),
-                        ),
-                      ],
-                    );
+                    return Container();
                   },
                 ),
               ),
@@ -548,6 +495,23 @@ class SocialProfileMyselfScreenState extends State<SocialProfileMyselfScreen> {
           ),
         )
       ],
+    );
+  }
+
+  Widget _buildDefaultProfilePicture() {
+    return Container(
+      height: 80.h,
+      width: 80.h,
+      decoration: BoxDecoration(
+        color: Colors.grey[200],
+        shape: BoxShape.circle,
+      ),
+      child: SvgPicture.asset(
+        'assets/images/person.crop.circle.fill.svg',
+        height: 80.h,
+        width: 80.h,
+        fit: BoxFit.cover,
+      ),
     );
   }
 }

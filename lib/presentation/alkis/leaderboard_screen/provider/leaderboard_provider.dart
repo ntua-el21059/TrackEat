@@ -81,7 +81,7 @@ class LeaderboardProvider extends ChangeNotifier {
           if (data['username'] != null &&
               data['username'].toString().isNotEmpty) {
             // Get profile picture from cache or fetch it
-            String? profilePicture = await _profilePictureCache.getProfilePicture(email);
+            String? profilePicture = await _profilePictureCache.getOrUpdateCache(email, null);
             
             allUsers.add(LeaderboardUserModel(
               username: data['username'] ?? '',

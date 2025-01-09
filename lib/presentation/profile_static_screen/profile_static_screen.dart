@@ -16,6 +16,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../services/storage_service.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../../widgets/cached_profile_picture.dart';
 
 class ProfileStaticScreen extends StatefulWidget {
   const ProfileStaticScreen({Key? key}) : super(key: key);
@@ -28,20 +29,6 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> {
   // Add text controller
   final TextEditingController _textController = TextEditingController();
   StreamSubscription<DocumentSnapshot>? _userSubscription;
-  Widget _currentProfileImage = Container(
-    height: 72.h,
-    width: 72.h,
-    decoration: BoxDecoration(
-      color: Colors.grey[200],
-      shape: BoxShape.circle,
-    ),
-    child: SvgPicture.asset(
-      'assets/images/person.crop.circle.fill.svg',
-      height: 72.h,
-      width: 72.h,
-      fit: BoxFit.cover,
-    ),
-  );
 
   void _showTextInputDialog(BuildContext context, String title, String currentValue, bool isNameField) {
     // Get the current value from Firebase first
@@ -557,35 +544,6 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> {
   @override
   void initState() {
     super.initState();
-    
-    // Fetch initial profile picture
-    final currentUser = FirebaseAuth.instance.currentUser;
-    if (currentUser?.email != null) {
-      FirebaseFirestore.instance
-          .collection('users')
-          .doc(currentUser?.email)
-          .get()
-          .then((snapshot) {
-        if (snapshot.exists && mounted) {
-          final userData = snapshot.data()!;
-          final profilePicture = userData['profilePicture'] as String?;
-          
-          if (profilePicture != null && profilePicture.isNotEmpty) {
-            setState(() {
-              _currentProfileImage = ClipOval(
-                child: Image.memory(
-                  base64Decode(profilePicture),
-                  height: 72.h,
-                  width: 72.h,
-                  fit: BoxFit.cover,
-                ),
-              );
-            });
-          }
-        }
-      });
-    }
-    
     // Setup Firebase listener for changes
     _setupFirestoreListener();
   }
@@ -593,44 +551,15 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> {
   void _setupFirestoreListener() {
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser?.email != null) {
-      FirebaseFirestore.instance
+      _userSubscription = FirebaseFirestore.instance
           .collection('users')
           .doc(currentUser?.email)
           .snapshots()
           .listen((snapshot) {
-        if (snapshot.exists && mounted) {
+        if (!mounted) return;
+        if (snapshot.exists) {
           final userData = snapshot.data()!;
-          final profilePicture = userData['profilePicture'] as String?;
-          
-          if (profilePicture != null && profilePicture.isNotEmpty) {
-            setState(() {
-              _currentProfileImage = ClipOval(
-                child: Image.memory(
-                  base64Decode(profilePicture),
-                  height: 72.h,
-                  width: 72.h,
-                  fit: BoxFit.cover,
-                ),
-              );
-            });
-          } else {
-            setState(() {
-              _currentProfileImage = Container(
-                height: 72.h,
-                width: 72.h,
-                decoration: BoxDecoration(
-                  color: Colors.grey[200],
-                  shape: BoxShape.circle,
-                ),
-                child: SvgPicture.asset(
-                  'assets/images/person.crop.circle.fill.svg',
-                  height: 72.h,
-                  width: 72.h,
-                  fit: BoxFit.cover,
-                ),
-              );
-            });
-          }
+          // Handle other user data updates here if needed
         }
       });
     }
@@ -638,46 +567,53 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> {
 
   @override
   void dispose() {
-    // Cancel the subscription when the screen is disposed
     _userSubscription?.cancel();
+    _textController.dispose();
     super.dispose();
+  }
+
+  Widget _buildDefaultProfilePicture() {
+    return Container(
+      height: 72.h,
+      width: 72.h,
+      decoration: BoxDecoration(
+        color: Colors.grey[200],
+        shape: BoxShape.circle,
+      ),
+      child: SvgPicture.asset(
+        'assets/images/person.crop.circle.fill.svg',
+        height: 72.h,
+        width: 72.h,
+        fit: BoxFit.cover,
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: theme.colorScheme.onErrorContainer,
+      backgroundColor: Colors.white,
       appBar: CustomAppBar(
-        height: 38.h,
-        leadingWidth: 24.h,
+        leadingWidth: 23.h,
         leading: AppbarLeadingImage(
           imagePath: ImageConstant.imgArrowLeftPrimary,
-          margin: EdgeInsets.only(left: 8.h),
-          onTap: () {
-            Navigator.pop(context);
-          },
-        ),
-        title: AppbarSubtitle(
-          text: "Profile",
           margin: EdgeInsets.only(left: 7.h),
+          onTap: () => Navigator.pop(context),
         ),
-        actions: [
-          Padding(
-            padding: EdgeInsets.only(right: 16.h, top: 4.h, bottom: 4.h),
-            child: GestureDetector(
-              onTap: () {
-                Navigator.pushNamed(context, AppRoutes.accessibilitySettingsScreen);
-              },
-              child: CustomImageView(
-                imagePath: ImageConstant.imgAccessibilityFill,
-                height: 28.h,
-                width: 28.h,
-                color: theme.colorScheme.primary,
-                fit: BoxFit.contain,
-              ),
+        title: TextButton(
+          onPressed: () => Navigator.pop(context),
+          style: TextButton.styleFrom(
+            padding: EdgeInsets.only(left: 7.h),
+            minimumSize: Size.zero,
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          ),
+          child: Text(
+            "Profile",
+            style: theme.textTheme.bodyLarge!.copyWith(
+              color: theme.colorScheme.primary,
             ),
           ),
-        ],
+        ),
       ),
       body: SafeArea(
         top: false,
@@ -705,10 +641,12 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> {
                             Container(
                               height: 72.h,
                               width: 72.h,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                              ),
-                              child: _currentProfileImage,
+                              child: FirebaseAuth.instance.currentUser?.email != null
+                                ? CachedProfilePicture(
+                                    email: FirebaseAuth.instance.currentUser!.email!,
+                                    size: 72.h,
+                                  )
+                                : _buildDefaultProfilePicture(),
                             ),
                             SizedBox(height: 8.h),
                             GestureDetector(
@@ -753,22 +691,6 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> {
                             "Birthday",
                             userInfo.birthdate,
                             false,
-                          ),
-                        ),
-                        _buildProfileItem(
-                          label: "Gender",
-                          value: userInfo.gender,
-                          onTap: () => _showGenderSelector(
-                            context,
-                            userInfo.gender,
-                          ),
-                        ),
-                        _buildProfileItem(
-                          label: "Height",
-                          value: userInfo.height.toString(),
-                          onTap: () => _showHeightInputDialog(
-                            context,
-                            userInfo.height.toString(),
                           ),
                         ),
                         _buildProfileItem(
