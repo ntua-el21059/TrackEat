@@ -53,3 +53,5 @@ app.*.map.json
 
 # windsurf rules
 .windsurfrules
+
+node_modules/
