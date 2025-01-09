@@ -29,13 +29,14 @@ void main() async {
     statusBarColor: Colors.transparent,
     statusBarIconBrightness: Brightness.dark,
     statusBarBrightness: Brightness.light,
-    systemNavigationBarColor: Colors.transparent,
+    systemNavigationBarColor: Colors.white,
     systemNavigationBarDividerColor: Colors.transparent,
     systemNavigationBarIconBrightness: Brightness.dark,
   ));
 
   await Future.wait([
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]),
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge),
     PrefUtils().init()
   ]);
 

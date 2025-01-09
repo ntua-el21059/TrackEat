@@ -30,36 +30,137 @@ class RewardScreenRingsClosedScreen extends StatefulWidget {
   }
 }
 
+class Particle {
+  Offset position;
+  Color color;
+  double size;
+  double velocityY;
+  double rotation;
+  int shape; // 0: rectangle, 1: diamond
+  
+  Particle({
+    required this.position,
+    required this.color,
+    required this.size,
+    required this.shape,
+    this.velocityY = 2.0, // Reduced falling speed from 4.0
+    required this.rotation,
+  });
+}
+
 class RewardScreenRingsClosedScreenState
-    extends State<RewardScreenRingsClosedScreen> {
-  late ConfettiController _confettiController;
+    extends State<RewardScreenRingsClosedScreen> with TickerProviderStateMixin {
   bool _isNavigating = false;
-  double _accelerometerX = 0;
-  double _accelerometerY = 0;
-  final double _parallaxFactor = 15.0; // Adjust this to control parallax intensity
+  double _alignX = 0.0;
+  double _alignY = 0.0;
+  double _smoothX = 0.0;
+  double _smoothY = 0.0;
+  static const double _sensitivity = 0.8; // Decreased sensitivity
+  static const double _smoothingFactor = 0.7; // Less smoothing for faster response
+  bool _isInitialized = false;
+  
+  final List<Particle> _particles = [];
+  late AnimationController _animationController;
+  final Random _random = Random();
+  
+  static const List<Color> _colors = [
+    Color(0xFFFF1D44),  // Red
+    Color(0xFFFFD100),  // Gold
+    Color(0xFF00E0FF),  // Blue
+    Color(0xFFFF8D00),  // Orange
+    Color(0xFFFFFFFF),  // White
+    Color(0xFF00FF94),  // Green
+  ];
 
   @override
   void initState() {
     super.initState();
-    _confettiController = ConfettiController(duration: const Duration(seconds: 30));
-    _confettiController.play();
-
-    // Start listening to accelerometer events
+    
+    // Create animation controller
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 1),
+    )..repeat();
+    
+    // Add listener for animation updates
+    _animationController.addListener(_updateParticles);
+    
+    // Listen to accelerometer events with smoothing
     accelerometerEvents.listen((AccelerometerEvent event) {
       if (mounted) {
         setState(() {
-          // Smoothing the values for better visual effect and inverting direction
-          _accelerometerX = (-event.x * 0.3 + _accelerometerX * 0.7);
-          _accelerometerY = (-event.y * 0.3 + _accelerometerY * 0.7);
+          // Only use X-axis for side-to-side movement
+          final targetX = (-event.x * _sensitivity).clamp(-1.0, 1.0);
+          
+          // Apply smoothing only to X movement
+          _smoothX = _smoothX * _smoothingFactor + targetX * (1 - _smoothingFactor);
+          _alignX = _smoothX;
         });
       }
     });
   }
 
+  void _generateParticles(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    _particles.clear();
+    
+    // Create particles distributed across the screen vertically
+    for (int i = 0; i < 100; i++) { // Increased from 50 to 100 particles
+      _particles.add(
+        Particle(
+          position: Offset(
+            _random.nextDouble() * size.width,
+            // Distribute particles across twice the screen height for smoother initial flow
+            -size.height + (_random.nextDouble() * size.height * 2),
+          ),
+          color: _colors[_random.nextInt(_colors.length)],
+          size: 2 + _random.nextDouble() * 3, // Slightly smaller size for denser look
+          shape: _random.nextInt(2),
+          rotation: _random.nextDouble() * pi * 2,
+        ),
+      );
+    }
+  }
+
+  void _updateParticles() {
+    if (!mounted || !_isInitialized) return;
+    
+    final size = MediaQuery.of(context).size;
+    for (var particle in _particles) {
+      // Add some natural swaying motion
+      final swayAmount = sin(_animationController.value * pi * 2) * 0.5;
+      
+      particle.position = Offset(
+        particle.position.dx + _alignX * 6 + swayAmount, // Reduced horizontal movement speed from 12 to 6
+        particle.position.dy + particle.velocityY,
+      );
+      
+      // Rotate based on movement
+      particle.rotation += 0.05 + (swayAmount.abs() * 0.05);
+      
+      // Reset particle position when it goes off screen
+      if (particle.position.dy > size.height) {
+        // Reset to above the screen at a random x position
+        particle.position = Offset(
+          _random.nextDouble() * size.width,
+          -particle.size * 2,
+        );
+        particle.rotation = _random.nextDouble() * pi * 2;
+      }
+      
+      // Wrap particles horizontally (appear on opposite side)
+      if (particle.position.dx < -particle.size * 3) {
+        particle.position = Offset(size.width + particle.size * 3, particle.position.dy);
+      } else if (particle.position.dx > size.width + particle.size * 3) {
+        particle.position = Offset(-particle.size * 3, particle.position.dy);
+      }
+    }
+    setState(() {});
+  }
+
   @override
   void dispose() {
-    _confettiController.stop();
-    _confettiController.dispose();
+    _animationController.dispose();
     super.dispose();
   }
 
@@ -70,7 +171,6 @@ class RewardScreenRingsClosedScreenState
       _isNavigating = true;
     });
 
-    // Mark reward as shown before navigating
     final homeProvider = Provider.of<HomeProvider>(context, listen: false);
     await homeProvider.markRewardScreenAsShown();
 
@@ -84,6 +184,14 @@ class RewardScreenRingsClosedScreenState
 
   @override
   Widget build(BuildContext context) {
+    // Initialize particles after first build
+    if (!_isInitialized) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _generateParticles(context);
+        _isInitialized = true;
+      });
+    }
+
     return WillPopScope(
       onWillPop: () async {
         _navigateToHome();
@@ -92,133 +200,130 @@ class RewardScreenRingsClosedScreenState
       child: Scaffold(
         backgroundColor: theme.colorScheme.onErrorContainer,
         body: SafeArea(
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final screenHeight = constraints.maxHeight;
-              final screenWidth = constraints.maxWidth;
+          child: Stack(
+            children: [
+              // Particles
+              CustomPaint(
+                painter: ParticlePainter(particles: _particles),
+                size: Size.infinite,
+              ),
               
-              return SingleChildScrollView(
-                physics: NeverScrollableScrollPhysics(),
-                child: Container(
-                  height: screenHeight,
-                  width: screenWidth,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      // Multiple confetti sources across the top
-                      Positioned(
-                        top: 0,
-                        child: Transform(
-                          transform: Matrix4.identity()
-                            ..setEntry(3, 2, 0.001) // perspective
-                            ..translate(
-                              _accelerometerX * 20.0,
-                              _accelerometerY * 20.0,
+              // Main content
+              Container(
+                width: double.maxFinite,
+                padding: EdgeInsets.symmetric(
+                  horizontal: 16.h,
+                  vertical: 24.h,
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      "Congratulations!",
+                      style: theme.textTheme.displayMedium,
+                      textAlign: TextAlign.center,
+                    ),
+                    SizedBox(height: 16.h),
+                    Text(
+                      "You closed your rings!",
+                      style: theme.textTheme.headlineSmall,
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+
+              // Dismiss button
+              Positioned(
+                bottom: 50.h,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(20.h),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 15.0, sigmaY: 15.0),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: _navigateToHome,
+                          child: Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 32.h,
+                              vertical: 12.h,
                             ),
-                          alignment: Alignment.center,
-                          child: SizedBox(
-                            width: screenWidth,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: List.generate(8, (index) => // 8 sources across the screen
-                                SizedBox(
-                                  width: screenWidth / 8,
-                                  child: ConfettiWidget(
-                                    confettiController: _confettiController,
-                                    blastDirection: pi/2,
-                                    blastDirectionality: BlastDirectionality.directional,
-                                    maxBlastForce: 20.0,
-                                    minBlastForce: 10.0,
-                                    emissionFrequency: 0.05,
-                                    numberOfParticles: 5,
-                                    gravity: 0.1,
-                                    shouldLoop: true,
-                                    colors: const [
-                                      Colors.green,
-                                      Colors.blue,
-                                      Colors.pink,
-                                      Colors.orange,
-                                      Colors.purple,
-                                      Colors.yellow,
-                                      Colors.red,
-                                      Colors.teal,
-                                    ],
-                                    minimumSize: const Size(8, 8),
-                                    maximumSize: const Size(15, 15),
-                                  ),
-                                ),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(20.h),
+                              border: Border.all(
+                                color: Colors.white.withOpacity(0.15),
+                                width: 0.5,
+                              ),
+                            ),
+                            child: Text(
+                              "Dismiss",
+                              style: TextStyle(
+                                color: Colors.black.withOpacity(0.9),
+                                fontSize: 17.h,
+                                fontWeight: FontWeight.w500,
+                                letterSpacing: 0.3,
                               ),
                             ),
                           ),
                         ),
                       ),
-                      // Main content
-                      Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              "Congratulations!",
-                              style: theme.textTheme.displayMedium,
-                              textAlign: TextAlign.center,
-                            ),
-                            SizedBox(height: 16.h),
-                            Text(
-                              "You closed your rings!",
-                              style: theme.textTheme.headlineSmall,
-                              textAlign: TextAlign.center,
-                            ),
-                          ],
-                        ),
-                      ),
-                      // Dismiss button
-                      Positioned(
-                        bottom: 50.h,
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(20.h),
-                          child: BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 15.0, sigmaY: 15.0),
-                            child: Material(
-                              color: Colors.transparent,
-                              child: InkWell(
-                                onTap: _navigateToHome,
-                                child: Container(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: 32.h,
-                                    vertical: 12.h,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(20.h),
-                                    border: Border.all(
-                                      color: Colors.white.withOpacity(0.15),
-                                      width: 0.5,
-                                    ),
-                                  ),
-                                  child: Text(
-                                    "Dismiss",
-                                    style: TextStyle(
-                                      color: Colors.black.withOpacity(0.9),
-                                      fontSize: 17.h,
-                                      fontWeight: FontWeight.w500,
-                                      letterSpacing: 0.3,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
-              );
-            },
+              ),
+            ],
           ),
         ),
       ),
     );
   }
+}
+
+class ParticlePainter extends CustomPainter {
+  final List<Particle> particles;
+
+  ParticlePainter({required this.particles});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    for (var particle in particles) {
+      final paint = Paint()
+        ..color = particle.color
+        ..style = PaintingStyle.fill;
+
+      canvas.save();
+      canvas.translate(particle.position.dx, particle.position.dy);
+      canvas.rotate(particle.rotation);
+
+      if (particle.shape == 0) {
+        // Rectangle confetti
+        final rect = Rect.fromCenter(
+          center: Offset.zero,
+          width: particle.size * 3,
+          height: particle.size,
+        );
+        canvas.drawRect(rect, paint);
+      } else {
+        // Diamond confetti
+        final path = Path();
+        path.moveTo(0, -particle.size * 1.5);
+        path.lineTo(particle.size, 0);
+        path.lineTo(0, particle.size * 1.5);
+        path.lineTo(-particle.size, 0);
+        path.close();
+        canvas.drawPath(path, paint);
+      }
+      
+      canvas.restore();
+    }
+  }
+
+  @override
+  bool shouldRepaint(ParticlePainter oldDelegate) => true;
 }
 
