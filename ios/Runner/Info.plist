@@ -37,6 +37,8 @@
 	<string>This app needs access to camera to take photos of your meals.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>This app needs access to microphone to record your voice for meal descriptions.</string>
+	<key>NSMotionUsageDescription</key>
+	<string>We need access to motion sensors to create interactive confetti effects in the app</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>This app needs access to photo library to select photos of your meals.</string>
 	<key>NSSiriUsageDescription</key>
@@ -70,7 +72,5 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
-	<key>NSMotionUsageDescription</key>
-	<string>We need access to motion sensors to create interactive confetti effects in the app</string>
 </dict>
 </plist>

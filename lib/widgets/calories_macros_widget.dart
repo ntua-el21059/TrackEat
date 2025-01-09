@@ -92,8 +92,7 @@ class CaloriesMacrosWidget extends StatelessWidget {
                     final caloriesPercent =
                         ((consumedCalories / dailyCalories) * 100)
                             .clamp(0, 100);
-                    final remainingCalories = (dailyCalories - consumedCalories)
-                        .clamp(0, dailyCalories);
+                    final remainingCalories = dailyCalories - consumedCalories;
 
                     if (isHomeScreen) {
                       (context as Element)
@@ -108,7 +107,9 @@ class CaloriesMacrosWidget extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              "$remainingCalories kcal Remaining...",
+                              remainingCalories < 0 
+                                ? "${remainingCalories.abs()} kcal exceeded..."
+                                : "$remainingCalories kcal remaining...",
                               style: CustomTextStyles.titleMediumGray90001Bold,
                             ),
                             Text(
@@ -274,6 +275,36 @@ class CaloriesMacrosWidget extends StatelessWidget {
             color: color,
             fontSize: 24,
             fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCaloriesRemaining(int dailyCalories, int consumedCalories) {
+    final remaining = dailyCalories - consumedCalories;
+    final isExceeded = remaining < 0;
+    
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          isExceeded ? "exceeded" : "remaining",
+          style: TextStyle(
+            color: isExceeded ? Colors.red : Colors.grey,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        SizedBox(height: 4.h),
+        Text(
+          isExceeded 
+            ? "${remaining.abs()} kcal"
+            : "$remaining kcal",
+          style: TextStyle(
+            color: Colors.black,
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
           ),
         ),
       ],

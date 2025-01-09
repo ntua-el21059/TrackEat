@@ -1,15 +1,12 @@
-import 'package:flutter/material.dart';
 import 'dart:math';
 import 'dart:ui';
 import '../../core/app_export.dart';
 import 'provider/reward_screen_rings_closed_provider.dart';
-import 'package:confetti/confetti.dart';
 import '../homepage_history/home_screen/provider/home_provider.dart';
 import 'package:sensors_plus/sensors_plus.dart';
-import 'package:provider/provider.dart';
 
 class RewardScreenRingsClosedScreen extends StatefulWidget {
-  const RewardScreenRingsClosedScreen({Key? key}) : super(key: key);
+  const RewardScreenRingsClosedScreen({super.key});
 
   @override
   RewardScreenRingsClosedScreenState createState() =>

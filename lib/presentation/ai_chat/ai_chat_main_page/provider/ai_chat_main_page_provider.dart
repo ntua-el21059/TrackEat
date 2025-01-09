@@ -122,7 +122,7 @@ class AiChatMainProvider extends ChangeNotifier {
 
   Future<bool> _isEatingStatement(String message) async {
     final eatingPrompt = '''
-    Does this message state that food was eaten (e.g. "I ate a sandwich", "just had pasta", "I had some pizza")?
+    Does this message state that food was eaten (e.g. "I ate a sandwich", "just had pasta", "I had some pizza", "I ate 10 big macs")?
     Note: Direct commands (e.g. "log a sandwich") should return false.
     Respond with only "true" or "false":
     Message: "$message"
@@ -133,6 +133,28 @@ class AiChatMainProvider extends ChangeNotifier {
       return response.text?.trim().toLowerCase() == 'true';
     } catch (e) {
       print('Error detecting eating statement: $e');
+      return false;
+    }
+  }
+
+  Future<bool> _isNegativeResponse(String message) async {
+    final negativePrompt = '''
+    Is this a negative response? Consider variations like:
+    - "no"
+    - "nope"
+    - "nah"
+    - "not really"
+    - "don't want to"
+    
+    Respond with only "true" or "false":
+    Message: "$message"
+    ''';
+
+    try {
+      final response = await _model.generateContent([Content.text(negativePrompt)]);
+      return response.text?.trim().toLowerCase() == 'true';
+    } catch (e) {
+      print('Error detecting negative response: $e');
       return false;
     }
   }
@@ -216,7 +238,17 @@ class AiChatMainProvider extends ChangeNotifier {
 
   Future<bool> _isCommonFood(String message) async {
     final commonFoodPrompt = '''
-    Is this a well-known food item with standard nutritional values (like Big Mac, apple, banana, etc.)? Respond with only "true" or "false":
+    Is this a well-known food item with standard nutritional values (like Big Mac, apple, banana, pizza slice, etc.)? Consider common fast food items, fruits, and basic meals.
+    
+    Examples of common foods:
+    - Big Mac
+    - Quarter Pounder
+    - Apple
+    - Banana
+    - Pizza slice
+    - Chicken nugget
+    
+    Respond with only "true" or "false":
     Food: "$message"
     ''';
 
@@ -333,6 +365,44 @@ class AiChatMainProvider extends ChangeNotifier {
       print('Error combining food names: $e');
       return previousFood;
     }
+  }
+
+  Future<(String, int)> _extractFoodNameAndQuantity(String message) async {
+    final extractPrompt = '''
+    Extract the food name and quantity from this message. If no quantity is specified, assume 1.
+    You must respond with ONLY a JSON object in this exact format, no other text or markdown:
+    {"food": "food name", "quantity": number}
+
+    Examples:
+    Message: "track 10 big macs"
+    {"food": "big mac", "quantity": 10}
+
+    Message: "I ate 5 slices of pizza"
+    {"food": "pizza slice", "quantity": 5}
+
+    Message: "just had two sandwiches"
+    {"food": "sandwich", "quantity": 2}
+
+    Message: "track big mac"
+    {"food": "big mac", "quantity": 1}
+
+    Message: "${message}"
+    ''';
+
+    try {
+      final response = await _model.generateContent([Content.text(extractPrompt)]);
+      if (response.text != null) {
+        String cleanedResponse = response.text!
+            .replaceAll('```json', '')
+            .replaceAll('```', '')
+            .trim();
+        final data = json.decode(cleanedResponse);
+        return (data['food'] as String, (data['quantity'] as num).toInt());
+      }
+    } catch (e) {
+      print('Error extracting food and quantity: $e');
+    }
+    return (message, 1); // Default fallback
   }
 
   Future<void> sendMessage(String message) async {
@@ -556,22 +626,25 @@ Important: Respond with ONLY the JSON object, no other text.""";
           final isEatingStatement = await _isEatingStatement(message);
           
           if (isDirectCommand) {
-            // Extract the food name from the command
-            final foodNamePrompt = '''
-            Extract just the food name from this logging command. Respond with ONLY the food name:
-            Command: "$message"
-            ''';
-            final foodResponse = await _model.generateContent([Content.text(foodNamePrompt)]);
-            final foodName = foodResponse.text?.trim() ?? message;
+            // Extract the food name and quantity from the command
+            final (foodName, quantity) = await _extractFoodNameAndQuantity(message);
             _previousFood = foodName;
 
             // If it's a direct command and common food, go straight to tracking
             if (await _isCommonFood(foodName)) {
               final nutritionData = await _getNutritionFromText(foodName);
+              
+              // Multiply nutritional values by quantity
+              nutritionData['calories'] = (nutritionData['calories'] as num) * quantity;
+              nutritionData['protein'] = (nutritionData['protein'] as num) * quantity;
+              nutritionData['carbs'] = (nutritionData['carbs'] as num) * quantity;
+              nutritionData['fat'] = (nutritionData['fat'] as num) * quantity;
+              nutritionData['serving_size'] = "${quantity}x ${nutritionData['serving_size']}";
+              
               lastNutritionData = nutritionData;
 
               String formattedResponse =
-                  'Food: ${nutritionData['food'].toString().split(' ').map((word) => word.substring(0, 1).toUpperCase() + word.substring(1)).join(' ')}\n'
+                  'Food: ${quantity}x ${nutritionData['food'].toString().split(' ').map((word) => word.substring(0, 1).toUpperCase() + word.substring(1)).join(' ')}\n'
                   '🍽️ Serving Size: ${nutritionData['serving_size']}\n'
                   '🔥 Calories: ${nutritionData['calories']}\n'
                   '💪 Protein: ${nutritionData['protein']}g\n'
@@ -599,25 +672,53 @@ Important: Respond with ONLY the JSON object, no other text.""";
               if (onMessageAdded != null) onMessageAdded!();
             }
           } else if (isEatingStatement) {
-            // Extract the food name from the eating statement
-            final foodNamePrompt = '''
-            Extract just the food name from this eating statement. Respond with ONLY the food name:
-            Statement: "$message"
-            ''';
-            final foodResponse = await _model.generateContent([Content.text(foodNamePrompt)]);
-            final foodName = foodResponse.text?.trim() ?? message;
+            // Extract the food name and quantity from the eating statement
+            final (foodName, quantity) = await _extractFoodNameAndQuantity(message);
             _previousFood = foodName;
 
-            // Always ask for nutrition info for eating statements
-            final foodInfo = await _getFoodInfo(foodName, isEatingStatement: true);
-            messages.add({
-              'role': 'assistant',
-              'content': foodInfo,
-            });
-            notifyListeners();
-            if (onMessageAdded != null) onMessageAdded!();
-            
-            _isTrackingFlow = true;
+            // If it's a common food, go straight to tracking
+            if (await _isCommonFood(foodName)) {
+              final nutritionData = await _getNutritionFromText(foodName);
+              
+              // Multiply nutritional values by quantity
+              nutritionData['calories'] = (nutritionData['calories'] as num) * quantity;
+              nutritionData['protein'] = (nutritionData['protein'] as num) * quantity;
+              nutritionData['carbs'] = (nutritionData['carbs'] as num) * quantity;
+              nutritionData['fat'] = (nutritionData['fat'] as num) * quantity;
+              nutritionData['serving_size'] = "${quantity}x ${nutritionData['serving_size']}";
+              
+              lastNutritionData = nutritionData;
+
+              String formattedResponse =
+                  'Food: ${quantity}x ${nutritionData['food'].toString().split(' ').map((word) => word.substring(0, 1).toUpperCase() + word.substring(1)).join(' ')}\n'
+                  '🍽️ Serving Size: ${nutritionData['serving_size']}\n'
+                  '🔥 Calories: ${nutritionData['calories']}\n'
+                  '💪 Protein: ${nutritionData['protein']}g\n'
+                  '🌾 Carbs: ${nutritionData['carbs']}g\n'
+                  '🥑 Fat: ${nutritionData['fat']}g';
+
+              messages.add({
+                'role': 'assistant',
+                'content': formattedResponse,
+              });
+              notifyListeners();
+              if (onMessageAdded != null) onMessageAdded!();
+
+              showTrackDialog = true;
+              _isTrackingFlow = false;
+              _userProvidedNutrition = null;
+            } else {
+              // Always ask for nutrition info for non-common foods
+              final foodInfo = await _getFoodInfo(foodName, isEatingStatement: true);
+              messages.add({
+                'role': 'assistant',
+                'content': foodInfo,
+              });
+              notifyListeners();
+              if (onMessageAdded != null) onMessageAdded!();
+              
+              _isTrackingFlow = true;
+            }
           } else {
             // Regular flow - show facts and ask for confirmation
             final foodInfo = await _getFoodInfo(message);
@@ -661,8 +762,8 @@ Important: Respond with ONLY the JSON object, no other text.""";
             return;
           }
 
-          // Check if user doesn't know nutritional info
-          if (await _isDontKnowResponse(message)) {
+          // Check if user doesn't know nutritional info or says no
+          if (await _isDontKnowResponse(message) || await _isNegativeResponse(message)) {
             // Get nutrition data for the previous food
             final nutritionData = await _getNutritionFromText(_previousFood ?? message);
             lastNutritionData = nutritionData;
