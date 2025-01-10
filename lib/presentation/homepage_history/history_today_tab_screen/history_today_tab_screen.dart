@@ -22,12 +22,14 @@ class HistoryTodayTabScreen extends StatefulWidget {
   }
 }
 
-class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> with SingleTickerProviderStateMixin {
+class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen>
+    with SingleTickerProviderStateMixin {
   bool _isLoading = true;
   late AnimationController _animationController;
   late Animation<Offset> _slideAnimation;
   late Animation<double> _fadeAnimation;
-  
+  Map<String, bool> expandedStates = {};
+
   // Add PageControllers for each meal type
   final PageController _breakfastController = PageController();
   final PageController _lunchController = PageController();
@@ -40,7 +42,7 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> with Singl
       vsync: this,
       duration: Duration(milliseconds: 300),
     );
-    
+
     _slideAnimation = Tween<Offset>(
       begin: Offset.zero,
       end: Offset.zero,
@@ -68,8 +70,9 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> with Singl
   }
 
   void _animateAndNavigate(bool goingBack) {
-    final provider = Provider.of<HistoryTodayTabProvider>(context, listen: false);
-    
+    final provider =
+        Provider.of<HistoryTodayTabProvider>(context, listen: false);
+
     setState(() {
       // Set up slide animation
       _slideAnimation = Tween<Offset>(
@@ -97,7 +100,7 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> with Singl
 
     // Reset to start position
     _animationController.value = 0;
-    
+
     // Start animation
     _animationController.forward();
 
@@ -141,11 +144,13 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> with Singl
                 builder: (context, provider, _) => Column(
                   children: [
                     Text(
-                      provider.isToday() 
-                        ? "TODAY"
-                        : "${provider.getDaysDifference()} ${provider.getDaysDifference() == 1 ? 'DAY' : 'DAYS'} AGO",
+                      provider.isToday()
+                          ? "TODAY"
+                          : "${provider.getDaysDifference()} ${provider.getDaysDifference() == 1 ? 'DAY' : 'DAYS'} AGO",
                       style: TextStyle(
-                        color: provider.isToday() ? const Color(0xFF4CD964) : Colors.grey,
+                        color: provider.isToday()
+                            ? const Color(0xFF4CD964)
+                            : Colors.grey,
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),
@@ -207,14 +212,19 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> with Singl
         child: GestureDetector(
           onHorizontalDragEnd: (details) {
             // Require minimum velocity and distance for swipe
-            if (details.primaryVelocity!.abs() < 500) {  // Lowered threshold for smoother experience
+            if (details.primaryVelocity!.abs() < 500) {
+              // Lowered threshold for smoother experience
               return;
             }
-            
-            final provider = Provider.of<HistoryTodayTabProvider>(context, listen: false);
-            if (details.primaryVelocity! > 0) { // Swiping right (to go back)
+
+            final provider =
+                Provider.of<HistoryTodayTabProvider>(context, listen: false);
+            if (details.primaryVelocity! > 0) {
+              // Swiping right (to go back)
               _animateAndNavigate(true);
-            } else if (details.primaryVelocity! < 0 && provider.canGoForward()) { // Swiping left (to go forward)
+            } else if (details.primaryVelocity! < 0 &&
+                provider.canGoForward()) {
+              // Swiping left (to go forward)
               // Double check we're not on today's date
               if (!provider.isToday()) {
                 _animateAndNavigate(false);
@@ -279,7 +289,8 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> with Singl
     );
   }
 
-  Widget _buildMacroColumn(String value, String label, Color color, double progress) {
+  Widget _buildMacroColumn(
+      String value, String label, Color color, double progress) {
     return Row(
       children: [
         Container(
@@ -327,7 +338,6 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> with Singl
       ],
     );
   }
-
 
   Widget _buildEmptyBreakfast(BuildContext context) {
     return Container(
@@ -474,8 +484,10 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> with Singl
     );
   }
 
-
   Widget _buildMealCard(BuildContext context, Meal meal, String mealType) {
+    final String mealKey = meal.id;
+    expandedStates.putIfAbsent(mealKey, () => false);
+
     return Container(
       width: double.maxFinite,
       margin: EdgeInsets.symmetric(horizontal: 22.h),
@@ -485,171 +497,208 @@ class HistoryTodayTabScreenState extends State<HistoryTodayTabScreen> with Singl
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFB2D7FF)),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    meal.name,
-                    style: TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w400,
-                      color: Colors.black,
-                    ),
-                  ),
-                  SizedBox(height: 2.h),
-                  Row(
+      child: Material(
+        color: Colors.transparent,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        "🔥",
+                        meal.name,
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w400,
+                          color: Colors.black,
                         ),
+                        maxLines: expandedStates[mealKey]! ? null : 1,
+                        overflow: expandedStates[mealKey]!
+                            ? null
+                            : TextOverflow.ellipsis,
                       ),
-                      Text(
-                        " ${meal.calories} kcal -${meal.servingSize.toInt()}g",
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey,
-                        ),
+                      SizedBox(height: 4.h),
+                      Row(
+                        children: [
+                          Text(
+                            "🔥",
+                            style: TextStyle(
+                              fontSize: 12,
+                            ),
+                          ),
+                          Text(
+                            " ${meal.calories} kcal -${meal.servingSize.toInt()}g",
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                ],
-              ),
-              Container(
-                width: 24,
-                height: 24,
-                decoration: BoxDecoration(
-                  color: Color.fromRGBO(178, 215, 255, 0.3),
-                  borderRadius: BorderRadius.circular(12),
                 ),
-                child: GestureDetector(
-                  onTap: () {
-                    showDialog(
-                      context: context,
-                      builder: (BuildContext dialogContext) {
-                        return BlurChooseActionScreenDialog.builder(
-                          dialogContext,
-                          mealType,
-                          () {
-                            Provider.of<HistoryTodayTabProvider>(context, listen: false).deleteMeal(meal.id);
-                          },
-                          meal,
-                        );
-                      },
-                    );
-                  },
-                  child: Icon(Icons.more_horiz, color: Colors.black54, size: 16),
+                if (meal.name.length > 25)
+                  InkWell(
+                    onTap: () {
+                      setState(() {
+                        expandedStates[mealKey] = !expandedStates[mealKey]!;
+                      });
+                    },
+                    child: Icon(
+                      expandedStates[mealKey]!
+                          ? Icons.keyboard_arrow_up
+                          : Icons.keyboard_arrow_down,
+                      size: 16,
+                      color: Colors.grey[400],
+                    ),
+                  ),
+                Container(
+                  width: 24,
+                  height: 24,
+                  margin: EdgeInsets.only(left: 8.h),
+                  decoration: BoxDecoration(
+                    color: Color.fromRGBO(178, 215, 255, 0.3),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: GestureDetector(
+                    onTap: () {
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext dialogContext) {
+                          return BlurChooseActionScreenDialog.builder(
+                            dialogContext,
+                            mealType,
+                            () {
+                              Provider.of<HistoryTodayTabProvider>(context,
+                                      listen: false)
+                                  .deleteMeal(meal.id);
+                            },
+                            meal,
+                          );
+                        },
+                      );
+                    },
+                    child:
+                        Icon(Icons.more_horiz, color: Colors.black54, size: 16),
+                  ),
                 ),
-              ),
-            ],
-          ),
-          SizedBox(height: 8.h),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _buildMacroColumn(
-                "${meal.macros['protein']?.toInt()}g",
-                "Protein",
-                const Color(0xFFFA114F),
-                0.7,
-              ),
-              _buildMacroColumn(
-                "${meal.macros['fats']?.toInt()}g",
-                "Fats",
-                const Color(0xFFA6FF00),
-                0.5,
-              ),
-              _buildMacroColumn(
-                "${meal.macros['carbs']?.toInt()}g",
-                "Carbs",
-                const Color(0xFF00FFF6),
-                0.3,
-              ),
-            ],
-          ),
-        ],
+              ],
+            ),
+            SizedBox(height: 8.h),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _buildMacroColumn(
+                  "${meal.macros['protein']?.toInt()}g",
+                  "Protein",
+                  const Color(0xFFFA114F),
+                  0.7,
+                ),
+                _buildMacroColumn(
+                  "${meal.macros['fats']?.toInt()}g",
+                  "Fats",
+                  const Color(0xFFA6FF00),
+                  0.5,
+                ),
+                _buildMacroColumn(
+                  "${meal.macros['carbs']?.toInt()}g",
+                  "Carbs",
+                  const Color(0xFF00FFF6),
+                  0.3,
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildBreakfastSection(BuildContext context) {
     return Consumer<HistoryTodayTabProvider>(
-      builder: (context, provider, child) {
-        final breakfastMeals = provider.getMealsByType('breakfast');
-        return Container(
-          height: 110.h,
-          child: PageView.builder(
-            controller: _breakfastController,
-            physics: const BouncingScrollPhysics(),
-            pageSnapping: true,
-            itemCount: breakfastMeals.isEmpty ? 1 : breakfastMeals.length + 1,
-            itemBuilder: (context, index) {
-              if (index < breakfastMeals.length) {
-                return _buildMealCard(context, breakfastMeals[index], 'breakfast');
-              } else {
-                return _buildEmptyBreakfast(context);
-              }
-            },
-          ),
-        );
-      }
-    );
+        builder: (context, provider, child) {
+      final breakfastMeals = provider.getMealsByType('breakfast');
+      return Container(
+        height: expandedStates[
+                    breakfastMeals.isNotEmpty ? breakfastMeals[0].id : ''] ==
+                true
+            ? 140.h
+            : 110.h,
+        child: PageView.builder(
+          controller: _breakfastController,
+          physics: const BouncingScrollPhysics(),
+          pageSnapping: true,
+          itemCount: breakfastMeals.isEmpty ? 1 : breakfastMeals.length + 1,
+          itemBuilder: (context, index) {
+            if (index < breakfastMeals.length) {
+              return _buildMealCard(
+                  context, breakfastMeals[index], 'breakfast');
+            } else {
+              return _buildEmptyBreakfast(context);
+            }
+          },
+        ),
+      );
+    });
   }
 
   Widget _buildLunchSection(BuildContext context) {
     return Consumer<HistoryTodayTabProvider>(
-      builder: (context, provider, child) {
-        final lunchMeals = provider.getMealsByType('lunch');
-        return Container(
-          height: 110.h,
-          child: PageView.builder(
-            controller: _lunchController,
-            physics: const BouncingScrollPhysics(),
-            pageSnapping: true,
-            itemCount: lunchMeals.isEmpty ? 1 : lunchMeals.length + 1,
-            itemBuilder: (context, index) {
-              if (index < lunchMeals.length) {
-                return _buildMealCard(context, lunchMeals[index], 'lunch');
-              } else {
-                return _buildEmptyLunch(context);
-              }
-            },
-          ),
-        );
-      }
-    );
+        builder: (context, provider, child) {
+      final lunchMeals = provider.getMealsByType('lunch');
+      return Container(
+        height: expandedStates[lunchMeals.isNotEmpty ? lunchMeals[0].id : ''] ==
+                true
+            ? 140.h
+            : 110.h,
+        child: PageView.builder(
+          controller: _lunchController,
+          physics: const BouncingScrollPhysics(),
+          pageSnapping: true,
+          itemCount: lunchMeals.isEmpty ? 1 : lunchMeals.length + 1,
+          itemBuilder: (context, index) {
+            if (index < lunchMeals.length) {
+              return _buildMealCard(context, lunchMeals[index], 'lunch');
+            } else {
+              return _buildEmptyLunch(context);
+            }
+          },
+        ),
+      );
+    });
   }
 
   Widget _buildDinnerSection(BuildContext context) {
     return Consumer<HistoryTodayTabProvider>(
-      builder: (context, provider, child) {
-        final dinnerMeals = provider.getMealsByType('dinner');
-        return Container(
-          height: 110.h,
-          child: PageView.builder(
-            controller: _dinnerController,
-            physics: const BouncingScrollPhysics(),
-            pageSnapping: true,
-            itemCount: dinnerMeals.isEmpty ? 1 : dinnerMeals.length + 1,
-            itemBuilder: (context, index) {
-              if (index < dinnerMeals.length) {
-                return _buildMealCard(context, dinnerMeals[index], 'dinner');
-              } else {
-                return _buildEmptyDinner(context);
-              }
-            },
-          ),
-        );
-      }
-    );
+        builder: (context, provider, child) {
+      final dinnerMeals = provider.getMealsByType('dinner');
+      return Container(
+        height:
+            expandedStates[dinnerMeals.isNotEmpty ? dinnerMeals[0].id : ''] ==
+                    true
+                ? 140.h
+                : 110.h,
+        child: PageView.builder(
+          controller: _dinnerController,
+          physics: const BouncingScrollPhysics(),
+          pageSnapping: true,
+          itemCount: dinnerMeals.isEmpty ? 1 : dinnerMeals.length + 1,
+          itemBuilder: (context, index) {
+            if (index < dinnerMeals.length) {
+              return _buildMealCard(context, dinnerMeals[index], 'dinner');
+            } else {
+              return _buildEmptyDinner(context);
+            }
+          },
+        ),
+      );
+    });
   }
 }
