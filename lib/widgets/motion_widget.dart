@@ -61,13 +61,13 @@ class _MotionWidgetState extends State<MotionWidget> {
           decoration: BoxDecoration(
             gradient: RadialGradient(
               center: Alignment(_alignX, _alignY),
-              radius: 0.7,
+              radius: 0.4,
               colors: [
-                Colors.white.withOpacity(0.8),  // Bright center
-                Colors.white.withOpacity(0.3),  // Mid fade
-                Colors.white.withOpacity(0.0),  // Full fade
+                Colors.grey[300]!.withOpacity(0.9),
+                Colors.grey[200]!.withOpacity(0.4),
+                Colors.transparent,
               ],
-              stops: const [0.0, 0.3, 0.6],
+              stops: const [0.0, 0.4, 0.8],
             ),
           ),
         ),
@@ -80,12 +80,12 @@ class _MotionWidgetState extends State<MotionWidget> {
             gradient: SweepGradient(
               center: Alignment(_alignX, _alignY),
               startAngle: 0,
-              endAngle: 3.14159 / 2,  // 90 degrees
+              endAngle: 3.14159 / 2,
               colors: [
-                Colors.white.withOpacity(0.6),
-                Colors.white.withOpacity(0.0),
+                Colors.grey[400]!.withOpacity(0.6),
+                Colors.transparent,
               ],
-              stops: const [0.0, 0.3],
+              stops: const [0.0, 0.2],
             ),
           ),
         ),
