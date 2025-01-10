@@ -78,7 +78,8 @@ class ProfileScreenState extends State<ProfileScreen> {
           final userData = doc.data()!;
           if (userData['dailyCalories'] != null) {
             Provider.of<ProfileProvider>(context, listen: false)
-                .updateNumericValue('Calories Goal', userData['dailyCalories'].toDouble());
+                .updateNumericValue(
+                    'Calories Goal', userData['dailyCalories'].toDouble());
           }
         }
       }).catchError((e) {
@@ -107,61 +108,71 @@ class ProfileScreenState extends State<ProfileScreen> {
           .doc(currentUser!.email)
           .snapshots()
           .listen(
-            (doc) {
-              if (doc.exists && mounted) {
-                final userData = doc.data()!;
-                final provider = Provider.of<ProfileProvider>(context, listen: false);
-                final userProvider = Provider.of<UserInfoProvider>(context, listen: false);
-                
-                try {
-                  // Weight updates
-                  if (userData['weight'] != null) {
-                    provider.updateNumericValue('Cur. Weight', double.parse(userData['weight'].toString()));
-                  }
-                  // Goal weight updates
-                  if (userData['weightgoal'] != null) {
-                    provider.updateNumericValue('Goal Weight', double.parse(userData['weightgoal'].toString()));
-                  }
-                  // Macros updates
-                  if (userData['carbsgoal'] != null) {
-                    provider.updateNumericValue('Carbs Goal', userData['carbsgoal'].toDouble());
-                  }
-                  if (userData['proteingoal'] != null) {
-                    provider.updateNumericValue('Protein Goal', userData['proteingoal'].toDouble());
-                  }
-                  if (userData['fatgoal'] != null) {
-                    provider.updateNumericValue('Fat Goal', userData['fatgoal'].toDouble());
-                  }
+        (doc) {
+          if (doc.exists && mounted) {
+            final userData = doc.data()!;
+            final provider =
+                Provider.of<ProfileProvider>(context, listen: false);
+            final userProvider =
+                Provider.of<UserInfoProvider>(context, listen: false);
 
-                  // Update user data
-                  final userModel = UserModel(
-                    firstName: userData['firstName'] as String? ?? '',
-                    lastName: userData['lastName'] as String? ?? '',
-                    username: userData['username'] as String? ?? '',
-                    email: currentUser.email,
-                    dailyCalories: userData['dailyCalories'] as int? ?? 0,
-                    carbsGoal: double.tryParse(userData['carbsgoal']?.toString() ?? '0'),
-                    proteinGoal: double.tryParse(userData['proteingoal']?.toString() ?? '0'),
-                    fatGoal: double.tryParse(userData['fatgoal']?.toString() ?? '0'),
-                    activity: userData['activity'] as String?,
-                    diet: userData['diet'] as String?,
-                    goal: userData['goal'] as String?,
-                    height: double.tryParse(userData['height']?.toString() ?? '0'),
-                    weight: double.tryParse(userData['weight']?.toString() ?? '0'),
-                    birthdate: userData['birthdate'] as String?,
-                    gender: userData['gender'] as String?,
-                  );
-                  
-                  userProvider.setUser(userModel);
-                } catch (e) {
-                  _showErrorSnackBar("Error updating profile data");
-                }
+            try {
+              // Weight updates
+              if (userData['weight'] != null) {
+                provider.updateNumericValue(
+                    'Cur. Weight', double.parse(userData['weight'].toString()));
               }
-            },
-            onError: (e) {
-              _showErrorSnackBar("Error fetching profile data");
-            },
-          );
+              // Goal weight updates
+              if (userData['weightgoal'] != null) {
+                provider.updateNumericValue('Goal Weight',
+                    double.parse(userData['weightgoal'].toString()));
+              }
+              // Macros updates
+              if (userData['carbsgoal'] != null) {
+                provider.updateNumericValue(
+                    'Carbs Goal', userData['carbsgoal'].toDouble());
+              }
+              if (userData['proteingoal'] != null) {
+                provider.updateNumericValue(
+                    'Protein Goal', userData['proteingoal'].toDouble());
+              }
+              if (userData['fatgoal'] != null) {
+                provider.updateNumericValue(
+                    'Fat Goal', userData['fatgoal'].toDouble());
+              }
+
+              // Update user data
+              final userModel = UserModel(
+                firstName: userData['firstName'] as String? ?? '',
+                lastName: userData['lastName'] as String? ?? '',
+                username: userData['username'] as String? ?? '',
+                email: currentUser.email,
+                dailyCalories: userData['dailyCalories'] as int? ?? 0,
+                carbsGoal:
+                    double.tryParse(userData['carbsgoal']?.toString() ?? '0'),
+                proteinGoal:
+                    double.tryParse(userData['proteingoal']?.toString() ?? '0'),
+                fatGoal:
+                    double.tryParse(userData['fatgoal']?.toString() ?? '0'),
+                activity: userData['activity'] as String?,
+                diet: userData['diet'] as String?,
+                goal: userData['goal'] as String?,
+                height: double.tryParse(userData['height']?.toString() ?? '0'),
+                weight: double.tryParse(userData['weight']?.toString() ?? '0'),
+                birthdate: userData['birthdate'] as String?,
+                gender: userData['gender'] as String?,
+              );
+
+              userProvider.setUser(userModel);
+            } catch (e) {
+              _showErrorSnackBar("Error updating profile data");
+            }
+          }
+        },
+        onError: (e) {
+          _showErrorSnackBar("Error fetching profile data");
+        },
+      );
     }
   }
 
@@ -176,10 +187,9 @@ class ProfileScreenState extends State<ProfileScreen> {
         if (doc.exists && mounted) {
           final userData = doc.data()!;
           final diet = userData['diet'] as String? ?? 'Balanced';
-          
+
           // Update only local provider
-          Provider.of<ProfileProvider>(context, listen: false)
-              .updateDiet(diet);
+          Provider.of<ProfileProvider>(context, listen: false).updateDiet(diet);
         }
       }).catchError((e) {
         _showErrorSnackBar("Error fetching diet information");
@@ -313,71 +323,73 @@ class ProfileScreenState extends State<ProfileScreen> {
             height: 72.h,
             alignment: Alignment.center,
             child: FirebaseAuth.instance.currentUser?.email != null
-              ? CachedProfilePicture(
-                  email: FirebaseAuth.instance.currentUser!.email!,
-                  size: 56.h,
-                )
-              : _buildDefaultProfilePicture(),
+                ? CachedProfilePicture(
+                    email: FirebaseAuth.instance.currentUser!.email!,
+                    size: 56.h,
+                  )
+                : _buildDefaultProfilePicture(),
           ),
           Expanded(
             child: Container(
               margin: EdgeInsets.only(top: 4.h, left: 0.h),
               padding: EdgeInsets.only(left: 4.h, right: 12.h),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () {
-                        Navigator.pushNamed(context, AppRoutes.profileStaticScreen);
-                      },
-                      child: StreamBuilder<DocumentSnapshot>(
-                        stream: FirebaseFirestore.instance
-                            .collection('users')
-                            .doc(FirebaseAuth.instance.currentUser?.email)
-                            .snapshots(),
-                        builder: (context, snapshot) {
-                          if (snapshot.hasData && snapshot.data != null && snapshot.data!.exists) {
-                            final userData = snapshot.data!.data() as Map<String, dynamic>;
-                            final firstName = userData['firstName']?.toString() ?? '';
-                            final lastName = userData['lastName']?.toString() ?? '';
-                            final username = userData['username']?.toString() ?? '';
-                            
-                            return Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  "$firstName $lastName",
-                                  style: theme.textTheme.titleLarge?.copyWith(
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                Text(
-                                  "@$username",
-                                  style: theme.textTheme.bodyMedium?.copyWith(
-                                    color: Colors.white.withOpacity(0.8),
-                                  ),
-                                ),
-                              ],
-                            );
-                          }
-                          return Container();
-                        },
-                      ),
-                    ),
-                  ),
-                  CustomImageView(
-                    imagePath: ImageConstant.imgArrowRight,
-                    height: 18.h,
-                    width: 18.h,
-                    alignment: Alignment.center,
-                    margin: EdgeInsets.only(
-                      right: 2.h,
-                    ),
-                    color: Colors.white,
-                  ),
-                ],
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.pushNamed(context, AppRoutes.profileStaticScreen);
+                },
+                child: StreamBuilder<DocumentSnapshot>(
+                  stream: FirebaseFirestore.instance
+                      .collection('users')
+                      .doc(FirebaseAuth.instance.currentUser?.email)
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    if (snapshot.hasData &&
+                        snapshot.data != null &&
+                        snapshot.data!.exists) {
+                      final userData =
+                          snapshot.data!.data() as Map<String, dynamic>;
+                      final firstName = userData['firstName']?.toString() ?? '';
+                      final lastName = userData['lastName']?.toString() ?? '';
+                      final username = userData['username']?.toString() ?? '';
+
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            "$firstName $lastName",
+                            style: theme.textTheme.titleLarge?.copyWith(
+                              color: Colors.white,
+                            ),
+                          ),
+                          Text(
+                            "@$username",
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: Colors.white.withOpacity(0.8),
+                            ),
+                          ),
+                        ],
+                      );
+                    }
+                    return Container();
+                  },
+                ),
               ),
+            ),
+          ),
+          GestureDetector(
+            onTap: () {
+              Navigator.pushNamed(context, AppRoutes.profileStaticScreen);
+            },
+            child: CustomImageView(
+              imagePath: ImageConstant.imgArrowRight,
+              height: 18.h,
+              width: 18.h,
+              alignment: Alignment.center,
+              margin: EdgeInsets.only(
+                right: 8.h,
+              ),
+              color: Colors.white,
             ),
           ),
         ],
@@ -425,7 +437,8 @@ class ProfileScreenState extends State<ProfileScreen> {
             },
             itemCount: provider.profileModelObj.profileItemList.length,
             itemBuilder: (context, index) {
-              ProfileItemModel model = provider.profileModelObj.profileItemList[index];
+              ProfileItemModel model =
+                  provider.profileModelObj.profileItemList[index];
               return ProfileItemWidget(
                 model,
                 onArrowTap: () {
@@ -439,7 +452,8 @@ class ProfileScreenState extends State<ProfileScreen> {
                   } else if (model.title == "Cur. Weight") {
                     _showWeightInputDialog(context, model.value ?? "0");
                   } else if (model.title?.contains('Goal') ?? false) {
-                    _showNumberInputDialog(context, model.title ?? "", model.value ?? "0");
+                    _showNumberInputDialog(
+                        context, model.title ?? "", model.value ?? "0");
                   }
                 },
               );
@@ -451,7 +465,8 @@ class ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _showCaloriesInputDialog(BuildContext context, String currentValue) {
-    final TextEditingController controller = TextEditingController(text: currentValue);
+    final TextEditingController controller =
+        TextEditingController(text: currentValue);
 
     showModalBottomSheet(
       context: context,
@@ -510,8 +525,11 @@ class ProfileScreenState extends State<ProfileScreen> {
 
                             // Update local provider
                             if (mounted) {
-                              final userInfoProvider = Provider.of<UserInfoProvider>(context, listen: false);
-                              await userInfoProvider.updateDailyCalories(newValue);
+                              final userInfoProvider =
+                                  Provider.of<UserInfoProvider>(context,
+                                      listen: false);
+                              await userInfoProvider
+                                  .updateDailyCalories(newValue);
                             }
                           } catch (e) {
                             print("Error updating calories: $e");
@@ -544,7 +562,11 @@ class ProfileScreenState extends State<ProfileScreen> {
     ];
 
     // Get current diet from provider
-    final currentDiet = Provider.of<ProfileProvider>(context, listen: false).profileModelObj.profileItemList[5].value ?? 'Balanced';
+    final currentDiet = Provider.of<ProfileProvider>(context, listen: false)
+            .profileModelObj
+            .profileItemList[5]
+            .value ??
+        'Balanced';
     // Get initial index
     final initialIndex = menuChoices.indexOf(currentDiet);
 
@@ -562,7 +584,8 @@ class ProfileScreenState extends State<ProfileScreen> {
             child: SafeArea(
               top: false,
               child: CupertinoPicker(
-                scrollController: FixedExtentScrollController(initialItem: initialIndex),
+                scrollController:
+                    FixedExtentScrollController(initialItem: initialIndex),
                 itemExtent: 44.0,
                 onSelectedItemChanged: (int index) async {
                   final diet = menuChoices[index];
@@ -585,15 +608,15 @@ class ProfileScreenState extends State<ProfileScreen> {
                     }
                   }
                 },
-                children: menuChoices.map((diet) => 
-                  Text(
-                    diet,
-                    style: TextStyle(
-                      fontSize: 20,
-                      color: CupertinoColors.black,
-                    ),
-                  )
-                ).toList(),
+                children: menuChoices
+                    .map((diet) => Text(
+                          diet,
+                          style: TextStyle(
+                            fontSize: 20,
+                            color: CupertinoColors.black,
+                          ),
+                        ))
+                    .toList(),
               ),
             ),
           );
@@ -620,35 +643,41 @@ class ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
                 SizedBox(height: 16.h),
-                ...menuChoices.map((diet) => ListTile(
-                  title: Text(
-                    diet,
-                    style: CustomTextStyles.bodyLargeBlack90018,
-                    textAlign: TextAlign.center,
-                  ),
-                  tileColor: diet == currentDiet ? Colors.blue.withOpacity(0.1) : null,
-                  onTap: () async {
-                    final currentUser = FirebaseAuth.instance.currentUser;
-                    if (currentUser?.email != null) {
-                      try {
-                        // Update Firebase
-                        await FirebaseFirestore.instance
-                            .collection('users')
-                            .doc(currentUser!.email)
-                            .update({'diet': diet});
+                ...menuChoices
+                    .map((diet) => ListTile(
+                          title: Text(
+                            diet,
+                            style: CustomTextStyles.bodyLargeBlack90018,
+                            textAlign: TextAlign.center,
+                          ),
+                          tileColor: diet == currentDiet
+                              ? Colors.blue.withOpacity(0.1)
+                              : null,
+                          onTap: () async {
+                            final currentUser =
+                                FirebaseAuth.instance.currentUser;
+                            if (currentUser?.email != null) {
+                              try {
+                                // Update Firebase
+                                await FirebaseFirestore.instance
+                                    .collection('users')
+                                    .doc(currentUser!.email)
+                                    .update({'diet': diet});
 
-                        // Update local provider
-                        if (context.mounted) {
-                          Provider.of<ProfileProvider>(context, listen: false)
-                              .updateDiet(diet);
-                        }
-                      } catch (e) {
-                        print("Error updating diet: $e");
-                      }
-                    }
-                    Navigator.pop(context);
-                  },
-                )).toList(),
+                                // Update local provider
+                                if (context.mounted) {
+                                  Provider.of<ProfileProvider>(context,
+                                          listen: false)
+                                      .updateDiet(diet);
+                                }
+                              } catch (e) {
+                                print("Error updating diet: $e");
+                              }
+                            }
+                            Navigator.pop(context);
+                          },
+                        ))
+                    .toList(),
                 SizedBox(height: 8.h),
                 TextButton(
                   onPressed: () => Navigator.pop(context),
@@ -670,9 +699,13 @@ class ProfileScreenState extends State<ProfileScreen> {
 
   void _showActivityLevelDialog(BuildContext context) {
     final List<String> activityLevels = ['Light', 'Moderate', 'Vigorous'];
-    
+
     // Get current activity level from provider
-    final currentActivity = Provider.of<ProfileProvider>(context, listen: false).profileModelObj.profileItemList[0].value ?? 'Light';
+    final currentActivity = Provider.of<ProfileProvider>(context, listen: false)
+            .profileModelObj
+            .profileItemList[0]
+            .value ??
+        'Light';
     // Get initial index
     final initialIndex = activityLevels.indexOf(currentActivity);
 
@@ -690,7 +723,8 @@ class ProfileScreenState extends State<ProfileScreen> {
             child: SafeArea(
               top: false,
               child: CupertinoPicker(
-                scrollController: FixedExtentScrollController(initialItem: initialIndex),
+                scrollController:
+                    FixedExtentScrollController(initialItem: initialIndex),
                 itemExtent: 44.0,
                 onSelectedItemChanged: (int index) async {
                   final level = activityLevels[index];
@@ -713,15 +747,15 @@ class ProfileScreenState extends State<ProfileScreen> {
                     }
                   }
                 },
-                children: activityLevels.map((level) => 
-                  Text(
-                    level,
-                    style: TextStyle(
-                      fontSize: 20,
-                      color: CupertinoColors.black,
-                    ),
-                  )
-                ).toList(),
+                children: activityLevels
+                    .map((level) => Text(
+                          level,
+                          style: TextStyle(
+                            fontSize: 20,
+                            color: CupertinoColors.black,
+                          ),
+                        ))
+                    .toList(),
               ),
             ),
           );
@@ -748,35 +782,41 @@ class ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
                 SizedBox(height: 16.h),
-                ...activityLevels.map((level) => ListTile(
-                  title: Text(
-                    level,
-                    style: CustomTextStyles.bodyLargeBlack90018,
-                    textAlign: TextAlign.center,
-                  ),
-                  tileColor: level == currentActivity ? Colors.blue.withOpacity(0.1) : null,
-                  onTap: () async {
-                    final currentUser = FirebaseAuth.instance.currentUser;
-                    if (currentUser?.email != null) {
-                      try {
-                        // Update Firebase
-                        await FirebaseFirestore.instance
-                            .collection('users')
-                            .doc(currentUser!.email)
-                            .update({'activity': level});
+                ...activityLevels
+                    .map((level) => ListTile(
+                          title: Text(
+                            level,
+                            style: CustomTextStyles.bodyLargeBlack90018,
+                            textAlign: TextAlign.center,
+                          ),
+                          tileColor: level == currentActivity
+                              ? Colors.blue.withOpacity(0.1)
+                              : null,
+                          onTap: () async {
+                            final currentUser =
+                                FirebaseAuth.instance.currentUser;
+                            if (currentUser?.email != null) {
+                              try {
+                                // Update Firebase
+                                await FirebaseFirestore.instance
+                                    .collection('users')
+                                    .doc(currentUser!.email)
+                                    .update({'activity': level});
 
-                        // Update local provider
-                        if (context.mounted) {
-                          Provider.of<ProfileProvider>(context, listen: false)
-                              .updateActivityLevel(level);
-                        }
-                      } catch (e) {
-                        print("Error updating activity level: $e");
-                      }
-                    }
-                    Navigator.pop(context);
-                  },
-                )).toList(),
+                                // Update local provider
+                                if (context.mounted) {
+                                  Provider.of<ProfileProvider>(context,
+                                          listen: false)
+                                      .updateActivityLevel(level);
+                                }
+                              } catch (e) {
+                                print("Error updating activity level: $e");
+                              }
+                            }
+                            Navigator.pop(context);
+                          },
+                        ))
+                    .toList(),
                 SizedBox(height: 8.h),
                 TextButton(
                   onPressed: () => Navigator.pop(context),
@@ -808,8 +848,9 @@ class ProfileScreenState extends State<ProfileScreen> {
         if (doc.exists) {
           final userData = doc.data()!;
           final goalWeight = userData['weightgoal']?.toString() ?? '';
-          
-          final TextEditingController controller = TextEditingController(text: goalWeight);
+
+          final TextEditingController controller =
+              TextEditingController(text: goalWeight);
 
           showModalBottomSheet(
             context: context,
@@ -865,8 +906,10 @@ class ProfileScreenState extends State<ProfileScreen> {
                                     .update({'weightgoal': newValue});
 
                                 // Update local provider
-                                Provider.of<ProfileProvider>(context, listen: false)
-                                    .updateNumericValue("Goal Weight", newValue);
+                                Provider.of<ProfileProvider>(context,
+                                        listen: false)
+                                    .updateNumericValue(
+                                        "Goal Weight", newValue);
                               } catch (e) {
                                 print("Error updating goal weight: $e");
                               }
@@ -887,7 +930,8 @@ class ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  void _showNumberInputDialog(BuildContext context, String title, String currentValue) {
+  void _showNumberInputDialog(
+      BuildContext context, String title, String currentValue) {
     if (title == "Goal Weight") {
       _showGoalWeightInputDialog(context);
     } else if (title == "Cur. Weight") {
@@ -902,7 +946,7 @@ class ProfileScreenState extends State<ProfileScreen> {
           if (doc.exists) {
             final userData = doc.data()!;
             final weight = userData['weight']?.toString() ?? '0';
-            
+
             // Show dialog with current weight from Firebase
             _showWeightInputDialog(context, weight);
           }
@@ -910,13 +954,15 @@ class ProfileScreenState extends State<ProfileScreen> {
       }
     } else {
       // For other numeric fields
-      final TextEditingController controller = TextEditingController(text: currentValue);
+      final TextEditingController controller =
+          TextEditingController(text: currentValue);
       _showGenericNumberInputDialog(context, title, controller);
     }
   }
 
   void _showWeightInputDialog(BuildContext context, String currentWeight) {
-    final TextEditingController controller = TextEditingController(text: currentWeight);
+    final TextEditingController controller =
+        TextEditingController(text: currentWeight);
 
     showModalBottomSheet(
       context: context,
@@ -994,7 +1040,8 @@ class ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  void _showGenericNumberInputDialog(BuildContext context, String title, TextEditingController controller) {
+  void _showGenericNumberInputDialog(
+      BuildContext context, String title, TextEditingController controller) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -1027,7 +1074,11 @@ class ProfileScreenState extends State<ProfileScreen> {
                 keyboardType: TextInputType.number,
                 decoration: InputDecoration(
                   hintText: 'Enter value',
-                  suffixText: title == "Carbs Goal" || title == "Protein Goal" || title == "Fat Goal" ? " g" : null,
+                  suffixText: title == "Carbs Goal" ||
+                          title == "Protein Goal" ||
+                          title == "Fat Goal"
+                      ? " g"
+                      : null,
                 ),
                 inputFormatters: [
                   FilteringTextInputFormatter.digitsOnly,
