@@ -148,7 +148,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
           children: [
             // Leaderboard list
             Expanded(
-              flex: 2,
+              flex: 3,
               child: Container(
                 margin: EdgeInsets.symmetric(horizontal: 9.h),
                 decoration: BoxDecoration(
@@ -231,7 +231,9 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                                   // Profile picture
                                   ClipOval(
                                     child: _buildProfilePicture(
-                                      cacheService.getCachedProfilePicture(user.email) ?? user.profileImage,
+                                      cacheService.getCachedProfilePicture(
+                                              user.email) ??
+                                          user.profileImage,
                                       32.h,
                                     ),
                                   ),
@@ -268,15 +270,24 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
 
             // Find Friends button
             Padding(
-              padding: EdgeInsets.symmetric(vertical: 2.h),
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.pushNamed(context, AppRoutes.findFriendsScreen);
-                },
-                child: Text('Find Friends'),
-                style: ElevatedButton.styleFrom(
-                  minimumSize: Size(150, 32),
-                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: EdgeInsets.symmetric(vertical: 2.h, horizontal: 16.h),
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pushNamed(context, AppRoutes.findFriendsScreen);
+                  },
+                  child: Text(
+                    'Find Friends',
+                    style: TextStyle(
+                      fontSize: 14.h,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: Size(120.h, 28.h),
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 12.h, vertical: 6.h),
+                  ),
                 ),
               ),
             ),
@@ -288,44 +299,52 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Padding(
-                    padding: EdgeInsets.fromLTRB(16.h, 0, 16.h, 2.h),
+                    padding: EdgeInsets.fromLTRB(16.h, 0, 16.h, 0),
                     child: Text(
                       'Challenges',
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
                   ),
+                  SizedBox(height: 4.h),
                   Expanded(
-                    child: PageView.builder(
-                      controller: _challengesController,
-                      itemCount: provider.challengePages.length,
-                      itemBuilder: (context, pageIndex) {
-                        return Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: provider.challengePages[pageIndex]
-                              .map((challenge) {
-                            return ChallengeCard(challenge: challenge);
-                          }).toList(),
-                        );
-                      },
-                    ),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.only(bottom: 8.h),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(
-                        provider.challengePages.length,
-                        (index) => Container(
-                          width: 6.0,
-                          height: 6.0,
-                          margin: EdgeInsets.symmetric(horizontal: 3.0),
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: _currentPage == index
-                                ? Color(0xFF000000)
-                                : Color(0xFFD8D8D8),
+                    child: Container(
+                      padding: EdgeInsets.only(bottom: 16.h),
+                      child: Column(
+                        children: [
+                          Expanded(
+                            child: PageView.builder(
+                              controller: _challengesController,
+                              itemCount: provider.challengePages.length,
+                              itemBuilder: (context, pageIndex) {
+                                return Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceEvenly,
+                                  children: provider.challengePages[pageIndex]
+                                      .map((challenge) {
+                                    return ChallengeCard(challenge: challenge);
+                                  }).toList(),
+                                );
+                              },
+                            ),
                           ),
-                        ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: List.generate(
+                              provider.challengePages.length,
+                              (index) => Container(
+                                width: 6.0,
+                                height: 6.0,
+                                margin: EdgeInsets.symmetric(horizontal: 3.0),
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: _currentPage == index
+                                      ? Color(0xFF000000)
+                                      : Color(0xFFD8D8D8),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),

@@ -63,87 +63,64 @@ class FindFriendsScreenState extends State<FindFriendsScreen> {
                     color: Color(0xFFF2F2F7),
                     borderRadius: BorderRadius.circular(15.h),
                   ),
-                  child: provider.isSearching
-                      ? Row(
-                          children: [
-                            Icon(
-                              Icons.search,
-                              color: Colors.grey[500],
-                              size: 20.h,
-                            ),
-                            SizedBox(width: 8.h),
-                            Expanded(
-                              child: TextField(
-                                controller: context
-                                    .read<FindFriendsProvider>()
-                                    .searchController,
-                                focusNode: context
-                                    .read<FindFriendsProvider>()
-                                    .searchFocusNode,
-                                onChanged: (query) {
-                                  context
-                                      .read<FindFriendsProvider>()
-                                      .searchUsers(query);
-                                },
-                                style: TextStyle(
-                                  color: Colors.black87,
-                                  fontSize: 16.h,
-                                ),
-                                decoration: InputDecoration(
-                                  hintText: "Find friends",
-                                  hintStyle: TextStyle(
-                                    color: Colors.grey[500],
-                                    fontSize: 16.h,
-                                  ),
-                                  isDense: true,
-                                  contentPadding: EdgeInsets.zero,
-                                  border: InputBorder.none,
-                                ),
-                              ),
-                            ),
-                            GestureDetector(
-                              onTap: () {
-                                context
-                                    .read<FindFriendsProvider>()
-                                    .cancelSearch();
-                              },
-                              child: Icon(
-                                Icons.clear,
-                                color: Colors.grey[500],
-                                size: 20.h,
-                              ),
-                            ),
-                          ],
-                        )
-                      : GestureDetector(
-                          behavior: HitTestBehavior.opaque,
-                          onTap: () {
-                            context.read<FindFriendsProvider>().startSearch();
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.search,
+                        color: Colors.grey[500],
+                        size: 20.h,
+                      ),
+                      SizedBox(width: 8.h),
+                      Expanded(
+                        child: Focus(
+                          onFocusChange: (hasFocus) {
+                            if (!hasFocus) {
+                              provider.searchFocusNode.unfocus();
+                            }
+                            setState(() {});
                           },
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.search,
+                          child: TextField(
+                            controller: provider.searchController,
+                            focusNode: provider.searchFocusNode,
+                            onChanged: (query) {
+                              provider.searchUsers(query);
+                            },
+                            textAlign: TextAlign.start,
+                            style: TextStyle(
+                              color: Colors.black87,
+                              fontSize: 16.h,
+                            ),
+                            decoration: InputDecoration(
+                              hintText: "Find friends",
+                              hintStyle: TextStyle(
                                 color: Colors.grey[500],
-                                size: 20.h,
+                                fontSize: 16.h,
                               ),
-                              SizedBox(width: 8.h),
-                              Text(
-                                "Find friends",
-                                style: TextStyle(
-                                  color: Colors.grey[500],
-                                  fontSize: 16.h,
-                                ),
-                              ),
-                            ],
+                              isDense: true,
+                              contentPadding: EdgeInsets.zero,
+                              border: InputBorder.none,
+                            ),
                           ),
                         ),
+                      ),
+                      if (provider.searchFocusNode.hasFocus)
+                        GestureDetector(
+                          onTap: () {
+                            provider.cancelSearch();
+                          },
+                          child: Icon(
+                            Icons.clear,
+                            color: Colors.grey[500],
+                            size: 20.h,
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
                 SizedBox(height: 18.h),
 
                 // Content section
-                if (!provider.isSearching) ...[
-                  // Main content section showing friend suggestions
+                if (provider.findFriendsModelObj.findFriendsItemList.isNotEmpty)
                   Container(
                     width: double.maxFinite,
                     padding: EdgeInsets.all(14.h),
@@ -152,109 +129,36 @@ class FindFriendsScreenState extends State<FindFriendsScreen> {
                     ),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        Text(
-                          "People you may know",
-                          style: theme.textTheme.titleLarge,
+                        if (provider.searchController.text.isEmpty)
+                          Column(
+                            children: [
+                              Text(
+                                "People you may know",
+                                style: theme.textTheme.titleLarge,
+                                textAlign: TextAlign.center,
+                              ),
+                              SizedBox(height: 18.h),
+                            ],
+                          ),
+                        ListView.separated(
+                          shrinkWrap: true,
+                          physics: BouncingScrollPhysics(),
+                          separatorBuilder: (context, index) =>
+                              SizedBox(height: 8.h),
+                          itemCount: provider
+                              .findFriendsModelObj.findFriendsItemList.length,
+                          itemBuilder: (context, index) {
+                            FindFriendsItemModel model = provider
+                                .findFriendsModelObj.findFriendsItemList[index];
+                            return FindFriendsItemWidget(model);
+                          },
                         ),
-                        SizedBox(height: 18.h),
-                        _buildFindfriends(context),
                       ],
                     ),
                   ),
-                  Spacer(),
-                ] else ...[
-                  // Search results layout
-                  Expanded(
-                    child: ListView.builder(
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 14.h, vertical: 8.h),
-                      itemCount: provider
-                          .findFriendsModelObj.findFriendsItemList.length,
-                      itemBuilder: (context, index) {
-                        FindFriendsItemModel model = provider
-                            .findFriendsModelObj.findFriendsItemList[index];
-                        return Container(
-                          margin: EdgeInsets.only(bottom: 8.h),
-                          padding: EdgeInsets.symmetric(
-                              horizontal: 16.h, vertical: 12.h),
-                          decoration: BoxDecoration(
-                            color: Color(0xFFE3F2FD),
-                            borderRadius: BorderRadius.circular(25.h),
-                          ),
-                          child: GestureDetector(
-                            onTap: () {
-                              if (model.username != null) {
-                                Navigator.pushNamed(
-                                  context,
-                                  AppRoutes.socialProfileViewScreen,
-                                  arguments: {'username': model.username},
-                                );
-                              }
-                            },
-                            child: Row(
-                              children: [
-                                ClipOval(
-                                  child: (model.profileImage != null &&
-                                          model.profileImage!.isNotEmpty)
-                                      ? Image.memory(
-                                          base64Decode(model.profileImage!),
-                                          height: 40.h,
-                                          width: 40.h,
-                                          fit: BoxFit.cover,
-                                        )
-                                      : Container(
-                                          height: 40.h,
-                                          width: 40.h,
-                                          decoration: BoxDecoration(
-                                            color: Colors.grey[200],
-                                            shape: BoxShape.circle,
-                                          ),
-                                          child: SvgPicture.asset(
-                                            'assets/images/person.crop.circle.fill.svg',
-                                            height: 40.h,
-                                            width: 40.h,
-                                            fit: BoxFit.cover,
-                                          ),
-                                        ),
-                                ),
-                                SizedBox(width: 12.h),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        model.fullName ?? '',
-                                        style: TextStyle(
-                                          fontSize: 16.h,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                      if (model.username != null)
-                                        Text(
-                                          "@${model.username}",
-                                          style: TextStyle(
-                                            fontSize: 14.h,
-                                            color: Colors.grey[600],
-                                          ),
-                                        ),
-                                    ],
-                                  ),
-                                ),
-                                Icon(
-                                  Icons.chevron_right,
-                                  color: Colors.grey[400],
-                                  size: 24.h,
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ],
+                Spacer(),
               ],
             ),
           ),
@@ -278,25 +182,6 @@ class FindFriendsScreenState extends State<FindFriendsScreen> {
         onTap: () => Navigator.pushReplacementNamed(
             context, AppRoutes.leaderboardScreen),
       ),
-    );
-  }
-
-  Widget _buildFindfriends(BuildContext context) {
-    return Consumer<FindFriendsProvider>(
-      builder: (context, provider, child) {
-        return ListView.separated(
-          physics: NeverScrollableScrollPhysics(),
-          shrinkWrap: true,
-          separatorBuilder: (context, index) => SizedBox(height: 8.h),
-          itemCount: provider.findFriendsModelObj.findFriendsItemList.length,
-          itemBuilder: (context, index) {
-            FindFriendsItemModel model =
-                provider.findFriendsModelObj.findFriendsItemList[index];
-            print('Building item for user: ${model.username}'); // Debug print
-            return FindFriendsItemWidget(model);
-          },
-        );
-      },
     );
   }
 }
