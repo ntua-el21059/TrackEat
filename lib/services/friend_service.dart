@@ -127,4 +127,17 @@ class FriendService {
         .orderBy('timestamps', descending: true)
         .snapshots();
   }
+
+  Stream<bool> getFriendStatusStream(String userId) {
+    final currentUser = _auth.currentUser;
+    if (currentUser == null) return Stream.value(false);
+
+    return _firestore
+        .collection('users')
+        .doc(currentUser.email)
+        .collection('friends')
+        .doc(userId)
+        .snapshots()
+        .map((doc) => doc.exists);
+  }
 }

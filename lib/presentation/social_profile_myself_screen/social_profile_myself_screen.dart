@@ -1,4 +1,7 @@
+import 'package:flutter/material.dart';
 import 'package:responsive_grid_list/responsive_grid_list.dart';
+import 'package:flutter/cupertino.dart';
+import 'dart:io' show Platform;
 import '../../core/app_export.dart';
 import '../../theme/custom_button_style.dart';
 import '../../widgets/app_bar/appbar_leading_image.dart';
@@ -79,65 +82,76 @@ class SocialProfileMyselfScreenState extends State<SocialProfileMyselfScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
-        Navigator.pop(context);
-        return false;
-      },
-      child: Scaffold(
-        backgroundColor: Colors.white,
-        appBar: _buildAppBar(context),
-        body: Container(
-          width: double.maxFinite,
-          height: MediaQuery.of(context).size.height,
-          decoration: BoxDecoration(
-            color: const Color(0xFFB2D7FF),
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(54.h),
-              topRight: Radius.circular(54.h),
-            ),
+    final scaffold = Scaffold(
+      backgroundColor: Colors.white,
+      appBar: _buildAppBar(context),
+      body: Container(
+        width: double.maxFinite,
+        height: MediaQuery.of(context).size.height,
+        decoration: BoxDecoration(
+          color: const Color(0xFFB2D7FF),
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(54.h),
+            topRight: Radius.circular(54.h),
           ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(54.h),
-              topRight: Radius.circular(54.h),
-            ),
-            child: SingleChildScrollView(
-              child: Padding(
-                padding: EdgeInsets.only(
-                  left: 8.h,
-                  top: 8.h,
-                  right: 8.h,
-                  bottom: MediaQuery.of(context).padding.bottom + 18.h,
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.max,
-                  children: [
-                    _buildRowvectorone(context),
-                    SizedBox(height: 6.h),
-                    _buildWeightgoal(context),
-                    SizedBox(height: 12.h),
-                    _buildListvegan(context),
-                    SizedBox(height: 8.h),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Padding(
-                        padding: EdgeInsets.only(left: 16.h),
-                        child: Text(
-                          "Awards",
-                          style: CustomTextStyles.headlineSmallOnErrorContainerBold,
-                        ),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(54.h),
+            topRight: Radius.circular(54.h),
+          ),
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: EdgeInsets.only(
+                left: 8.h,
+                top: 8.h,
+                right: 8.h,
+                bottom: MediaQuery.of(context).padding.bottom + 18.h,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.max,
+                children: [
+                  _buildRowvectorone(context),
+                  SizedBox(height: 6.h),
+                  _buildWeightgoal(context),
+                  SizedBox(height: 12.h),
+                  _buildListvegan(context),
+                  SizedBox(height: 8.h),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Padding(
+                      padding: EdgeInsets.only(left: 16.h),
+                      child: Text(
+                        "Awards",
+                        style: CustomTextStyles.headlineSmallOnErrorContainerBold,
                       ),
                     ),
-                    SizedBox(height: 6.h),
-                    _buildGridvectorone(context)
-                  ],
-                ),
+                  ),
+                  SizedBox(height: 6.h),
+                  _buildGridvectorone(context)
+                ],
               ),
             ),
           ),
         ),
       ),
+    );
+
+    if (Platform.isIOS) {
+      return Material(
+        child: CupertinoPageScaffold(
+          backgroundColor: Colors.transparent,
+          child: scaffold,
+        ),
+      );
+    }
+
+    return WillPopScope(
+      onWillPop: () async {
+        Navigator.pop(context);
+        return false;
+      },
+      child: scaffold,
     );
   }
 

@@ -1,6 +1,7 @@
 import 'package:responsive_grid_list/responsive_grid_list.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:convert';
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../core/app_export.dart';
@@ -552,6 +553,9 @@ class SocialProfileViewScreenState extends State<SocialProfileViewScreen> {
 
 class FriendButton extends StatefulWidget {
   final String userId;
+  
+  // Static cache for friend status
+  static final Map<String, bool> _friendStatusCache = {};
 
   const FriendButton({
     Key? key,
@@ -565,20 +569,54 @@ class FriendButton extends StatefulWidget {
 class _FriendButtonState extends State<FriendButton> {
   final FriendService _friendService = FriendService();
   bool _isFriend = false;
-  bool _isLoading = true;
+  bool _isLoading = false;
+  StreamSubscription? _friendStatusSubscription;
 
   @override
   void initState() {
     super.initState();
-    _checkFriendStatus();
+    // First check the cache
+    if (FriendButton._friendStatusCache.containsKey(widget.userId)) {
+      _isFriend = FriendButton._friendStatusCache[widget.userId]!;
+      _isLoading = false;
+    } else {
+      // If not in cache, do initial fetch
+      _checkFriendStatus();
+    }
+    // Setup stream listener for changes
+    _setupFriendStatusListener();
+  }
+
+  @override
+  void dispose() {
+    _friendStatusSubscription?.cancel();
+    super.dispose();
+  }
+
+  void _setupFriendStatusListener() {
+    _friendStatusSubscription = _friendService.getFriendStatusStream(widget.userId).listen((isFollowing) {
+      if (mounted && FriendButton._friendStatusCache[widget.userId] != isFollowing) {
+        setState(() {
+          _isFriend = isFollowing;
+          _isLoading = false;
+        });
+        FriendButton._friendStatusCache[widget.userId] = isFollowing;
+      }
+    });
   }
 
   Future<void> _checkFriendStatus() async {
-    final isFollowing = await _friendService.isFollowing(widget.userId);
-    setState(() {
-      _isFriend = isFollowing;
-      _isLoading = false;
-    });
+    if (!FriendButton._friendStatusCache.containsKey(widget.userId)) {
+      setState(() => _isLoading = true);
+      final isFollowing = await _friendService.isFollowing(widget.userId);
+      if (mounted) {
+        setState(() {
+          _isFriend = isFollowing;
+          _isLoading = false;
+        });
+        FriendButton._friendStatusCache[widget.userId] = isFollowing;
+      }
+    }
   }
 
   Future<void> _toggleFriendStatus() async {
@@ -589,12 +627,22 @@ class _FriendButtonState extends State<FriendButton> {
       } else {
         await _friendService.addFriend(widget.userId);
       }
-      setState(() => _isFriend = !_isFriend);
+      // Update cache immediately for better UX
+      FriendButton._friendStatusCache[widget.userId] = !_isFriend;
+      if (mounted) {
+        setState(() {
+          _isFriend = !_isFriend;
+          _isLoading = false;
+        });
+      }
     } catch (e) {
       print('Error toggling friend status: $e');
-      // You might want to show an error message to the user here
+      // Revert cache on error
+      FriendButton._friendStatusCache[widget.userId] = _isFriend;
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
-    setState(() => _isLoading = false);
   }
 
   @override
