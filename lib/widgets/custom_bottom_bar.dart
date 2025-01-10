@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'dart:io' show Platform;
 import '../core/app_export.dart';
 import '../core/theme/theme_constants.dart';
 
@@ -27,6 +28,7 @@ class CustomBottomBarState extends State<CustomBottomBar> {
   @override
   Widget build(BuildContext context) {
     final String currentRoute = ModalRoute.of(context)?.settings.name ?? '';
+    final bottomPadding = Platform.isAndroid ? MediaQuery.of(context).padding.bottom : 0.0;
     
     return Stack(
       clipBehavior: Clip.none,
@@ -43,7 +45,10 @@ class CustomBottomBarState extends State<CustomBottomBar> {
             ),
           ),
           child: Container(
-            padding: const EdgeInsets.only(top: 5, bottom: 15),
+            padding: EdgeInsets.only(
+              top: 5,
+              bottom: Platform.isAndroid ? 15 + bottomPadding : 15,
+            ),
             constraints: BoxConstraints(maxWidth: ThemeConstants.maxWidth),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
