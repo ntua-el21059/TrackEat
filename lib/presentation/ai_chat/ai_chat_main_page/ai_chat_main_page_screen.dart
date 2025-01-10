@@ -182,7 +182,8 @@ class AiChatMainScreenState extends State<AiChatMainScreen> {
             children: [
               Consumer<AiChatMainProvider>(
                 builder: (context, provider, child) {
-                  if (provider.messages.isEmpty) {
+                  // Only show welcome content if messages are empty and keyboard is closed
+                  if (provider.messages.isEmpty && MediaQuery.of(context).viewInsets.bottom == 0) {
                     return Column(
                       children: [
                         Align(
@@ -256,11 +257,15 @@ class AiChatMainScreenState extends State<AiChatMainScreen> {
                     if (provider.messages.isEmpty) {
                       return const SizedBox.shrink();
                     }
+                    
                     return ListView.builder(
                       controller: _scrollController,
                       reverse: false,
                       itemCount: provider.messages.length,
-                      padding: EdgeInsets.only(top: 16.h),
+                      padding: EdgeInsets.only(
+                        top: 16.h,
+                        bottom: MediaQuery.of(context).viewInsets.bottom + 80.h, // Add padding when keyboard is open
+                      ),
                       itemBuilder: (context, index) {
                         final message = provider.messages[index];
                         final isUser = message['role'] == 'user';
@@ -270,20 +275,39 @@ class AiChatMainScreenState extends State<AiChatMainScreen> {
                         
                         // If it's a user message with an image
                         if (isUser && hasImagePath) {
-                          return Align(
-                            alignment: Alignment.centerRight,
-                            child: Container(
-                              margin: EdgeInsets.symmetric(vertical: 4.h),
-                              width: SizeUtils.width * 0.7, // 70% of screen width
-                              height: SizeUtils.height * 0.4, // 40% of screen height
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(16.h),
-                                image: DecorationImage(
-                                  image: FileImage(File(message['content']!.split('\n').last.trim())),
-                                  fit: BoxFit.cover,
+                          final imagePath = message['content']!.split('\n').last.trim();
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Container(
+                                margin: EdgeInsets.symmetric(vertical: 4.h, horizontal: 16.h),
+                                width: SizeUtils.width * 0.7, // 70% of screen width
+                                height: SizeUtils.height * 0.3, // 30% of screen height
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(16.h),
+                                  image: DecorationImage(
+                                    image: FileImage(File(imagePath)),
+                                    fit: BoxFit.cover,
+                                  ),
                                 ),
                               ),
-                            ),
+                              if (message['content']!.contains('User note:'))
+                                Container(
+                                  margin: EdgeInsets.only(right: 16.h, bottom: 4.h),
+                                  padding: EdgeInsets.symmetric(horizontal: 16.h, vertical: 12.h),
+                                  decoration: BoxDecoration(
+                                    color: appTheme.lightBlue300,
+                                    borderRadius: BorderRadius.circular(16.h),
+                                  ),
+                                  child: Text(
+                                    message['content']!.split('\n')[1].replaceAll('User note: ', ''),
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16.h,
+                                    ),
+                                  ),
+                                ),
+                            ],
                           );
                         }
                         
