@@ -9,7 +9,13 @@ import '../../../../services/points_service.dart';
 import '../models/ai_chat_main_page_model.dart';
 
 const String apiKey = 'AIzaSyDe5fyQXDIfgZ1paU5Ax5HNj6gNyWA0MAA';
-const String modelName = 'gemini-2.0-flash-exp';
+const List<String> modelNames = [
+  'gemini-2.0-flash-exp',  // Primary model
+  'gemini-1.5-flash',      // First backup
+  'gemini-1.5-flash-8b',   // Second backup
+  'gemini-1.5-pro',        // Third backup
+];
+int _currentModelIndex = 0;
 
 const String _systemPrompt = '''
 You are TrackEat AI, a witty and helpful food logging assistant. Your primary purpose is to help users track their meals and nutrition.
@@ -39,20 +45,28 @@ class AiChatMainProvider extends ChangeNotifier {
   String? selectedMealType;
   String? _previousFood;
 
-  final GenerativeModel _model = GenerativeModel(
-    model: modelName,
-    apiKey: apiKey,
-  );
-
+  GenerativeModel _model;
   late ChatSession _chat;
   List<Map<String, String>> messages = [];
   bool isLoading = false;
   Function? onMessageAdded;
-
   Map<String, String>? _userProvidedNutrition;
 
-  AiChatMainProvider() {
+  AiChatMainProvider() : _model = GenerativeModel(
+    model: modelNames[0],
+    apiKey: apiKey,
+  ) {
     _chat = _model.startChat(history: [Content.text(_systemPrompt)]);
+  }
+
+  Future<void> _switchToNextModel() async {
+    _currentModelIndex = (_currentModelIndex + 1) % modelNames.length;
+    _model = GenerativeModel(
+      model: modelNames[_currentModelIndex],
+      apiKey: apiKey,
+    );
+    _chat = _model.startChat(history: [Content.text(_systemPrompt)]);
+    print('🤖 [switchModel] Switched to model: ${modelNames[_currentModelIndex]}');
   }
 
   Future<void> pickImage() async {
@@ -74,6 +88,15 @@ class AiChatMainProvider extends ChangeNotifier {
   }
 
   Future<bool> _isNegativeResponse(String message) async {
+    // Reset model index at the start of each prompt
+    _currentModelIndex = 0;
+    _model = GenerativeModel(
+      model: modelNames[_currentModelIndex],
+      apiKey: apiKey,
+    );
+    _chat = _model.startChat(history: [Content.text(_systemPrompt)]);
+    print('🤖 [isNegativeResponse] Using model: ${modelNames[_currentModelIndex]}');
+
     final negativePrompt = '''
     Is this a negative response? Consider variations like:
     - "no"
@@ -96,6 +119,15 @@ class AiChatMainProvider extends ChangeNotifier {
   }
 
   Future<String> _getFoodInfo(String message, {bool isDirectCommand = false, bool isEatingStatement = false}) async {
+    // Reset model index at the start of each prompt
+    _currentModelIndex = 0;
+    _model = GenerativeModel(
+      model: modelNames[_currentModelIndex],
+      apiKey: apiKey,
+    );
+    _chat = _model.startChat(history: [Content.text(_systemPrompt)]);
+    print('🤖 [getFoodInfo] Using model: ${modelNames[_currentModelIndex]}');
+
     if (isDirectCommand || isEatingStatement) {
       // For direct commands and eating statements, skip food facts and go straight to nutrition questions
       final askForNutritionPrompt = '''
@@ -151,34 +183,97 @@ class AiChatMainProvider extends ChangeNotifier {
   }
 
   Future<Map<String, dynamic>> _getNutritionFromText(String message) async {
+    // Reset model index at the start of each prompt
+    _currentModelIndex = 0;
+    _model = GenerativeModel(
+      model: modelNames[_currentModelIndex],
+      apiKey: apiKey,
+    );
+    _chat = _model.startChat(history: [Content.text(_systemPrompt)]);
+    print('🤖 [getNutrition] Using model: ${modelNames[_currentModelIndex]}');
+
     final nutritionPrompt = '''
-    Extract or estimate nutritional information from this text. If any values are missing or unclear, make a reasonable estimate based on the food description. Respond with ONLY a valid JSON object in this format:
+    Extract or estimate nutritional information from this text. If any values are missing or unclear, make a reasonable estimate based on the food description. ALL numbers should be doubles (e.g. 123.0 not 123). Respond with ONLY a valid JSON object in this format:
     {
       "food": "name of the food",
       "serving_size": "estimated serving",
-      "calories": 123,
-      "protein": 12,
-      "carbs": 34,
-      "fat": 56
+      "calories": 123.0,
+      "protein": 12.0,
+      "carbs": 34.0,
+      "fat": 56.0
     }
     
     Text: "$message"
     ${_userProvidedNutrition != null ? "User provided values: ${json.encode(_userProvidedNutrition)}" : ""}
     ''';
 
-    try {
-      final response = await _model.generateContent([Content.text(nutritionPrompt)]);
-      if (response.text != null) {
-        String cleanedResponse = response.text!
-            .replaceAll('```json', '')
-            .replaceAll('```', '')
-            .trim();
-        return json.decode(cleanedResponse);
+    int maxRetries = 3;
+    int currentTry = 0;
+    Duration backoff = Duration(milliseconds: 500);
+
+    while (currentTry < maxRetries) {
+      try {
+        final response = await _model.generateContent([Content.text(nutritionPrompt)]);
+        if (response.text != null) {
+          String cleanedResponse = response.text!
+              .replaceAll('```json', '')
+              .replaceAll('```', '')
+              .trim();
+          Map<String, dynamic> data = json.decode(cleanedResponse);
+          // Ensure all numeric values are doubles
+          data['calories'] = (data['calories'] as num).toDouble();
+          data['protein'] = (data['protein'] as num).toDouble();
+          data['carbs'] = (data['carbs'] as num).toDouble();
+          data['fat'] = (data['fat'] as num).toDouble();
+          return data;
+        }
+      } catch (e) {
+        print('Error getting nutrition from text (attempt ${currentTry + 1}): $e');
+        if (e is GenerativeAIException && e.message.contains('503')) {
+          // Try switching to next model before retrying
+          await _switchToNextModel();
+          currentTry++;
+          if (currentTry < maxRetries) {
+            await Future.delayed(backoff);
+            backoff *= 2; // Exponential backoff
+            continue;
+          }
+          // All models have been tried and failed
+          messages.add({
+            'role': 'assistant',
+            'content': 'Server is overloaded. Try again in a bit!',
+          });
+          notifyListeners();
+          if (onMessageAdded != null) onMessageAdded!();
+          return {
+            'food': message,
+            'serving_size': '1 serving',
+            'calories': 0.0,
+            'protein': 0.0,
+            'carbs': 0.0,
+            'fat': 0.0
+          };
+        }
+        // For other errors, return default values
+        return {
+          'food': message,
+          'serving_size': '1 serving',
+          'calories': 0.0,
+          'protein': 0.0,
+          'carbs': 0.0,
+          'fat': 0.0
+        };
       }
-    } catch (e) {
-      print('Error getting nutrition from text: $e');
     }
-    return {};
+    // If we get here, all retries failed
+    return {
+      'food': message,
+      'serving_size': '1 serving',
+      'calories': 0.0,
+      'protein': 0.0,
+      'carbs': 0.0,
+      'fat': 0.0
+    };
   }
 
   Future<void> sendMessage(String message) async {
@@ -213,6 +308,8 @@ class AiChatMainProvider extends ChangeNotifier {
         });
         notifyListeners();
         if (onMessageAdded != null) onMessageAdded!();
+        isLoading = false;  // Reset loading state
+        notifyListeners();
         return;
       }
 
@@ -237,10 +334,81 @@ class AiChatMainProvider extends ChangeNotifier {
           });
           notifyListeners();
           if (onMessageAdded != null) onMessageAdded!();
+          isLoading = false;  // Reset loading state
+          notifyListeners();
           return;
         } else {
-          // Handle as modification request
-          // ... (keep existing modification handling code)
+          // Analyze modification with a single call
+          final modificationPrompt = '''
+          Current food data:
+          ${json.encode(lastNutritionData)}
+          
+          User modification request: "${message}"
+          
+          Analyze the modification and respond with ONLY a JSON object containing:
+          {
+            "food": "name of the food",
+            "serving_size": "detected serving size",
+            "calories": 123.0,
+            "protein": 12.0,
+            "carbs": 34.0,
+            "fat": 56.0,
+            "quantity": 1.0,
+            "size_modifier": "small/medium/large/null",
+            "modification_type": "quantity/size/nutrition/combined"
+          }
+
+          Rules for modifications:
+          1. IMPORTANT: Keep the original food description intact, just update the quantity/size
+             - Original: "2 pancakes with maple syrup" and user says "make it 3"
+             -> Result: "3 pancakes with maple syrup" (not just "3 pancakes")
+          2. Extract any quantity mentioned (e.g., "make it 3" -> quantity: 3.0)
+          3. Detect size modifiers:
+             - small: multiply values by 0.7
+             - medium: keep values as is
+             - large: multiply values by 1.3
+          4. Apply both quantity and size multipliers if present
+          5. If calories change, adjust protein, carbs, and fat proportionally
+          6. Maintain the original macro ratio
+          7. Remember: 1g protein = 4 calories, 1g carbs = 4 calories, 1g fat = 9 calories
+          8. Round numbers to 1 decimal place for usability
+          9. Update serving size description to reflect changes but keep all descriptors
+
+          Examples:
+          "make it 3 pancakes" -> keep full food description, just update quantity
+          "it was small" -> keep full food description, just update size
+          "2 large ones" -> keep full food description, update both quantity and size
+          ''';
+
+          final response = await _model.generateContent([Content.text(modificationPrompt)]);
+          if (response.text != null) {
+            try {
+              String cleanedResponse = response.text!
+                  .replaceAll('```json', '')
+                  .replaceAll('```', '')
+                  .trim();
+              Map<String, dynamic> updatedNutritionData = jsonDecode(cleanedResponse);
+              lastNutritionData = updatedNutritionData;
+
+              String formattedResponse =
+                  'Food: ${updatedNutritionData['food'].toString().split(' ').map((word) => word.substring(0, 1).toUpperCase() + word.substring(1)).join(' ')}\n'
+                  '🍽️ Serving Size: ${updatedNutritionData['serving_size']}\n'
+                  '🔥 Calories: ${updatedNutritionData['calories']}\n'
+                  '💪 Protein: ${updatedNutritionData['protein']}g\n'
+                  '🌾 Carbs: ${updatedNutritionData['carbs']}g\n'
+                  '🥑 Fat: ${updatedNutritionData['fat']}g';
+
+              messages.add({
+                'role': 'assistant',
+                'content': formattedResponse,
+              });
+              notifyListeners();
+              if (onMessageAdded != null) onMessageAdded!();
+            } catch (e) {
+              print('Error updating nutrition data: $e');
+            }
+            return;
+          }
         }
       }
 
@@ -288,6 +456,9 @@ class AiChatMainProvider extends ChangeNotifier {
 
             showTrackDialog = true;
             _userProvidedNutrition = null;
+            isLoading = false;  // Reset loading state
+            notifyListeners();
+            return;
           }
         } else {
           // For non-common foods, ask for nutritional information
@@ -302,6 +473,9 @@ class AiChatMainProvider extends ChangeNotifier {
           if (onMessageAdded != null) onMessageAdded!();
           
           _userProvidedNutrition = null;
+          isLoading = false;  // Reset loading state
+          notifyListeners();
+          return;
         }
         return;
       }
@@ -330,6 +504,8 @@ class AiChatMainProvider extends ChangeNotifier {
 
         showTrackDialog = true;
         _userProvidedNutrition = null;
+        isLoading = false;  // Reset loading state
+        notifyListeners();
         return;
       }
 
@@ -364,14 +540,66 @@ class AiChatMainProvider extends ChangeNotifier {
           ...messages.map((msg) => Content.text(msg['content']!)),
         ]);
 
-        final response = await _chat.sendMessage(Content.text(message));
-        if (response.text != null) {
-          messages.add({
-            'role': 'assistant',
-            'content': response.text!.trim(),
-          });
+        try {
+          final response = await _chat.sendMessage(Content.text(message));
+          if (response.text != null) {
+            messages.add({
+              'role': 'assistant',
+              'content': response.text!.trim(),
+            });
+            notifyListeners();
+            if (onMessageAdded != null) onMessageAdded!();
+          }
+        } catch (e, stackTrace) {
+          print('Error sending message: $e');
+          print('Stacktrace: $stackTrace');
+          
+          if (e.toString().contains('Resource has been exhausted') || 
+              e.toString().contains('503')) {
+            // Try all available models
+            int maxRetries = modelNames.length;
+            int currentTry = 1;  // Start at 1 since we already tried the first model
+            
+            while (currentTry < maxRetries) {
+              try {
+                await _switchToNextModel();
+                final response = await _chat.sendMessage(Content.text(message));
+                if (response.text != null) {
+                  messages.add({
+                    'role': 'assistant',
+                    'content': response.text!.trim(),
+                  });
+                  notifyListeners();
+                  if (onMessageAdded != null) onMessageAdded!();
+                  return;
+                }
+              } catch (retryError) {
+                print('Error with model attempt ${currentTry + 1}: $retryError');
+                currentTry++;
+                if (currentTry < maxRetries) {
+                  continue;
+                }
+              }
+            }
+            
+            // If we get here, all models failed
+            messages.add({
+              'role': 'assistant',
+              'content': 'Server is overloaded. Try again in a bit!',
+            });
+          } else {
+            // For non-quota errors, show generic error message
+            messages.add({
+              'role': 'assistant',
+              'content': 'Sorry, I encountered an error. Please try again.',
+            });
+          }
+          
           notifyListeners();
           if (onMessageAdded != null) onMessageAdded!();
+        } finally {
+          isLoading = false;
+          notifyListeners();
         }
       }
     } catch (e, stackTrace) {
@@ -383,8 +611,7 @@ class AiChatMainProvider extends ChangeNotifier {
       });
       notifyListeners();
       if (onMessageAdded != null) onMessageAdded!();
-    } finally {
-      isLoading = false;
+      isLoading = false;  // Reset loading state
       notifyListeners();
     }
   }
@@ -512,6 +739,15 @@ class AiChatMainProvider extends ChangeNotifier {
   }
 
   Future<bool> _isDontKnowResponse(String message) async {
+    // Reset model index at the start of each prompt
+    _currentModelIndex = 0;
+    _model = GenerativeModel(
+      model: modelNames[_currentModelIndex],
+      apiKey: apiKey,
+    );
+    _chat = _model.startChat(history: [Content.text(_systemPrompt)]);
+    print('🤖 [isDontKnowResponse] Using model: ${modelNames[_currentModelIndex]}');
+
     final dontKnowPrompt = '''
     Does this message indicate the user doesn't know or is unsure? Consider variations like:
     - "idk"
@@ -525,16 +761,40 @@ class AiChatMainProvider extends ChangeNotifier {
     Message: "$message"
     ''';
 
-    try {
-      final response = await _model.generateContent([Content.text(dontKnowPrompt)]);
-      return response.text?.trim().toLowerCase() == 'true';
-    } catch (e) {
-      print('Error detecting don\'t know response: $e');
-      return false;
+    int maxRetries = modelNames.length;
+    int currentTry = 0;
+
+    while (currentTry < maxRetries) {
+      try {
+        final response = await _model.generateContent([Content.text(dontKnowPrompt)]);
+        return response.text?.trim().toLowerCase() == 'true';
+      } catch (e) {
+        print('Error detecting don\'t know response (attempt ${currentTry + 1}): $e');
+        if (e.toString().contains('Resource has been exhausted') || 
+            e.toString().contains('503')) {
+          // Try switching to next model
+          await _switchToNextModel();
+          currentTry++;
+          if (currentTry < maxRetries) {
+            continue;
+          }
+        }
+        return false;
+      }
     }
+    return false;
   }
 
   Future<Map<String, dynamic>> _analyzeMessage(String message, {String? previousFood}) async {
+    // Reset model index at the start of each prompt
+    _currentModelIndex = 0;
+    _model = GenerativeModel(
+      model: modelNames[_currentModelIndex],
+      apiKey: apiKey,
+    );
+    _chat = _model.startChat(history: [Content.text(_systemPrompt)]);
+    print('🤖 [analyzeMessage] Using model: ${modelNames[_currentModelIndex]}');
+
     final analysisPrompt = '''
     Analyze this message and respond with ONLY a JSON object containing all the following information:
     {
@@ -545,7 +805,7 @@ class AiChatMainProvider extends ChangeNotifier {
       "is_common_food": true/false,        // Is the food mentioned a common/well-known item?
       "is_affirmative": true/false,        // Is this a "yes" response? (e.g., "yes", "sure", "okay", "yep")
       "food_name": "extracted food name or null",
-      "quantity": number,                  // Extract any quantity mentioned, default to 1
+      "quantity": 1.0,                     // Extract any quantity mentioned, default to 1.0 (always double)
       "size_modifier": "small/medium/large/null", // Extract any size mentioned
       "is_specifying_food": true/false,    // Is this specifying/modifying a previous food?
       "specification_type": "name/size/attribute/null", // What type of specification is it?
@@ -561,16 +821,20 @@ class AiChatMainProvider extends ChangeNotifier {
     Previous food: null
     {"is_tracking_intent": true, "is_direct_command": false, "is_eating_statement": true, "is_food_mention": false, "is_common_food": true, "is_affirmative": false, "food_name": "apple", "quantity": 3, "size_modifier": "small", "is_specifying_food": false, "specification_type": null, "combined_food_name": null}
 
+    Message: "it was 3 pancakes"
+    Previous food: "pancakes with maple syrup"
+    {"is_tracking_intent": false, "is_direct_command": false, "is_eating_statement": false, "is_food_mention": false, "is_common_food": true, "is_affirmative": false, "food_name": "pancakes with maple syrup", "quantity": 3, "size_modifier": null, "is_specifying_food": true, "specification_type": "quantity", "combined_food_name": "3 pancakes with maple syrup"}
+
+    Message: "make it 3"
+    Previous food: "pancakes with maple syrup"
+    {"is_tracking_intent": false, "is_direct_command": false, "is_eating_statement": false, "is_food_mention": false, "is_common_food": false, "is_affirmative": false, "food_name": null, "quantity": 3, "size_modifier": null, "is_specifying_food": true, "specification_type": "quantity", "combined_food_name": "3 pancakes with maple syrup"}
+
     Message: "big mac"
     Previous food: null
     {"is_tracking_intent": false, "is_direct_command": false, "is_eating_statement": false, "is_food_mention": true, "is_common_food": true, "is_affirmative": false, "food_name": "big mac", "quantity": 1, "size_modifier": null, "is_specifying_food": false, "specification_type": null, "combined_food_name": null}
 
     Message: "yes"
     Previous food: "big mac"
-    {"is_tracking_intent": false, "is_direct_command": false, "is_eating_statement": false, "is_food_mention": false, "is_common_food": false, "is_affirmative": true, "food_name": null, "quantity": 1, "size_modifier": null, "is_specifying_food": false, "specification_type": null, "combined_food_name": null}
-
-    Message: "sure, log it"
-    Previous food: "apple"
     {"is_tracking_intent": false, "is_direct_command": false, "is_eating_statement": false, "is_food_mention": false, "is_common_food": false, "is_affirmative": true, "food_name": null, "quantity": 1, "size_modifier": null, "is_specifying_food": false, "specification_type": null, "combined_food_name": null}
 
     Message: "it was a BLT"
