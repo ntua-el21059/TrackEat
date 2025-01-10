@@ -47,7 +47,7 @@ class CustomBottomBarState extends State<CustomBottomBar> {
           child: Container(
             padding: EdgeInsets.only(
               top: 5,
-              bottom: Platform.isAndroid ? 15 + bottomPadding : 15,
+              bottom: Platform.isAndroid ? 30 : 15,
             ),
             constraints: BoxConstraints(maxWidth: ThemeConstants.maxWidth),
             child: Row(
