@@ -4,30 +4,39 @@ import '../models/find_friends_item_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../../models/user_model.dart';
+import 'dart:convert';
 
 class FindFriendsProvider extends ChangeNotifier {
   FindFriendsModel _findFriendsModelObj = FindFriendsModel();
   TextEditingController searchController = TextEditingController();
   FocusNode searchFocusNode = FocusNode();
-  bool _isSearching = false;
+  List<FindFriendsItemModel> _allUsers = [];
+  List<FindFriendsItemModel> _filteredUsers = [];
+  Map<String, Image> _imageCache = {};
 
   FindFriendsModel get findFriendsModelObj => _findFriendsModelObj;
-  bool get isSearching => _isSearching;
+  List<FindFriendsItemModel> get filteredUsers => _filteredUsers;
 
   @override
   void dispose() {
     searchController.dispose();
     searchFocusNode.dispose();
+    _imageCache.clear();
     super.dispose();
   }
 
-  void startSearch() {
-    _isSearching = true;
-    notifyListeners();
-    // Delay focus to wait for the search UI to build
-    Future.delayed(Duration(milliseconds: 100), () {
-      searchFocusNode.requestFocus();
-    });
+  Image? getCachedImage(String? profileImage) {
+    if (profileImage == null || profileImage.isEmpty) return null;
+
+    if (!_imageCache.containsKey(profileImage)) {
+      final decodedImage = base64Decode(profileImage);
+      _imageCache[profileImage] = Image.memory(
+        decodedImage,
+        gaplessPlayback: true,
+        fit: BoxFit.cover,
+      );
+    }
+    return _imageCache[profileImage];
   }
 
   Future<void> fetchUsers() async {
@@ -40,13 +49,21 @@ class FindFriendsProvider extends ChangeNotifier {
           .where('email', isNotEqualTo: currentUser.email)
           .get();
 
-      final users = usersSnapshot.docs
+      _allUsers = usersSnapshot.docs
           .map((doc) => UserModel.fromJson(doc.data()))
           .where((user) => user.username != null && user.username!.isNotEmpty)
           .map((user) => FindFriendsItemModel.fromUserModel(user))
           .toList();
 
-      _findFriendsModelObj.findFriendsItemList = users;
+      // Pre-cache all profile images
+      for (var user in _allUsers) {
+        if (user.profileImage != null && user.profileImage!.isNotEmpty) {
+          getCachedImage(user.profileImage);
+        }
+      }
+
+      _filteredUsers = List.from(_allUsers);
+      _findFriendsModelObj.findFriendsItemList = _allUsers;
       notifyListeners();
     } catch (e) {
       print('Error fetching users: $e');
@@ -54,34 +71,25 @@ class FindFriendsProvider extends ChangeNotifier {
   }
 
   void searchUsers(String query) {
-    if (query == " ") {
-      startSearch();
-      searchController.clear();
-      return;
-    }
-
-    _isSearching = query.isNotEmpty;
-
     if (query.isEmpty) {
-      fetchUsers();
-      return;
+      _filteredUsers = List.from(_allUsers);
+    } else {
+      final lowercaseQuery = query.toLowerCase();
+      _filteredUsers = _allUsers
+          .where((user) =>
+              user.username?.toLowerCase().contains(lowercaseQuery) == true ||
+              user.fullName?.toLowerCase().contains(lowercaseQuery) == true)
+          .toList();
     }
-
-    final lowercaseQuery = query.toLowerCase();
-    final filteredUsers = _findFriendsModelObj.findFriendsItemList
-        .where((user) =>
-            user.username?.toLowerCase().contains(lowercaseQuery) == true ||
-            user.fullName?.toLowerCase().contains(lowercaseQuery) == true)
-        .toList();
-
-    _findFriendsModelObj.findFriendsItemList = filteredUsers;
+    _findFriendsModelObj.findFriendsItemList = _filteredUsers;
     notifyListeners();
   }
 
   void cancelSearch() {
     searchController.clear();
-    _isSearching = false;
     searchFocusNode.unfocus();
-    fetchUsers();
+    _filteredUsers = List.from(_allUsers);
+    _findFriendsModelObj.findFriendsItemList = _allUsers;
+    notifyListeners();
   }
 }

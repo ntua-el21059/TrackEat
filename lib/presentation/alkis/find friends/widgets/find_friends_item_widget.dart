@@ -4,6 +4,8 @@ import '../models/find_friends_item_model.dart';
 import '../../../../routes/app_routes.dart';
 import 'dart:convert';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:provider/provider.dart';
+import '../provider/find_friends_provider.dart';
 
 class FindFriendsItemWidget extends StatelessWidget {
   FindFriendsItemWidget(this.findFriendsItemModelObj, {Key? key})
@@ -11,8 +13,7 @@ class FindFriendsItemWidget extends StatelessWidget {
 
   final FindFriendsItemModel findFriendsItemModelObj;
 
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildDefaultAvatar() {
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: 18.h,
@@ -79,10 +80,7 @@ class FindFriendsItemWidget extends StatelessWidget {
                 Navigator.pushNamed(
                   context,
                   AppRoutes.socialProfileViewScreen,
-                  arguments: {
-                    'username': findFriendsItemModelObj.username,
-                    'backButtonText': 'Find Friends'
-                  },
+                  arguments: {'username': findFriendsItemModelObj.username},
                 );
               }
             },
@@ -93,8 +91,8 @@ class FindFriendsItemWidget extends StatelessWidget {
               margin: EdgeInsets.only(right: 8.h),
               color: appTheme.blue100,
             ),
-          )
-        ],
+          ],
+        ),
       ),
     );
   }
