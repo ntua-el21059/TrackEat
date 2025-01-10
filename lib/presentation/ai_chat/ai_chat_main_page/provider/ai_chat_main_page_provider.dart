@@ -470,18 +470,35 @@ class AiChatMainProvider extends ChangeNotifier {
 
       // If tracking dialog is visible, treat message as modification request
       if (showTrackDialog && lastNutritionData != null) {
+        // First check if the message contains a quantity
+        final quantityPrompt = '''
+        Extract the quantity from this message. If no quantity is found, return 1.
+        Examples:
+        - "10" -> 10
+        - "i ate 5" -> 5
+        - "make it 3" -> 3
+        - "change to 2" -> 2
+        Respond with ONLY the number:
+        Message: "${message}"
+        ''';
+
+        final quantityResponse = await _model.generateContent([Content.text(quantityPrompt)]);
+        final quantity = int.tryParse(quantityResponse.text?.trim() ?? "1") ?? 1;
+
         // Update nutrition based on modification request
         final modificationPrompt = '''
         Current food data:
         ${json.encode(lastNutritionData)}
         
         User modification request: "${message}"
+        Quantity to apply: $quantity
         
         Update the nutritional values based on the user's request. Important rules:
-        1. If calories change, adjust protein, carbs, and fat proportionally
-        2. Maintain the original macro ratio
-        3. Remember: 1g protein = 4 calories, 1g carbs = 4 calories, 1g fat = 9 calories
-        4. Round numbers reasonably for usability
+        1. If a quantity is specified, multiply all values by that quantity
+        2. If calories change, adjust protein, carbs, and fat proportionally
+        3. Maintain the original macro ratio
+        4. Remember: 1g protein = 4 calories, 1g carbs = 4 calories, 1g fat = 9 calories
+        5. Round numbers reasonably for usability
         
         Respond with ONLY a valid JSON object with the modified values:
         {
@@ -505,8 +522,10 @@ class AiChatMainProvider extends ChangeNotifier {
             Map<String, dynamic> updatedNutritionData = jsonDecode(cleanedResponse);
             lastNutritionData = updatedNutritionData;
 
-            String formattedResponse =
-                'Updated values:\n' +
+            String formattedResponse = quantity > 1 ? 
+                'Updated values (×$quantity):\n' :
+                'Updated values:\n';
+            formattedResponse +=
                 'Food: ${updatedNutritionData['food'].toString().split(' ').map((word) => word.substring(0, 1).toUpperCase() + word.substring(1)).join(' ')}\n' +
                 '🍽️ Serving Size: ${updatedNutritionData['serving_size']}\n' +
                 '🔥 Calories: ${updatedNutritionData['calories']}\n' +
