@@ -152,7 +152,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
               child: Container(
                 margin: EdgeInsets.symmetric(horizontal: 9.h),
                 decoration: BoxDecoration(
-                  color: appTheme.blue100,
+                  color: const Color(0xFFB2D7FF),
                   borderRadius: BorderRadius.circular(13.6),
                 ),
                 child: ListView.separated(
