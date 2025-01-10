@@ -271,23 +271,40 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
 
             // Find Friends button
             Padding(
-              padding: EdgeInsets.symmetric(vertical: 2.h, horizontal: 16.h),
+              padding: EdgeInsets.symmetric(vertical: 2.h, horizontal: 9.h),
               child: Align(
                 alignment: Alignment.centerRight,
                 child: ElevatedButton(
                   onPressed: () {
                     Navigator.pushNamed(context, AppRoutes.findFriendsScreen);
                   },
-                  child: Text(
-                    'Find Friends',
-                    style: TextStyle(
-                      fontSize: 14.h,
-                    ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Find Friends',
+                        style: TextStyle(
+                          fontSize: 14.h,
+                          color: Colors.white,
+                        ),
+                      ),
+                      SizedBox(width: 6.h),
+                      SvgPicture.asset(
+                        'assets/images/magnifyingglass.svg',
+                        height: 13.h,
+                        width: 13.h,
+                        colorFilter: const ColorFilter.mode(
+                          Colors.white,
+                          BlendMode.srcIn,
+                        ),
+                      ),
+                    ],
                   ),
                   style: ElevatedButton.styleFrom(
                     minimumSize: Size(120.h, 28.h),
                     padding:
                         EdgeInsets.symmetric(horizontal: 12.h, vertical: 6.h),
+                    backgroundColor: const Color(0xFF007AFF),
                   ),
                 ),
               ),
