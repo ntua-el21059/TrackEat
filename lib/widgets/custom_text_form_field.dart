@@ -2,39 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../core/app_export.dart';
 
-extension TextFormFieldStyleHelper on CustomTextFormField {
-  static OutlineInputBorder get fillGray => OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16.h),
-        borderSide: BorderSide.none,
-      );
-
-  static OutlineInputBorder get outlineBlueGrayTL8 => OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8.h),
-        borderSide: BorderSide(
-          color: appTheme.blueGray10001,
-          width: 1,
-        ),
-      );
-
-  static OutlineInputBorder get outlineGray => OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16.h),
-        borderSide: BorderSide(
-          color: appTheme.gray30002,
-          width: 1,
-        ),
-      );
-
-  static OutlineInputBorder get fillOnErrorContainer => OutlineInputBorder(
-        borderRadius: BorderRadius.circular(22.h),
-        borderSide: BorderSide.none,
-      );
-
-  static OutlineInputBorder get fillBlueGray => OutlineInputBorder(
-        borderRadius: BorderRadius.circular(20.h),
-        borderSide: BorderSide.none,
-      );
-}
-
 class CustomTextFormField extends StatelessWidget {
   CustomTextFormField({
     Key? key,
@@ -49,6 +16,7 @@ class CustomTextFormField extends StatelessWidget {
     this.obscureText = false,
     this.readOnly = false,
     this.onTap,
+    this.onChanged,
     this.textInputAction = TextInputAction.next,
     this.textInputType = TextInputType.text,
     this.maxLines,
@@ -77,6 +45,7 @@ class CustomTextFormField extends StatelessWidget {
   final bool? obscureText;
   final bool? readOnly;
   final VoidCallback? onTap;
+  final ValueChanged<String>? onChanged;
   final TextInputAction? textInputAction;
   final TextInputType? textInputType;
   final int? maxLines;
@@ -111,6 +80,7 @@ class CustomTextFormField extends StatelessWidget {
               EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
           controller: controller,
           focusNode: focusNode,
+          onChanged: onChanged,
           onTapOutside: (event) {
             if (focusNode != null) {
               focusNode?.unfocus();

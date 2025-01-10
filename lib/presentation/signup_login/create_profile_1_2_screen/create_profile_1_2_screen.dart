@@ -31,16 +31,20 @@ class CreateProfile12ScreenState extends State<CreateProfile12Screen> {
   @override
   void initState() {
     super.initState();
-    
+
     // Pre-fill data from UserProvider
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final provider = Provider.of<CreateProfile12Provider>(context, listen: false);
+      final provider =
+          Provider.of<CreateProfile12Provider>(context, listen: false);
       final userProvider = Provider.of<UserProvider>(context, listen: false);
       final user = userProvider.user;
-      
-      if (user.firstName != null) provider.firstNameController.text = user.firstName!;
-      if (user.lastName != null) provider.lastNameController.text = user.lastName!;
-      if (user.birthdate != null) provider.dateController.text = user.birthdate!;
+
+      if (user.firstName != null)
+        provider.firstNameController.text = user.firstName!;
+      if (user.lastName != null)
+        provider.lastNameController.text = user.lastName!;
+      if (user.birthdate != null)
+        provider.dateController.text = user.birthdate!;
       if (user.gender != null) provider.gendertwoController.text = user.gender!;
     });
   }
@@ -129,6 +133,32 @@ class CreateProfile12ScreenState extends State<CreateProfile12Screen> {
               ),
               SizedBox(height: 8.h),
               _buildGender(context),
+              SizedBox(height: 8.h),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Padding(
+                  padding: EdgeInsets.only(left: 8.h),
+                  child: Text(
+                    "Username",
+                    style: CustomTextStyles.titleSmallBlack90015,
+                  ),
+                ),
+              ),
+              SizedBox(height: 8.h),
+              _buildUsername(context),
+              SizedBox(height: 8.h),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Padding(
+                  padding: EdgeInsets.only(left: 8.h),
+                  child: Text(
+                    "Email",
+                    style: CustomTextStyles.titleSmallBlack90015,
+                  ),
+                ),
+              ),
+              SizedBox(height: 8.h),
+              _buildEmail(context),
               Spacer(),
               _buildNext(context),
               SizedBox(height: 48.h),
@@ -231,7 +261,8 @@ class CreateProfile12ScreenState extends State<CreateProfile12Screen> {
                       margin: EdgeInsets.only(
                         bottom: MediaQuery.of(context).viewInsets.bottom,
                       ),
-                      color: CupertinoColors.systemBackground.resolveFrom(context),
+                      color:
+                          CupertinoColors.systemBackground.resolveFrom(context),
                       child: SafeArea(
                         top: false,
                         child: CupertinoDatePicker(
@@ -241,10 +272,10 @@ class CreateProfile12ScreenState extends State<CreateProfile12Screen> {
                           maximumYear: DateTime.now().year,
                           mode: CupertinoDatePickerMode.date,
                           onDateTimeChanged: (DateTime newDate) {
-                            dateController?.text = 
-                              "${newDate.day.toString().padLeft(2, '0')}/"
-                              "${newDate.month.toString().padLeft(2, '0')}/"
-                              "${newDate.year}";
+                            dateController?.text =
+                                "${newDate.day.toString().padLeft(2, '0')}/"
+                                "${newDate.month.toString().padLeft(2, '0')}/"
+                                "${newDate.year}";
                           },
                           backgroundColor: CupertinoColors.systemBackground,
                           itemExtent: 44.0,
@@ -260,12 +291,12 @@ class CreateProfile12ScreenState extends State<CreateProfile12Screen> {
                   firstDate: DateTime(1900),
                   lastDate: DateTime.now(),
                 );
-                
+
                 if (pickedDate != null) {
-                  dateController?.text = 
-                    "${pickedDate.day.toString().padLeft(2, '0')}/"
-                    "${pickedDate.month.toString().padLeft(2, '0')}/"
-                    "${pickedDate.year}";
+                  dateController?.text =
+                      "${pickedDate.day.toString().padLeft(2, '0')}/"
+                      "${pickedDate.month.toString().padLeft(2, '0')}/"
+                      "${pickedDate.year}";
                 }
               }
             },
@@ -313,23 +344,25 @@ class CreateProfile12ScreenState extends State<CreateProfile12Screen> {
                       margin: EdgeInsets.only(
                         bottom: MediaQuery.of(context).viewInsets.bottom,
                       ),
-                      color: CupertinoColors.systemBackground.resolveFrom(context),
+                      color:
+                          CupertinoColors.systemBackground.resolveFrom(context),
                       child: SafeArea(
                         top: false,
                         child: CupertinoPicker(
                           itemExtent: 44.0,
                           onSelectedItemChanged: (int index) {
-                            provider.gendertwoController.text = genderOptions[index];
+                            provider.gendertwoController.text =
+                                genderOptions[index];
                           },
-                          children: genderOptions.map((gender) => 
-                            Text(
-                              gender,
-                              style: TextStyle(
-                                fontSize: 20,
-                                color: CupertinoColors.black,
-                              ),
-                            )
-                          ).toList(),
+                          children: genderOptions
+                              .map((gender) => Text(
+                                    gender,
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      color: CupertinoColors.black,
+                                    ),
+                                  ))
+                              .toList(),
                         ),
                       ),
                     );
@@ -338,49 +371,151 @@ class CreateProfile12ScreenState extends State<CreateProfile12Screen> {
               } else {
                 showModalBottomSheet(
                   context: context,
+                  isScrollControlled:
+                      true, // Makes bottom sheet adjustable in size
                   builder: (BuildContext context) {
-                    return Container(
-                      padding: EdgeInsets.symmetric(vertical: 20.h),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          ListTile(
-                            title: Text(
-                              'Male',
-                              style: CustomTextStyles.bodyLargeBlack90018,
+                    return Padding(
+                      padding: EdgeInsets.only(
+                        bottom: MediaQuery.of(context).viewInsets.bottom +
+                            MediaQuery.of(context).padding.bottom,
+                      ),
+                      child: Container(
+                        // Fixed: Removed extra child nesting
+                        padding: EdgeInsets.symmetric(vertical: 20.h),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            ListTile(
+                              title: Text(
+                                'Male',
+                                style: CustomTextStyles.bodyLargeBlack90018,
+                              ),
+                              onTap: () {
+                                provider.gendertwoController.text = 'Male';
+                                Navigator.pop(context);
+                              },
                             ),
-                            onTap: () {
-                              provider.gendertwoController.text = 'Male';
-                              Navigator.pop(context);
-                            },
-                          ),
-                          ListTile(
-                            title: Text(
-                              'Female',
-                              style: CustomTextStyles.bodyLargeBlack90018,
+                            ListTile(
+                              title: Text(
+                                'Female',
+                                style: CustomTextStyles.bodyLargeBlack90018,
+                              ),
+                              onTap: () {
+                                provider.gendertwoController.text = 'Female';
+                                Navigator.pop(context);
+                              },
                             ),
-                            onTap: () {
-                              provider.gendertwoController.text = 'Female';
-                              Navigator.pop(context);
-                            },
-                          ),
-                          ListTile(
-                            title: Text(
-                              'Non Binary',
-                              style: CustomTextStyles.bodyLargeBlack90018,
+                            ListTile(
+                              title: Text(
+                                'Non Binary',
+                                style: CustomTextStyles.bodyLargeBlack90018,
+                              ),
+                              onTap: () {
+                                provider.gendertwoController.text =
+                                    'Non Binary';
+                                Navigator.pop(context);
+                              },
                             ),
-                            onTap: () {
-                              provider.gendertwoController.text = 'Non Binary';
-                              Navigator.pop(context);
-                            },
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     );
                   },
                 );
               }
             },
+          );
+        },
+      ),
+    );
+  }
+
+  /// Username Field
+  Widget _buildUsername(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 8.h),
+      child: Consumer<CreateProfile12Provider>(
+        builder: (context, provider, child) {
+          print('Username field rebuilt. Error: ${provider.usernameError}');
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              CustomTextFormField(
+                controller: provider.usernameController,
+                hintText: "Choose a username",
+                hintStyle: CustomTextStyles.bodyLargeGray500,
+                textInputType: TextInputType.text,
+                textInputAction: TextInputAction.next,
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 16.h,
+                  vertical: 12.h,
+                ),
+                onChanged: (value) {
+                  print('Username changed to: $value');
+                  // The provider already has a listener that will trigger validation
+                },
+                borderDecoration: provider.usernameError != null
+                    ? TextFormFieldStyleHelper.outlineError
+                    : TextFormFieldStyleHelper.outlineBlueGrayTL8,
+              ),
+              if (provider.usernameError != null)
+                Padding(
+                  padding: EdgeInsets.only(top: 5.h, left: 16.h),
+                  child: Text(
+                    provider.usernameError!,
+                    style: TextStyle(
+                      color: Colors.red,
+                      fontSize: 12.h,
+                    ),
+                  ),
+                ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  /// Email Field
+  Widget _buildEmail(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 8.h),
+      child: Consumer<CreateProfile12Provider>(
+        builder: (context, provider, child) {
+          print('Email field rebuilt. Error: ${provider.emailError}');
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              CustomTextFormField(
+                controller: provider.emailController,
+                hintText: "Enter your email",
+                hintStyle: CustomTextStyles.bodyLargeGray500,
+                textInputType: TextInputType.emailAddress,
+                textInputAction: TextInputAction.next,
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 16.h,
+                  vertical: 12.h,
+                ),
+                onChanged: (value) {
+                  print('Email changed to: $value');
+                  // The provider already has a listener that will trigger validation
+                },
+                borderDecoration: provider.emailError != null
+                    ? TextFormFieldStyleHelper.outlineError
+                    : TextFormFieldStyleHelper.outlineBlueGrayTL8,
+              ),
+              if (provider.emailError != null)
+                Padding(
+                  padding: EdgeInsets.only(top: 5.h, left: 16.h),
+                  child: Text(
+                    provider.emailError!,
+                    style: TextStyle(
+                      color: Colors.red,
+                      fontSize: 12.h,
+                    ),
+                  ),
+                ),
+            ],
           );
         },
       ),
@@ -400,23 +535,26 @@ class CreateProfile12ScreenState extends State<CreateProfile12Screen> {
           height: 48.h,
           width: 114.h,
           text: "Next",
-          buttonStyle: isFormValid 
+          buttonStyle: isFormValid
               ? CustomButtonStyles.fillPrimary
               : CustomButtonStyles.fillGray,
           buttonTextStyle: theme.textTheme.titleMedium!,
           alignment: Alignment.centerRight,
-          onPressed: isFormValid ? () {
-            // Save to UserProvider
-            final userProvider = Provider.of<UserProvider>(context, listen: false);
-            userProvider.setProfile1Info(
-              firstName: provider.firstNameController.text,
-              lastName: provider.lastNameController.text,
-              birthdate: provider.dateController.text,
-              gender: provider.gendertwoController.text,
-            );
-            
-            NavigatorService.pushNamed(AppRoutes.createProfile22Screen);
-          } : null,
+          onPressed: isFormValid
+              ? () {
+                  // Save to UserProvider
+                  final userProvider =
+                      Provider.of<UserProvider>(context, listen: false);
+                  userProvider.setProfile1Info(
+                    firstName: provider.firstNameController.text,
+                    lastName: provider.lastNameController.text,
+                    birthdate: provider.dateController.text,
+                    gender: provider.gendertwoController.text,
+                  );
+
+                  NavigatorService.pushNamed(AppRoutes.createProfile22Screen);
+                }
+              : null,
         );
       },
     );

@@ -96,23 +96,6 @@ class LoginScreenState extends State<LoginScreen> {
               SizedBox(height: 14.h),
               _buildLogintwo(context),
               SizedBox(height: 16.h),
-              _buildRowlineeightyfi(context),
-              SizedBox(height: 24.h),
-              CustomElevatedButton(
-                height: 48.h,
-                text: "For Testing - Skip Login",
-                buttonStyle: CustomButtonStyles.fillGray,
-                buttonTextStyle: theme.textTheme.titleMedium!,
-                onPressed: () {
-                  Navigator.pushNamedAndRemoveUntil(
-                    context,
-                    AppRoutes.homeScreen,
-                    (route) => false,
-                  );
-                },
-              ),
-              SizedBox(height: 14.h),
-              _buildContinuewith(context)
             ],
           ),
         ),
@@ -146,13 +129,31 @@ class LoginScreenState extends State<LoginScreen> {
       ),
       child: Consumer<LoginProvider>(
         builder: (context, provider, child) {
-          return CustomTextFormField(
-            controller: provider.userNameController,
-            hintText: "hello@example.com",
-            hintStyle: CustomTextStyles.bodyLargeGray50003,
-            textInputType: TextInputType.emailAddress,
-            contentPadding: EdgeInsets.fromLTRB(16.h, 12.h, 10.h, 12.h),
-            borderDecoration: TextFormFieldStyleHelper.outlineBlueGrayTL8,
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              CustomTextFormField(
+                controller: provider.userNameController,
+                hintText: "hello@example.com",
+                hintStyle: CustomTextStyles.bodyLargeGray50003,
+                textInputType: TextInputType.emailAddress,
+                contentPadding: EdgeInsets.fromLTRB(16.h, 12.h, 10.h, 12.h),
+                borderDecoration: provider.emailError != null
+                    ? TextFormFieldStyleHelper.outlineError
+                    : TextFormFieldStyleHelper.outlineBlueGrayTL8,
+              ),
+              if (provider.emailError != null)
+                Padding(
+                  padding: EdgeInsets.only(top: 5.h, left: 16.h),
+                  child: Text(
+                    provider.emailError!,
+                    style: TextStyle(
+                      color: Colors.red,
+                      fontSize: 12.h,
+                    ),
+                  ),
+                ),
+            ],
           );
         },
       ),
@@ -168,33 +169,52 @@ class LoginScreenState extends State<LoginScreen> {
       ),
       child: Consumer<LoginProvider>(
         builder: (context, provider, child) {
-          return CustomTextFormField(
-            controller: provider.passwordtwoController,
-            hintText: "Enter password",
-            textInputType: TextInputType.visiblePassword,
-            textInputAction: TextInputAction.next,
-            suffix: InkWell(
-              onTap: () {
-                provider.changePasswordVisibility();
-              },
-              child: Container(
-                margin: EdgeInsets.fromLTRB(16.h, 12.h, 10.h, 12.h),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12.h),
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              CustomTextFormField(
+                controller: provider.passwordtwoController,
+                hintText: "Enter password",
+                textInputType: TextInputType.visiblePassword,
+                textInputAction: TextInputAction.next,
+                suffix: InkWell(
+                  onTap: () {
+                    provider.changePasswordVisibility();
+                  },
+                  child: Container(
+                    margin: EdgeInsets.fromLTRB(16.h, 12.h, 10.h, 12.h),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12.h),
+                    ),
+                    child: CustomImageView(
+                      imagePath: ImageConstant.imgIconEye,
+                      height: 20.h,
+                      width: 24.h,
+                      fit: BoxFit.contain,
+                    ),
+                  ),
                 ),
-                child: CustomImageView(
-                  imagePath: ImageConstant.imgIconEye,
-                  height: 20.h,
-                  width: 24.h,
-                  fit: BoxFit.contain,
+                suffixConstraints: BoxConstraints(
+                  maxHeight: 48.h,
                 ),
+                obscureText: provider.isShowPassword,
+                contentPadding: EdgeInsets.fromLTRB(16.h, 12.h, 10.h, 12.h),
+                borderDecoration: provider.passwordError != null
+                    ? TextFormFieldStyleHelper.outlineError
+                    : TextFormFieldStyleHelper.outlineBlueGrayTL8,
               ),
-            ),
-            suffixConstraints: BoxConstraints(
-              maxHeight: 48.h,
-            ),
-            obscureText: provider.isShowPassword,
-            contentPadding: EdgeInsets.fromLTRB(16.h, 12.h, 10.h, 12.h),
+              if (provider.passwordError != null)
+                Padding(
+                  padding: EdgeInsets.only(top: 5.h, left: 16.h),
+                  child: Text(
+                    provider.passwordError!,
+                    style: TextStyle(
+                      color: Colors.red,
+                      fontSize: 12.h,
+                    ),
+                  ),
+                ),
+            ],
           );
         },
       ),
@@ -239,6 +259,7 @@ class LoginScreenState extends State<LoginScreen> {
             final password = provider.passwordtwoController.text;
 
             provider.setLoading(true);
+            provider.clearErrors();
 
             try {
               final success = await authProvider.signIn(context, email, password);
@@ -258,12 +279,20 @@ class LoginScreenState extends State<LoginScreen> {
                   );
                 }
               } else if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(authProvider.lastError ?? 'Login failed'),
-                    duration: Duration(seconds: 3),
-                  ),
-                );
+                String errorMessage = authProvider.lastError ?? 'Login failed';
+                
+                if (errorMessage.contains('Invalid email or password')) {
+                  provider.setEmailError(errorMessage);
+                  provider.setPasswordError(errorMessage);
+                } else if (errorMessage.contains('No user found with this email')) {
+                  provider.setEmailError(errorMessage);
+                } else if (errorMessage.contains('Wrong password provided')) {
+                  provider.setPasswordError(errorMessage);
+                } else if (errorMessage.contains('The email address is not valid')) {
+                  provider.setEmailError(errorMessage);
+                } else {
+                  provider.setEmailError(errorMessage);
+                }
               }
             } finally {
               if (mounted) {
@@ -273,66 +302,6 @@ class LoginScreenState extends State<LoginScreen> {
           },
         );
       },
-    );
-  }
-
-  /// Section Widget
-  Widget _buildRowlineeightyfi(BuildContext context) {
-    return SizedBox(
-      width: double.maxFinite,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Padding(
-              padding: EdgeInsets.only(top: 6.h),
-              child: Divider(
-                color: appTheme.black900.withAlpha(64),
-              ),
-            ),
-          ),
-          SizedBox(width: 8.h),
-          Align(
-            alignment: Alignment.center,
-            child: Text(
-              "or sign in with",
-              style: CustomTextStyles.bodySmallBlack900,
-            ),
-          ),
-          SizedBox(width: 8.h),
-          Expanded(
-            child: Padding(
-              padding: EdgeInsets.only(top: 6.h),
-              child: Divider(
-                color: appTheme.black900.withAlpha(64),
-              ),
-            ),
-          )
-        ],
-      ),
-    );
-  }
-
-  /// Section Widget
-  Widget _buildContinuewith(BuildContext context) {
-    return CustomElevatedButton(
-      height: 48.h,
-      text: "Continue with Google",
-      margin: EdgeInsets.only(
-        left: 12.h,
-        right: 10.h,
-      ),
-      leftIcon: Container(
-        margin: EdgeInsets.only(right: 16.h),
-        child: CustomImageView(
-          imagePath: ImageConstant.imgGoogle,
-          height: 24.h,
-          width: 24.h,
-          fit: BoxFit.contain,
-        ),
-      ),
-      buttonStyle: CustomButtonStyles.fillGray,
-      buttonTextStyle: CustomTextStyles.bodyLargeBluegray700,
     );
   }
 }

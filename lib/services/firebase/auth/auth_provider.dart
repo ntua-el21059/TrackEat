@@ -89,6 +89,10 @@ class AuthProvider with ChangeNotifier {
         return true;
       }
       return false;
+    } on FirebaseAuthException catch (e) {
+      _lastError = _getReadableError(e);
+      notifyListeners();
+      return false;
     } catch (e) {
       _lastError = e.toString();
       notifyListeners();
@@ -177,6 +181,8 @@ class AuthProvider with ChangeNotifier {
         return 'Email/password accounts are not enabled.';
       case 'weak-password':
         return 'The password provided is too weak.';
+      case 'invalid-credential':
+        return 'Invalid email or password.';
       default:
         return e.message ?? 'An unknown error occurred.';
     }
