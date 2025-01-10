@@ -17,9 +17,14 @@ class SocialProfileMessageFromProfileProvider extends ChangeNotifier {
   String recipientName = '';
   String recipientSurname = '';
   String recipientUsername = '';
-  List<Message> messages = [];
+  List<Message> _cachedMessages = [];
   bool isLoading = false;
   StreamSubscription<DocumentSnapshot>? _userSubscription;
+  StreamSubscription<QuerySnapshot>? _messageSubscription;
+  String? _currentChatRoomId;
+
+  // Getter for cached messages
+  List<Message> get messages => _cachedMessages;
 
   // Initialize provider and set receiver based on current user
   SocialProfileMessageFromProfileProvider() {
@@ -33,6 +38,7 @@ class SocialProfileMessageFromProfileProvider extends ChangeNotifier {
   }) {
     if (receiverId != null) {
       this.receiverId = receiverId;
+      _setupMessageListener();
     }
     if (receiverName != null) {
       final names = receiverName.split(' ');
@@ -101,6 +107,87 @@ class SocialProfileMessageFromProfileProvider extends ChangeNotifier {
     });
   }
 
+  void _setupMessageListener() {
+    final currentUser = _auth.currentUser;
+    if (currentUser == null || receiverId == null) return;
+
+    // Cancel existing subscription if any
+    _messageSubscription?.cancel();
+
+    // Create chat room ID
+    final List<String> ids = [currentUser.email!, receiverId!]..sort();
+    _currentChatRoomId = ids.join('_');
+
+    // Listen only to new messages
+    _messageSubscription = _firestore
+        .collection('chats')
+        .doc(_currentChatRoomId)
+        .collection('messages')
+        .orderBy('timestamp', descending: false)
+        .snapshots()
+        .listen((snapshot) {
+          if (snapshot.docChanges.isNotEmpty) {
+            // Process only changes
+            for (var change in snapshot.docChanges) {
+              final message = Message.fromMap({
+                ...change.doc.data()!,
+                'id': change.doc.id
+              });
+              
+              switch (change.type) {
+                case DocumentChangeType.added:
+                  if (!_cachedMessages.any((m) => m.id == message.id)) {
+                    _cachedMessages.add(message);
+                  }
+                  break;
+                case DocumentChangeType.modified:
+                  final index = _cachedMessages.indexWhere((m) => m.id == message.id);
+                  if (index != -1) {
+                    _cachedMessages[index] = message;
+                  }
+                  break;
+                case DocumentChangeType.removed:
+                  _cachedMessages.removeWhere((m) => m.id == message.id);
+                  break;
+              }
+            }
+            
+            // Sort messages by timestamp
+            _cachedMessages.sort((a, b) => a.timestamp.compareTo(b.timestamp));
+            notifyListeners();
+          }
+        }, onError: (error) {
+          print('Error in message stream: $error');
+        });
+
+    // Initial fetch of messages
+    _fetchInitialMessages();
+  }
+
+  Future<void> _fetchInitialMessages() async {
+    try {
+      final snapshot = await _firestore
+          .collection('chats')
+          .doc(_currentChatRoomId)
+          .collection('messages')
+          .orderBy('timestamp', descending: false)
+          .get();
+
+      _cachedMessages = snapshot.docs.map((doc) {
+        return Message.fromMap({...doc.data(), 'id': doc.id});
+      }).toList();
+
+      notifyListeners();
+    } catch (e) {
+      print('Error fetching initial messages: $e');
+    }
+  }
+
+  // Stream of messages for the current chat
+  Stream<List<Message>> getMessages() {
+    return Stream.value(_cachedMessages);
+  }
+
   // Send a message
   Future<void> sendMessage(String content) async {
     if (content.trim().isEmpty || receiverId == null) return;
@@ -109,25 +196,26 @@ class SocialProfileMessageFromProfileProvider extends ChangeNotifier {
     if (currentUser == null) return;
 
     try {
+      // Create a new document reference to get the ID
+      final messageRef = _firestore
+          .collection('chats')
+          .doc(_currentChatRoomId)
+          .collection('messages')
+          .doc();
+
       final message = Message(
+        id: messageRef.id,
         senderId: currentUser.email!,
         receiverId: receiverId!,
         content: content.trim(),
         timestamp: Timestamp.now(),
       );
 
-      // Create a unique chat room ID by sorting and combining user IDs
-      final List<String> ids = [currentUser.email!, receiverId!]..sort();
-      final String chatRoomId = ids.join('_');
-
-      await _firestore
-          .collection('chats')
-          .doc(chatRoomId)
-          .collection('messages')
-          .add(message.toMap());
+      // Use the same reference to set the data
+      await messageRef.set(message.toMap());
 
       // Update chat room info
-      await _firestore.collection('chats').doc(chatRoomId).set({
+      await _firestore.collection('chats').doc(_currentChatRoomId).set({
         'lastMessage': content,
         'lastMessageTime': Timestamp.now(),
         'participants': [currentUser.email!, receiverId!],
@@ -136,87 +224,68 @@ class SocialProfileMessageFromProfileProvider extends ChangeNotifier {
         }
       }, SetOptions(merge: true));
 
-      // Get sender's username from their user document
-      final senderDoc = await _firestore.collection('users').doc(currentUser.email!).get();
-      if (senderDoc.exists) {
-        final senderUsername = senderDoc.data()?['username'];
-        if (senderUsername != null) {
-          // Create notification for the recipient
-          await _firestore
-              .collection('users')
-              .doc(receiverId)
-              .collection('notifications')
-              .add({
-                'isRead': false,
-                'message': '@$senderUsername sent you a message',
-                'timestamp': Timestamp.now(),
-                'type': 'message',
-                'senderId': currentUser.email
-              });
-        }
-      }
+      // Create notification for the recipient
+      await _createNotification(content, currentUser.email!);
 
       // Clear the input field
       messageoneController.clear();
-      notifyListeners();
     } catch (e) {
       print('Error sending message: $e');
     }
   }
 
-  // Stream of messages for the current chat
-  Stream<List<Message>> getMessages() {
-    final currentUser = _auth.currentUser;
-    if (currentUser == null || receiverId == null) return Stream.value([]);
-
-    // Create a unique chat room ID by sorting and combining user IDs
-    final List<String> ids = [currentUser.email!, receiverId!]..sort();
-    final String chatRoomId = ids.join('_');
-
-    // Mark messages as read when they are viewed
-    _markMessagesAsRead(chatRoomId, currentUser.email!);
-
-    return _firestore
-        .collection('chats')
-        .doc(chatRoomId)
-        .collection('messages')
-        .orderBy('timestamp', descending: false)
-        .snapshots()
-        .map((snapshot) {
-          return snapshot.docs.map((doc) {
-            final data = doc.data();
-            return Message.fromMap({...data, 'id': doc.id});
-          }).toList();
-        });
-  }
-
-  // Mark messages as read
-  Future<void> _markMessagesAsRead(String chatRoomId, String currentUserId) async {
+  Future<void> _createNotification(String messageContent, String senderEmail) async {
     try {
-      // Get unread messages sent to current user
-      final unreadMessages = await _firestore
-          .collection('chats')
-          .doc(chatRoomId)
-          .collection('messages')
-          .where('receiverId', isEqualTo: currentUserId)
-          .where('isRead', isEqualTo: false)
-          .get();
+      print('Starting notification creation...');
+      print('Receiver ID: $receiverId');
+      print('Sender Email: $senderEmail');
 
-      // Mark each message as read
-      final batch = _firestore.batch();
-      for (var doc in unreadMessages.docs) {
-        batch.update(doc.reference, {'isRead': true});
+      if (receiverId == null) {
+        print('Error: receiverId is null');
+        return;
       }
-      await batch.commit();
 
-      // Reset unread count for current user in chat room
-      await _firestore.collection('chats').doc(chatRoomId).set({
-        'unreadCount': {
-          currentUserId: 0,
-        }
-      }, SetOptions(merge: true));
-    } catch (e) {
-      print('Error marking messages as read: $e');
+      // Get sender's username
+      print('Fetching sender document...');
+      final senderDoc = await _firestore.collection('users').doc(senderEmail).get();
+      if (!senderDoc.exists) {
+        print('Error: Sender document does not exist');
+        return;
+      }
+
+      final senderData = senderDoc.data()!;
+      print('Sender data: $senderData');
+      
+      final senderUsername = senderData['username'] as String?;
+      if (senderUsername == null) {
+        print('Error: username is null in sender data');
+        return;
+      }
+
+      print('Creating notification data...');
+      // Create notification with exact structure
+      final notificationData = {
+        'isRead': false,
+        'message': '@$senderUsername sent you a message',
+        'senderId': senderEmail,
+        'timestamp': FieldValue.serverTimestamp(),
+        'type': 'message'
+      };
+
+      print('Notification data: $notificationData');
+      print('Adding notification to path: users/$receiverId/notifications/');
+
+      // Add to the correct path: users/{receiverEmail}/notifications/{notificationId}
+      final notificationRef = await _firestore
+          .collection('users')
+          .doc(receiverId)
+          .collection('notifications')
+          .add(notificationData);
+
+      print('Notification created successfully with ID: ${notificationRef.id}');
+    } catch (e, stackTrace) {
+      print('Error creating notification: $e');
+      print('Stack trace: $stackTrace');
     }
   }
 
@@ -224,6 +293,7 @@ class SocialProfileMessageFromProfileProvider extends ChangeNotifier {
   void dispose() {
     messageoneController.dispose();
     _userSubscription?.cancel();
+    _messageSubscription?.cancel();
     super.dispose();
   }
 }

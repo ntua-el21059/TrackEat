@@ -79,7 +79,10 @@ class FindFriendsItemWidget extends StatelessWidget {
                 Navigator.pushNamed(
                   context,
                   AppRoutes.socialProfileViewScreen,
-                  arguments: {'username': findFriendsItemModelObj.username},
+                  arguments: {
+                    'username': findFriendsItemModelObj.username,
+                    'backButtonText': 'Find Friends'
+                  },
                 );
               }
             },

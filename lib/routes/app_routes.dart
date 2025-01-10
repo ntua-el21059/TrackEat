@@ -133,8 +133,14 @@ class AppRoutes {
       }
       print('Route args: $args');
       final username = args['username'] as String;
+      final backButtonText = args['backButtonText'] as String? ?? 'Profile';
       print('Username from args: $username');
-      return SocialProfileViewScreen.builder(context, username: username);
+      print('BackButtonText from args: $backButtonText');
+      return SocialProfileViewScreen.builder(
+        context, 
+        username: username,
+        backButtonText: backButtonText,
+      );
     },
   };
 }

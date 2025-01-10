@@ -202,13 +202,14 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                                     ),
                                   );
                                 } else {
+                                  print('Navigating to profile view from leaderboard with username: ${user.username}');
                                   Navigator.pushNamed(
                                     context,
                                     AppRoutes.socialProfileViewScreen,
                                     arguments: {
                                       'username': user.username,
-                                      'backButtonText': 'Preview Profile',
-                                      'appBarTitle': 'Preview Profile'
+                                      'backButtonText': 'Leaderboard',
+                                      'appBarTitle': 'Profile'
                                     },
                                   );
                                 }

@@ -116,14 +116,14 @@ class SocialProfileMessageFromProfileScreenState
                       SizedBox(height: 60.h),
                       _buildProfileInfo(),
                       Expanded(
-                        child: StreamBuilder<List<Message>>(
-                          stream: Provider.of<SocialProfileMessageFromProfileProvider>(context)
-                              .getMessages(),
-                          builder: (context, snapshot) {
-                            if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                        child: Consumer<SocialProfileMessageFromProfileProvider>(
+                          builder: (context, provider, _) {
+                            final messages = provider.messages;
+                            
+                            if (messages.isEmpty) {
                               return Center(
                                 child: Text(
-                                  "No messages yet",
+                                  "Start a conversation",
                                   style: theme.textTheme.bodyLarge?.copyWith(
                                     color: Colors.black54,
                                   ),
@@ -131,7 +131,6 @@ class SocialProfileMessageFromProfileScreenState
                               );
                             }
 
-                            final messages = snapshot.data!;
                             WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
                             return ListView.builder(
                               controller: _scrollController,
@@ -376,22 +375,28 @@ class SocialProfileMessageFromProfileScreenState
                 ),
               ),
               SizedBox(width: 8.h),
-              Container(
-                decoration: BoxDecoration(
-                  color: provider.messageoneController.text.trim().isNotEmpty 
-                      ? theme.colorScheme.primary 
-                      : Colors.grey[400],
-                  shape: BoxShape.circle,
-                ),
-                child: IconButton(
-                  icon: Icon(
-                    Icons.arrow_upward,
-                    color: Colors.white,
-                  ),
-                  onPressed: provider.messageoneController.text.trim().isNotEmpty 
-                      ? () => provider.sendMessage(provider.messageoneController.text)
-                      : null,
-                ),
+              ValueListenableBuilder<TextEditingValue>(
+                valueListenable: provider.messageoneController,
+                builder: (context, value, child) {
+                  final isNotEmpty = value.text.trim().isNotEmpty;
+                  return Container(
+                    decoration: BoxDecoration(
+                      color: isNotEmpty 
+                          ? theme.colorScheme.primary 
+                          : Colors.grey[400],
+                      shape: BoxShape.circle,
+                    ),
+                    child: IconButton(
+                      icon: Icon(
+                        Icons.arrow_upward,
+                        color: Colors.white,
+                      ),
+                      onPressed: isNotEmpty 
+                          ? () => provider.sendMessage(value.text)
+                          : null,
+                    ),
+                  );
+                },
               ),
             ],
           );
