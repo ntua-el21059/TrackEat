@@ -8,6 +8,7 @@ import 'provider/social_profile_message_from_profile_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/services.dart';
 import 'dart:convert';
+import 'dart:io' show Platform;
 
 class SocialProfileMessageFromProfileScreen extends StatefulWidget {
   final String? receiverId;
@@ -25,7 +26,8 @@ class SocialProfileMessageFromProfileScreen extends StatefulWidget {
   SocialProfileMessageFromProfileScreenState createState() =>
       SocialProfileMessageFromProfileScreenState();
 
-  static Widget builder(BuildContext context, {
+  static Widget builder(
+    BuildContext context, {
     String? receiverId,
     String? receiverName,
     String? receiverUsername,
@@ -47,7 +49,8 @@ class SocialProfileMessageFromProfileScreen extends StatefulWidget {
 }
 
 class SocialProfileMessageFromProfileScreenState
-    extends State<SocialProfileMessageFromProfileScreen> with AutomaticKeepAliveClientMixin {
+    extends State<SocialProfileMessageFromProfileScreen>
+    with AutomaticKeepAliveClientMixin {
   final FocusNode _messageFocusNode = FocusNode();
   Map<int, bool> _showTimestamp = {};
   final ScrollController _scrollController = ScrollController();
@@ -89,194 +92,234 @@ class SocialProfileMessageFromProfileScreenState
         statusBarIconBrightness: Brightness.dark,
         statusBarBrightness: Brightness.light,
       ),
-      child: Scaffold(
-        backgroundColor: Colors.white,
-        appBar: _buildAppBar(context),
-        body: Stack(
-          children: [
-            Padding(
-              padding: EdgeInsets.only(top: 30.h),
-              child: Container(
-                width: double.maxFinite,
-                height: MediaQuery.of(context).size.height - 30.h,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFB2D7FF),
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(54.h),
-                    topRight: Radius.circular(54.h),
+      child: SafeArea(
+        bottom: Platform.isAndroid,
+        child: Scaffold(
+          resizeToAvoidBottomInset: Platform.isAndroid,
+          backgroundColor: Colors.white,
+          appBar: _buildAppBar(context),
+          body: Stack(
+            children: [
+              Padding(
+                padding: EdgeInsets.only(top: 30.h),
+                child: Container(
+                  width: double.maxFinite,
+                  height: MediaQuery.of(context).size.height - 30.h,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFB2D7FF),
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(54.h),
+                      topRight: Radius.circular(54.h),
+                    ),
                   ),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(54.h),
-                    topRight: Radius.circular(54.h),
-                  ),
-                  child: Column(
-                    children: [
-                      SizedBox(height: 60.h),
-                      _buildProfileInfo(),
-                      Expanded(
-                        child: Consumer<SocialProfileMessageFromProfileProvider>(
-                          builder: (context, provider, _) {
-                            final messages = provider.messages;
-                            
-                            if (messages.isEmpty) {
-                              return Center(
-                                child: Text(
-                                  "Start a conversation",
-                                  style: theme.textTheme.bodyLarge?.copyWith(
-                                    color: Colors.black54,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(54.h),
+                      topRight: Radius.circular(54.h),
+                    ),
+                    child: Column(
+                      children: [
+                        SizedBox(height: 60.h),
+                        _buildProfileInfo(),
+                        Expanded(
+                          child:
+                              Consumer<SocialProfileMessageFromProfileProvider>(
+                            builder: (context, provider, _) {
+                              final messages = provider.messages;
+
+                              if (messages.isEmpty) {
+                                return Center(
+                                  child: Text(
+                                    "Start a conversation",
+                                    style: theme.textTheme.bodyLarge?.copyWith(
+                                      color: Colors.black54,
+                                    ),
                                   ),
-                                ),
-                              );
-                            }
+                                );
+                              }
 
-                            WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
-                            return ListView.builder(
-                              controller: _scrollController,
-                              reverse: false,
-                              padding: EdgeInsets.symmetric(horizontal: 16.h, vertical: 8.h),
-                              itemCount: messages.length,
-                              physics: const AlwaysScrollableScrollPhysics(),
-                              addAutomaticKeepAlives: true,
-                              itemBuilder: (context, index) {
-                                final message = messages[index];
-                                final isMe = message.senderId == 
-                                    FirebaseAuth.instance.currentUser?.email;
-                                final isLastMessage = index == messages.length - 1;
-                                final showDateHeader = _shouldShowDateHeader(messages, index);
+                              WidgetsBinding.instance.addPostFrameCallback(
+                                  (_) => _scrollToBottom());
+                              return ListView.builder(
+                                controller: _scrollController,
+                                reverse: false,
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 16.h, vertical: 8.h),
+                                itemCount: messages.length,
+                                physics: const AlwaysScrollableScrollPhysics(),
+                                addAutomaticKeepAlives: true,
+                                itemBuilder: (context, index) {
+                                  final message = messages[index];
+                                  final isMe = message.senderId ==
+                                      FirebaseAuth.instance.currentUser?.email;
+                                  final isLastMessage =
+                                      index == messages.length - 1;
+                                  final showDateHeader =
+                                      _shouldShowDateHeader(messages, index);
 
-                                return Column(
-                                  children: [
-                                    if (showDateHeader)
-                                      Padding(
-                                        padding: EdgeInsets.symmetric(vertical: 8.h),
-                                        child: Text(
-                                          _formatDateHeader(message.timestamp.toDate()),
-                                          style: theme.textTheme.bodySmall?.copyWith(
-                                            color: Colors.black54,
-                                            fontWeight: FontWeight.w500,
+                                  return Column(
+                                    children: [
+                                      if (showDateHeader)
+                                        Padding(
+                                          padding: EdgeInsets.symmetric(
+                                              vertical: 8.h),
+                                          child: Text(
+                                            _formatDateHeader(
+                                                message.timestamp.toDate()),
+                                            style: theme.textTheme.bodySmall
+                                                ?.copyWith(
+                                              color: Colors.black54,
+                                              fontWeight: FontWeight.w500,
+                                            ),
                                           ),
                                         ),
-                                      ),
-                                    RepaintBoundary(
-                                      child: GestureDetector(
-                                        onTap: () {
-                                          setState(() {
-                                            _showTimestamp.clear();
-                                            if (!isLastMessage) {
-                                              _showTimestamp[index] = !(_showTimestamp[index] ?? false);
-                                            }
-                                          });
-                                        },
-                                        child: Align(
-                                          alignment: isMe 
-                                              ? Alignment.centerRight 
-                                              : Alignment.centerLeft,
-                                          child: Column(
-                                            crossAxisAlignment: isMe 
-                                                ? CrossAxisAlignment.end 
-                                                : CrossAxisAlignment.start,
-                                            children: [
-                                              Container(
-                                                margin: EdgeInsets.only(
-                                                  top: 8.h,
-                                                  left: isMe ? 60.h : 0,
-                                                  right: isMe ? 0 : 60.h,
-                                                ),
-                                                padding: EdgeInsets.symmetric(
-                                                  horizontal: 16.h,
-                                                  vertical: 10.h,
-                                                ),
-                                                decoration: BoxDecoration(
-                                                  color: isMe 
-                                                      ? const Color(0xFF007AFF)
-                                                      : Colors.white,
-                                                  borderRadius: BorderRadius.only(
-                                                    topLeft: Radius.circular(20.h),
-                                                    topRight: Radius.circular(20.h),
-                                                    bottomLeft: Radius.circular(isMe ? 20.h : 5.h),
-                                                    bottomRight: Radius.circular(isMe ? 5.h : 20.h),
+                                      RepaintBoundary(
+                                        child: GestureDetector(
+                                          onTap: () {
+                                            setState(() {
+                                              _showTimestamp.clear();
+                                              if (!isLastMessage) {
+                                                _showTimestamp[index] =
+                                                    !(_showTimestamp[index] ??
+                                                        false);
+                                              }
+                                            });
+                                          },
+                                          child: Align(
+                                            alignment: isMe
+                                                ? Alignment.centerRight
+                                                : Alignment.centerLeft,
+                                            child: Column(
+                                              crossAxisAlignment: isMe
+                                                  ? CrossAxisAlignment.end
+                                                  : CrossAxisAlignment.start,
+                                              children: [
+                                                Container(
+                                                  margin: EdgeInsets.only(
+                                                    top: 8.h,
+                                                    left: isMe ? 60.h : 0,
+                                                    right: isMe ? 0 : 60.h,
                                                   ),
-                                                  boxShadow: [
-                                                    BoxShadow(
-                                                      color: Colors.black.withOpacity(0.05),
-                                                      blurRadius: 4,
-                                                      offset: Offset(0, 2),
+                                                  padding: EdgeInsets.symmetric(
+                                                    horizontal: 16.h,
+                                                    vertical: 10.h,
+                                                  ),
+                                                  decoration: BoxDecoration(
+                                                    color: isMe
+                                                        ? const Color(
+                                                            0xFF007AFF)
+                                                        : Colors.white,
+                                                    borderRadius:
+                                                        BorderRadius.only(
+                                                      topLeft:
+                                                          Radius.circular(20.h),
+                                                      topRight:
+                                                          Radius.circular(20.h),
+                                                      bottomLeft:
+                                                          Radius.circular(isMe
+                                                              ? 20.h
+                                                              : 5.h),
+                                                      bottomRight:
+                                                          Radius.circular(isMe
+                                                              ? 5.h
+                                                              : 20.h),
                                                     ),
-                                                  ],
-                                                ),
-                                                child: Text(
-                                                  message.content,
-                                                  style: theme.textTheme.bodyMedium?.copyWith(
-                                                    color: isMe ? Colors.white : Colors.black,
-                                                    height: 1.3,
-                                                  ),
-                                                ),
-                                              ),
-                                              if (isLastMessage || _showTimestamp[index] == true)
-                                                Padding(
-                                                  padding: EdgeInsets.only(
-                                                    top: 4.h,
-                                                    left: isMe ? 60.h : 8.h,
-                                                    right: isMe ? 8.h : 60.h,
-                                                    bottom: 4.h,
-                                                  ),
-                                                  child: Row(
-                                                    mainAxisSize: MainAxisSize.min,
-                                                    children: [
-                                                      Text(
-                                                        _formatTimestamp(message.timestamp),
-                                                        style: theme.textTheme.bodySmall?.copyWith(
-                                                          color: Colors.black54,
-                                                          fontSize: 10.h,
-                                                        ),
+                                                    boxShadow: [
+                                                      BoxShadow(
+                                                        color: Colors.black
+                                                            .withOpacity(0.05),
+                                                        blurRadius: 4,
+                                                        offset: Offset(0, 2),
                                                       ),
-                                                      if (isMe) ...[
-                                                        SizedBox(width: 4.h),
-                                                        Icon(
-                                                          message.isRead 
-                                                              ? Icons.done_all 
-                                                              : Icons.done,
-                                                          size: 14.h,
-                                                          color: message.isRead 
-                                                              ? Color(0xFF0084FF) 
-                                                              : Colors.black54,
-                                                        ),
-                                                      ],
                                                     ],
                                                   ),
+                                                  child: Text(
+                                                    message.content,
+                                                    style: theme
+                                                        .textTheme.bodyMedium
+                                                        ?.copyWith(
+                                                      color: isMe
+                                                          ? Colors.white
+                                                          : Colors.black,
+                                                      height: 1.3,
+                                                    ),
+                                                  ),
                                                 ),
-                                            ],
+                                                if (isLastMessage ||
+                                                    _showTimestamp[index] ==
+                                                        true)
+                                                  Padding(
+                                                    padding: EdgeInsets.only(
+                                                      top: 4.h,
+                                                      left: isMe ? 60.h : 8.h,
+                                                      right: isMe ? 8.h : 60.h,
+                                                      bottom: 4.h,
+                                                    ),
+                                                    child: Row(
+                                                      mainAxisSize:
+                                                          MainAxisSize.min,
+                                                      children: [
+                                                        Text(
+                                                          _formatTimestamp(
+                                                              message
+                                                                  .timestamp),
+                                                          style: theme.textTheme
+                                                              .bodySmall
+                                                              ?.copyWith(
+                                                            color:
+                                                                Colors.black54,
+                                                            fontSize: 10.h,
+                                                          ),
+                                                        ),
+                                                        if (isMe) ...[
+                                                          SizedBox(width: 4.h),
+                                                          Icon(
+                                                            message.isRead
+                                                                ? Icons.done_all
+                                                                : Icons.done,
+                                                            size: 14.h,
+                                                            color: message
+                                                                    .isRead
+                                                                ? Color(
+                                                                    0xFF0084FF)
+                                                                : Colors
+                                                                    .black54,
+                                                          ),
+                                                        ],
+                                                      ],
+                                                    ),
+                                                  ),
+                                              ],
+                                            ),
                                           ),
                                         ),
                                       ),
-                                    ),
-                                  ],
-                                );
-                              },
-                            );
-                          },
+                                    ],
+                                  );
+                                },
+                              );
+                            },
+                          ),
                         ),
-                      ),
-                      _buildMessageInput(),
-                    ],
+                        _buildMessageInput(),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-            Align(
-              alignment: Alignment.topCenter,
-              child: Padding(
-                padding: EdgeInsets.only(top: 16.h),
-                child: Consumer<SocialProfileMessageFromProfileProvider>(
-                  builder: (context, provider, _) => ProfilePictureWidget(
-                    receiverId: provider.receiverId ?? '',
+              Align(
+                alignment: Alignment.topCenter,
+                child: Padding(
+                  padding: EdgeInsets.only(top: 16.h),
+                  child: Consumer<SocialProfileMessageFromProfileProvider>(
+                    builder: (context, provider, _) => ProfilePictureWidget(
+                      receiverId: provider.receiverId ?? '',
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -341,8 +384,10 @@ class SocialProfileMessageFromProfileScreenState
   }
 
   Widget _buildMessageInput() {
+    final bottomPadding =
+        Platform.isAndroid ? MediaQuery.of(context).viewPadding.bottom : 0.0;
     return Container(
-      padding: EdgeInsets.fromLTRB(16.h, 24.h, 16.h, 32.h),
+      padding: EdgeInsets.fromLTRB(16.h, 24.h, 16.h, 32.h + bottomPadding),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.vertical(
@@ -381,8 +426,8 @@ class SocialProfileMessageFromProfileScreenState
                   final isNotEmpty = value.text.trim().isNotEmpty;
                   return Container(
                     decoration: BoxDecoration(
-                      color: isNotEmpty 
-                          ? theme.colorScheme.primary 
+                      color: isNotEmpty
+                          ? theme.colorScheme.primary
                           : Colors.grey[400],
                       shape: BoxShape.circle,
                     ),
@@ -391,7 +436,7 @@ class SocialProfileMessageFromProfileScreenState
                         Icons.arrow_upward,
                         color: Colors.white,
                       ),
-                      onPressed: isNotEmpty 
+                      onPressed: isNotEmpty
                           ? () => provider.sendMessage(value.text)
                           : null,
                     ),
@@ -416,7 +461,8 @@ class SocialProfileMessageFromProfileScreenState
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final yesterday = today.subtract(const Duration(days: 1));
-    final messageDay = DateTime(messageDate.year, messageDate.month, messageDate.day);
+    final messageDay =
+        DateTime(messageDate.year, messageDate.month, messageDate.day);
 
     if (messageDay == today) {
       return 'Today';
@@ -429,17 +475,17 @@ class SocialProfileMessageFromProfileScreenState
 
   bool _shouldShowDateHeader(List<Message> messages, int index) {
     if (index == 0) return true;
-    
+
     final currentMessageDate = messages[index].timestamp.toDate();
     final previousMessageDate = messages[index - 1].timestamp.toDate();
-    
+
     return !_isSameDay(currentMessageDate, previousMessageDate);
   }
 
   bool _isSameDay(DateTime date1, DateTime date2) {
-    return date1.year == date2.year && 
-           date1.month == date2.month && 
-           date1.day == date2.day;
+    return date1.year == date2.year &&
+        date1.month == date2.month &&
+        date1.day == date2.day;
   }
 }
 
@@ -459,10 +505,12 @@ class ProfilePictureWidget extends StatelessWidget {
           .doc(receiverId)
           .snapshots(),
       builder: (context, snapshot) {
-        if (snapshot.hasData && snapshot.data != null && snapshot.data!.exists) {
+        if (snapshot.hasData &&
+            snapshot.data != null &&
+            snapshot.data!.exists) {
           final userData = snapshot.data!.data() as Map<String, dynamic>;
           final profilePicture = userData['profilePicture'] as String?;
-          
+
           if (profilePicture != null && profilePicture.isNotEmpty) {
             return Container(
               height: 70.h,
@@ -478,14 +526,15 @@ class ProfilePictureWidget extends StatelessWidget {
                   child: Image.memory(
                     base64Decode(profilePicture),
                     fit: BoxFit.cover,
-                    gaplessPlayback: true,  // Prevents flashing during image updates
+                    gaplessPlayback:
+                        true, // Prevents flashing during image updates
                   ),
                 ),
               ),
             );
           }
         }
-        
+
         return Container(
           height: 70.h,
           width: 70.h,
