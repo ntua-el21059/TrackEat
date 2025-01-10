@@ -28,79 +28,81 @@ class CustomBottomBarState extends State<CustomBottomBar> {
   @override
   Widget build(BuildContext context) {
     final String currentRoute = ModalRoute.of(context)?.settings.name ?? '';
-    final bottomPadding = Platform.isAndroid ? MediaQuery.of(context).padding.bottom : 0.0;
     
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Container(
-          width: double.infinity,
-          decoration: BoxDecoration(
-            color: widget.backgroundColor ?? Colors.white,
-            border: Border(
-              top: BorderSide(
-                color: ThemeConstants.borderColor,
-                width: 1,
+    return SafeArea(
+      bottom: true,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: widget.backgroundColor ?? Colors.white,
+              border: Border(
+                top: BorderSide(
+                  color: ThemeConstants.borderColor,
+                  width: 1,
+                ),
+              ),
+            ),
+            child: Container(
+              padding: const EdgeInsets.only(
+                top: 5,
+                bottom: 15,
+              ),
+              constraints: BoxConstraints(maxWidth: ThemeConstants.maxWidth),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: _buildNavigationItem(
+                      icon: 'assets/images/home.svg',
+                      label: 'Home',
+                      width: 35,
+                      aspectRatio: 1.3,
+                      type: BottomBarEnum.Home,
+                      isSelected: currentRoute == AppRoutes.homeScreen,
+                    ),
+                  ),
+                  const Spacer(),
+                  Expanded(
+                    child: _buildNavigationItem(
+                      icon: 'assets/images/Leaderboard.svg',
+                      label: 'Leaderboard',
+                      width: 28,
+                      aspectRatio: 0.92,
+                      type: BottomBarEnum.Leaderboard,
+                      isSelected: currentRoute == AppRoutes.leaderboardScreen,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
-          child: Container(
-            padding: EdgeInsets.only(
-              top: 5,
-              bottom: Platform.isAndroid ? 30 : 15,
-            ),
-            constraints: BoxConstraints(maxWidth: ThemeConstants.maxWidth),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Expanded(
-                  child: _buildNavigationItem(
-                    icon: 'assets/images/home.svg',
-                    label: 'Home',
-                    width: 35,
-                    aspectRatio: 1.3,
-                    type: BottomBarEnum.Home,
-                    isSelected: currentRoute == AppRoutes.homeScreen,
-                  ),
+          Positioned(
+            top: -10,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: GestureDetector(
+                onTap: () {
+                  if (currentRoute != AppRoutes.aiChatMainScreen) {
+                    widget.onChanged?.call(BottomBarEnum.AI);
+                    Navigator.pushNamed(context, AppRoutes.aiChatMainScreen);
+                  }
+                },
+                child: SvgPicture.asset(
+                  'assets/images/ai_logo.svg',
+                  width: 65,
+                  height: 65,
+                  fit: BoxFit.contain,
                 ),
-                const Spacer(),
-                Expanded(
-                  child: _buildNavigationItem(
-                    icon: 'assets/images/Leaderboard.svg',
-                    label: 'Leaderboard',
-                    width: 28,
-                    aspectRatio: 0.92,
-                    type: BottomBarEnum.Leaderboard,
-                    isSelected: currentRoute == AppRoutes.leaderboardScreen,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        Positioned(
-          top: -10,
-          left: 0,
-          right: 0,
-          child: Center(
-            child: GestureDetector(
-              onTap: () {
-                if (currentRoute != AppRoutes.aiChatMainScreen) {
-                  widget.onChanged?.call(BottomBarEnum.AI);
-                  Navigator.pushNamed(context, AppRoutes.aiChatMainScreen);
-                }
-              },
-              child: SvgPicture.asset(
-                'assets/images/ai_logo.svg',
-                width: 65,
-                height: 65,
-                fit: BoxFit.contain,
               ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
