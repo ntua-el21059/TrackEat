@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../../../../core/app_export.dart';
 import '../models/find_friends_item_model.dart';
 import '../../../../routes/app_routes.dart';
-import 'dart:convert';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import '../provider/find_friends_provider.dart';
