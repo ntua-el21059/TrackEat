@@ -65,30 +65,23 @@ class ProfileProvider extends ChangeNotifier {
   }
 
   void updateNumericValue(String title, double value) {
-    for (var item in _profileModelObj.profileItemList) {
-      if (item.title == title) {
-        // Format number: remove .0 if it's a whole number
-        String formattedNumber;
-        if (value == value.roundToDouble()) {
-          formattedNumber = value.toInt().toString();
-        } else {
-          formattedNumber = value.toString();
-        }
-        
-        // Add appropriate unit based on title with spaces
-        if (title == "Cur. Weight" || title == "Goal Weight") {
-          item.value = "$formattedNumber kg";
-        } else if (title == "Carbs Goal" || title == "Protein Goal" || title == "Fat Goal") {
-          item.value = "$formattedNumber g";
-        } else {
-          item.value = formattedNumber;
-        }
-        
-        // Ensure UI is updated
-        notifyListeners();
-        break;
-      }
+    final item = profileModelObj.profileItemList.firstWhere(
+      (item) => item.title == title,
+      orElse: () => ProfileItemModel(),
+    );
+
+    if (title == "Weekly Goal") {
+      item.value = "${value.toStringAsFixed(1)} kg";
+    } else if (title == "Goal Weight" || title == "Cur. Weight") {
+      item.value = "${value.toStringAsFixed(1)} kg";
+    } else if (title == "Calories Goal") {
+      item.value = "${value.toInt()} kcal";
+    } else if (title == "Carbs Goal" || title == "Protein Goal" || title == "Fat Goal") {
+      item.value = "${value.toInt()} g";
+    } else {
+      item.value = value.toString();
     }
+    notifyListeners();
   }
 
   void updateProfileImage(String imagePath) {

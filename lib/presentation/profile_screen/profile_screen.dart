@@ -36,6 +36,10 @@ class ProfileScreenState extends State<ProfileScreen> {
   ];
 
   String? selectedDiet;
+  int _selectedDietIndex = 0;
+  double _selectedWeeklyGoalValue = 0.0;
+  int _selectedSign = 1;
+  double _selectedValue = 0.0;
 
   @override
   void initState() {
@@ -121,6 +125,10 @@ class ProfileScreenState extends State<ProfileScreen> {
                   // Goal weight updates
                   if (userData['weightgoal'] != null) {
                     provider.updateNumericValue('Goal Weight', double.parse(userData['weightgoal'].toString()));
+                  }
+                  // Weekly goal updates
+                  if (userData['weeklygoal'] != null) {
+                    provider.updateNumericValue('Weekly Goal', double.parse(userData['weeklygoal'].toString()));
                   }
                   // Macros updates
                   if (userData['carbsgoal'] != null) {
@@ -451,86 +459,188 @@ class ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _showCaloriesInputDialog(BuildContext context, String currentValue) {
-    final TextEditingController controller = TextEditingController(text: currentValue);
+    final TextEditingController controller = TextEditingController(
+      text: currentValue.replaceAll(" kcal", "")
+    );
 
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white.withOpacity(0.9),
-      builder: (BuildContext context) {
-        return Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
-            left: 16.h,
-            right: 16.h,
-            top: 16.h,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                "Daily Calories Goal",
-                style: theme.textTheme.titleLarge?.copyWith(
-                  color: Colors.black,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              SizedBox(height: 16.h),
-              TextField(
-                controller: controller,
-                autofocus: true,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  hintText: 'Enter daily calories goal',
-                  suffixText: 'kcal',
-                ),
-                inputFormatters: [
-                  FilteringTextInputFormatter.digitsOnly,
-                ],
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: Text('Cancel'),
+    if (Platform.isIOS) {
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: CupertinoColors.white,
+        builder: (BuildContext context) {
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+              left: 16,
+              right: 16,
+              top: 16,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: CupertinoColors.white,
+                    border: Border(
+                      bottom: BorderSide(
+                        color: CupertinoColors.systemGrey5,
+                        width: 0.5,
+                      ),
+                    ),
                   ),
-                  TextButton(
-                    onPressed: () async {
-                      final newValue = controller.text.trim();
-                      if (newValue.isNotEmpty) {
-                        final currentUser = FirebaseAuth.instance.currentUser;
-                        if (currentUser?.email != null) {
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      CupertinoButton(
+                        padding: EdgeInsets.symmetric(horizontal: 16),
+                        onPressed: () => Navigator.pop(context),
+                        child: Text('Cancel', style: TextStyle(color: Color(0xFF4A90E2))),
+                      ),
+                      CupertinoButton(
+                        padding: EdgeInsets.symmetric(horizontal: 16),
+                        onPressed: () async {
+                          if (controller.text.isNotEmpty) {
+                            try {
+                              // Update Firebase
+                              await FirebaseFirestore.instance
+                                  .collection('users')
+                                  .doc(FirebaseAuth.instance.currentUser!.email)
+                                  .update({'dailyCalories': int.parse(controller.text)});
+
+                              // Update local provider
+                              Provider.of<ProfileProvider>(context, listen: false)
+                                  .updateNumericValue("Calories Goal", double.parse(controller.text));
+                            } catch (e) {
+                              print("Error updating calories: $e");
+                            }
+                          }
+                          Navigator.pop(context);
+                        },
+                        child: Text('Save', style: TextStyle(color: Color(0xFF4A90E2))),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(height: 16),
+                CupertinoTextField(
+                  controller: controller,
+                  autofocus: true,
+                  keyboardType: TextInputType.number,
+                  decoration: BoxDecoration(
+                    color: CupertinoColors.systemGrey6,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  placeholder: 'Enter daily calories goal',
+                  suffix: Padding(
+                    padding: EdgeInsets.only(right: 8),
+                    child: Text(
+                      ' kcal',
+                      style: TextStyle(
+                        color: CupertinoColors.systemGrey,
+                        fontSize: 16,
+                        decoration: TextDecoration.none,
+                      ),
+                    ),
+                  ),
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: CupertinoColors.black,
+                  ),
+                ),
+                SizedBox(height: 16),
+              ],
+            ),
+          );
+        },
+      );
+    } else {
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.white.withOpacity(0.7),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
+        ),
+        builder: (BuildContext context) {
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+              left: 16.h,
+              right: 16.h,
+              top: 16.h,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  "Daily Calories Goal",
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                SizedBox(height: 16.h),
+                TextField(
+                  controller: controller,
+                  autofocus: true,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    hintText: 'Enter daily calories goal',
+                    suffixText: ' kcal',
+                    filled: true,
+                    fillColor: Colors.white.withOpacity(0.1),
+                    border: OutlineInputBorder(
+                      borderSide: BorderSide.none,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: theme.primaryColor),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                  ],
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: Text('Cancel'),
+                    ),
+                    TextButton(
+                      onPressed: () async {
+                        if (controller.text.isNotEmpty) {
                           try {
-                            // Update Firestore
+                            // Update Firebase
                             await FirebaseFirestore.instance
                                 .collection('users')
-                                .doc(currentUser!.email)
-                                .update({'dailyCalories': int.parse(newValue)});
+                                .doc(FirebaseAuth.instance.currentUser!.email)
+                                .update({'dailyCalories': int.parse(controller.text)});
 
                             // Update local provider
-                            if (mounted) {
-                              final userInfoProvider = Provider.of<UserInfoProvider>(context, listen: false);
-                              await userInfoProvider.updateDailyCalories(newValue);
-                            }
+                            Provider.of<ProfileProvider>(context, listen: false)
+                                .updateNumericValue("Calories Goal", double.parse(controller.text));
                           } catch (e) {
                             print("Error updating calories: $e");
                           }
                         }
-                      }
-                      if (mounted) {
                         Navigator.pop(context);
-                      }
-                    },
-                    child: Text('Save'),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        );
-      },
-    );
+                      },
+                      child: Text('Save'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          );
+        },
+      );
+    }
   }
 
   void _showDietSelectionDialog(BuildContext context) {
@@ -553,48 +663,78 @@ class ProfileScreenState extends State<ProfileScreen> {
         context: context,
         builder: (BuildContext context) {
           return Container(
-            height: 216,
-            padding: const EdgeInsets.only(top: 6.0),
-            margin: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewInsets.bottom,
-            ),
-            color: CupertinoColors.systemBackground.resolveFrom(context),
-            child: SafeArea(
-              top: false,
-              child: CupertinoPicker(
-                scrollController: FixedExtentScrollController(initialItem: initialIndex),
-                itemExtent: 44.0,
-                onSelectedItemChanged: (int index) async {
-                  final diet = menuChoices[index];
-                  final currentUser = FirebaseAuth.instance.currentUser;
-                  if (currentUser?.email != null) {
-                    try {
-                      // Update Firebase
-                      await FirebaseFirestore.instance
-                          .collection('users')
-                          .doc(currentUser!.email)
-                          .update({'diet': diet});
-
-                      // Update local provider
-                      if (context.mounted) {
-                        Provider.of<ProfileProvider>(context, listen: false)
-                            .updateDiet(diet);
-                      }
-                    } catch (e) {
-                      print("Error updating diet: $e");
-                    }
-                  }
-                },
-                children: menuChoices.map((diet) => 
-                  Text(
-                    diet,
-                    style: TextStyle(
-                      fontSize: 20,
-                      color: CupertinoColors.black,
+            height: 250,
+            color: CupertinoColors.white,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: CupertinoColors.white,
+                    border: Border(
+                      bottom: BorderSide(
+                        color: CupertinoColors.systemGrey5,
+                        width: 0.5,
+                      ),
                     ),
-                  )
-                ).toList(),
-              ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      CupertinoButton(
+                        padding: EdgeInsets.symmetric(horizontal: 16),
+                        onPressed: () => Navigator.pop(context),
+                        child: Text('Cancel', style: TextStyle(color: Color(0xFF4A90E2))),
+                      ),
+                      CupertinoButton(
+                        padding: EdgeInsets.symmetric(horizontal: 16),
+                        onPressed: () async {
+                          final diet = menuChoices[_selectedDietIndex];
+                          final currentUser = FirebaseAuth.instance.currentUser;
+                          if (currentUser?.email != null) {
+                            try {
+                              await FirebaseFirestore.instance
+                                  .collection('users')
+                                  .doc(currentUser!.email)
+                                  .update({'diet': diet});
+
+                              if (context.mounted) {
+                                Provider.of<ProfileProvider>(context, listen: false)
+                                    .updateDiet(diet);
+                              }
+                            } catch (e) {
+                              print("Error updating diet: $e");
+                            }
+                          }
+                          Navigator.pop(context);
+                        },
+                        child: Text('Save', style: TextStyle(color: Color(0xFF4A90E2))),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: CupertinoPicker(
+                    scrollController: FixedExtentScrollController(initialItem: initialIndex),
+                    itemExtent: 44,
+                    onSelectedItemChanged: (int index) {
+                      _selectedDietIndex = index;
+                    },
+                    children: menuChoices.map((diet) => 
+                      Center(
+                        child: Text(
+                          diet,
+                          style: TextStyle(
+                            fontSize: 20,
+                            color: CupertinoColors.black,
+                          ),
+                        ),
+                      )
+                    ).toList(),
+                  ),
+                ),
+              ],
             ),
           );
         },
@@ -681,48 +821,70 @@ class ProfileScreenState extends State<ProfileScreen> {
         context: context,
         builder: (BuildContext context) {
           return Container(
-            height: 216,
-            padding: const EdgeInsets.only(top: 6.0),
-            margin: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewInsets.bottom,
-            ),
-            color: CupertinoColors.systemBackground.resolveFrom(context),
-            child: SafeArea(
-              top: false,
-              child: CupertinoPicker(
-                scrollController: FixedExtentScrollController(initialItem: initialIndex),
-                itemExtent: 44.0,
-                onSelectedItemChanged: (int index) async {
-                  final level = activityLevels[index];
-                  final currentUser = FirebaseAuth.instance.currentUser;
-                  if (currentUser?.email != null) {
-                    try {
-                      // Update Firebase
-                      await FirebaseFirestore.instance
-                          .collection('users')
-                          .doc(currentUser!.email)
-                          .update({'activity': level});
-
-                      // Update local provider
-                      if (context.mounted) {
-                        Provider.of<ProfileProvider>(context, listen: false)
-                            .updateActivityLevel(level);
-                      }
-                    } catch (e) {
-                      print("Error updating activity level: $e");
-                    }
-                  }
-                },
-                children: activityLevels.map((level) => 
-                  Text(
-                    level,
-                    style: TextStyle(
-                      fontSize: 20,
-                      color: CupertinoColors.black,
-                    ),
-                  )
-                ).toList(),
+            decoration: BoxDecoration(
+              color: CupertinoColors.systemGrey6.withOpacity(0.95),
+              borderRadius: BorderRadius.vertical(
+                top: Radius.circular(15),
               ),
+            ),
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+              left: 16.h,
+              right: 16.h,
+              top: 16.h,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  "Select Activity Level",
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                SizedBox(height: 16.h),
+                ...activityLevels.map((level) => ListTile(
+                  title: Text(
+                    level,
+                    style: CustomTextStyles.bodyLargeBlack90018,
+                    textAlign: TextAlign.center,
+                  ),
+                  tileColor: level == currentActivity ? Colors.blue.withOpacity(0.1) : null,
+                  onTap: () async {
+                    final currentUser = FirebaseAuth.instance.currentUser;
+                    if (currentUser?.email != null) {
+                      try {
+                        // Update Firebase
+                        await FirebaseFirestore.instance
+                            .collection('users')
+                            .doc(currentUser!.email)
+                            .update({'activity': level});
+
+                        // Update local provider
+                        if (context.mounted) {
+                          Provider.of<ProfileProvider>(context, listen: false)
+                              .updateActivityLevel(level);
+                        }
+                      } catch (e) {
+                        print("Error updating activity level: $e");
+                      }
+                    }
+                    Navigator.pop(context);
+                  },
+                )).toList(),
+                SizedBox(height: 8.h),
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text(
+                    'Cancel',
+                    style: TextStyle(
+                      fontSize: 16.h,
+                      color: Colors.blue,
+                    ),
+                  ),
+                ),
+              ],
             ),
           );
         },
@@ -799,7 +961,6 @@ class ProfileScreenState extends State<ProfileScreen> {
   void _showGoalWeightInputDialog(BuildContext context) {
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser?.email != null) {
-      // First get the current goal weight from Firebase
       FirebaseFirestore.instance
           .collection('users')
           .doc(currentUser!.email)
@@ -811,77 +972,187 @@ class ProfileScreenState extends State<ProfileScreen> {
           
           final TextEditingController controller = TextEditingController(text: goalWeight);
 
-          showModalBottomSheet(
-            context: context,
-            isScrollControlled: true,
-            backgroundColor: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
-            ),
-            builder: (BuildContext context) {
-              return Padding(
-                padding: EdgeInsets.only(
-                  bottom: MediaQuery.of(context).viewInsets.bottom,
-                  left: 16.h,
-                  right: 16.h,
-                  top: 16.h,
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      "Goal Weight",
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        color: Colors.black,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    SizedBox(height: 16.h),
-                    TextField(
-                      controller: controller,
-                      autofocus: true,
-                      keyboardType: TextInputType.number,
-                      decoration: InputDecoration(
-                        hintText: 'Enter goal weight in kg',
-                        suffixText: ' kg',
-                      ),
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: Text('Cancel'),
+          if (Platform.isIOS) {
+            showModalBottomSheet(
+              context: context,
+              isScrollControlled: true,
+              backgroundColor: CupertinoColors.white,
+              builder: (BuildContext context) {
+                return Padding(
+                  padding: EdgeInsets.only(
+                    bottom: MediaQuery.of(context).viewInsets.bottom,
+                    left: 16,
+                    right: 16,
+                    top: 16,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: CupertinoColors.white,
+                          border: Border(
+                            bottom: BorderSide(
+                              color: CupertinoColors.systemGrey5,
+                              width: 0.5,
+                            ),
+                          ),
                         ),
-                        TextButton(
-                          onPressed: () async {
-                            final newValue = double.tryParse(controller.text);
-                            if (newValue != null) {
-                              try {
-                                // Update Firebase
-                                await FirebaseFirestore.instance
-                                    .collection('users')
-                                    .doc(currentUser.email)
-                                    .update({'weightgoal': newValue});
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            CupertinoButton(
+                              padding: EdgeInsets.symmetric(horizontal: 16),
+                              onPressed: () => Navigator.pop(context),
+                              child: Text('Cancel', style: TextStyle(color: Color(0xFF4A90E2))),
+                            ),
+                            CupertinoButton(
+                              padding: EdgeInsets.symmetric(horizontal: 16),
+                              onPressed: () async {
+                                final newValue = double.tryParse(controller.text.replaceAll(' kg', ''));
+                                if (newValue != null) {
+                                  try {
+                                    await FirebaseFirestore.instance
+                                        .collection('users')
+                                        .doc(currentUser.email)
+                                        .update({'weightgoal': newValue});
 
-                                // Update local provider
-                                Provider.of<ProfileProvider>(context, listen: false)
-                                    .updateNumericValue("Goal Weight", newValue);
-                              } catch (e) {
-                                print("Error updating goal weight: $e");
-                              }
-                            }
-                            Navigator.pop(context);
-                          },
-                          child: Text('Save'),
+                                    Provider.of<ProfileProvider>(context, listen: false)
+                                        .updateNumericValue("Goal Weight", newValue);
+                                  } catch (e) {
+                                    print("Error updating goal weight: $e");
+                                  }
+                                }
+                                Navigator.pop(context);
+                              },
+                              child: Text('Save', style: TextStyle(color: Color(0xFF4A90E2))),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                  ],
-                ),
-              );
-            },
-          );
+                      ),
+                      SizedBox(height: 16),
+                      CupertinoTextField(
+                        controller: controller,
+                        autofocus: true,
+                        keyboardType: TextInputType.numberWithOptions(decimal: true),
+                        decoration: BoxDecoration(
+                          color: CupertinoColors.systemGrey6,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        placeholder: 'Enter goal weight',
+                        suffix: Padding(
+                          padding: EdgeInsets.only(right: 8),
+                          child: Text(
+                            'kg',
+                            style: TextStyle(
+                              color: CupertinoColors.systemGrey,
+                              fontSize: 16,
+                              decoration: TextDecoration.none,
+                            ),
+                          ),
+                        ),
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: CupertinoColors.black,
+                        ),
+                      ),
+                      SizedBox(height: 16),
+                    ],
+                  ),
+                );
+              },
+            );
+          } else {
+            showModalBottomSheet(
+              context: context,
+              isScrollControlled: true,
+              backgroundColor: Colors.white.withOpacity(0.7),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
+              ),
+              builder: (BuildContext context) {
+                final TextEditingController controller = TextEditingController(
+                  text: _selectedWeeklyGoalValue.toStringAsFixed(1)
+                );
+                return Padding(
+                  padding: EdgeInsets.only(
+                    bottom: MediaQuery.of(context).viewInsets.bottom,
+                    left: 16.h,
+                    right: 16.h,
+                    top: 16.h,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        "Weekly Goal",
+                        style: CupertinoTheme.of(context).textTheme.navTitleTextStyle.copyWith(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      SizedBox(height: 16.h),
+                      TextField(
+                        controller: controller,
+                        autofocus: true,
+                        keyboardType: TextInputType.numberWithOptions(decimal: true, signed: true),
+                        decoration: InputDecoration(
+                          hintText: 'Enter weekly goal in kg',
+                          suffixText: ' kg',
+                          filled: true,
+                          fillColor: Colors.white.withOpacity(0.1),
+                          border: OutlineInputBorder(
+                            borderSide: BorderSide.none,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(color: theme.primaryColor),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(RegExp(r'^-?\d*\.?\d*')),
+                        ],
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: Text('Cancel'),
+                          ),
+                          TextButton(
+                            onPressed: () async {
+                              final newValue = double.tryParse(controller.text);
+                              if (newValue != null) {
+                                try {
+                                  // Update Firebase
+                                  await FirebaseFirestore.instance
+                                      .collection('users')
+                                      .doc(currentUser.email)
+                                      .update({'weeklygoal': newValue});
+
+                                  // Update local provider
+                                  Provider.of<ProfileProvider>(context, listen: false)
+                                      .updateNumericValue("Weekly Goal", newValue);
+                                } catch (e) {
+                                  print("Error updating weekly goal: $e");
+                                }
+                              }
+                              Navigator.pop(context);
+                            },
+                            child: Text('Save'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                );
+              },
+            );
+          }
         }
       });
     }
@@ -908,177 +1179,879 @@ class ProfileScreenState extends State<ProfileScreen> {
           }
         });
       }
+    } else if (title == "Weekly Goal") {
+      _showWeeklyGoalInputDialog(context);
+    } else if (title == "Calories Goal") {
+      _showCaloriesGoalInputDialog(context);
     } else {
-      // For other numeric fields
-      final TextEditingController controller = TextEditingController(text: currentValue);
+      // For carbs, protein, and fat goals
+      final TextEditingController controller = TextEditingController(
+        text: currentValue.replaceAll(" g", "")  // Remove "g" from the initial value
+      );
       _showGenericNumberInputDialog(context, title, controller);
     }
   }
 
-  void _showWeightInputDialog(BuildContext context, String currentWeight) {
-    final TextEditingController controller = TextEditingController(text: currentWeight);
+  void _showCaloriesGoalInputDialog(BuildContext context) {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser?.email != null) {
+      FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentUser!.email)
+          .get()
+          .then((doc) {
+        if (doc.exists) {
+          final userData = doc.data()!;
+          final caloriesGoal = userData['dailyCalories']?.toString() ?? '';
+          
+          final TextEditingController controller = TextEditingController(text: caloriesGoal);
 
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
-      ),
-      builder: (BuildContext context) {
-        return Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
-            left: 16.h,
-            right: 16.h,
-            top: 16.h,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                "Current Weight",
-                style: theme.textTheme.titleLarge?.copyWith(
-                  color: Colors.black,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              SizedBox(height: 16.h),
-              TextField(
-                controller: controller,
-                autofocus: true,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  hintText: 'Enter weight in kg',
-                  suffixText: ' kg',
-                ),
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: Text('Cancel'),
+          if (Platform.isIOS) {
+            showModalBottomSheet(
+              context: context,
+              isScrollControlled: true,
+              backgroundColor: CupertinoColors.white,
+              builder: (BuildContext context) {
+                return Padding(
+                  padding: EdgeInsets.only(
+                    bottom: MediaQuery.of(context).viewInsets.bottom,
+                    left: 16,
+                    right: 16,
+                    top: 16,
                   ),
-                  TextButton(
-                    onPressed: () async {
-                      final newValue = double.tryParse(controller.text);
-                      if (newValue != null) {
-                        final currentUser = FirebaseAuth.instance.currentUser;
-                        if (currentUser?.email != null) {
-                          try {
-                            // Update Firebase
-                            await FirebaseFirestore.instance
-                                .collection('users')
-                                .doc(currentUser!.email)
-                                .update({'weight': newValue});
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: CupertinoColors.white,
+                          border: Border(
+                            bottom: BorderSide(
+                              color: CupertinoColors.systemGrey5,
+                              width: 0.5,
+                            ),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            CupertinoButton(
+                              padding: EdgeInsets.symmetric(horizontal: 16),
+                              onPressed: () => Navigator.pop(context),
+                              child: Text('Cancel', style: TextStyle(color: Color(0xFF4A90E2))),
+                            ),
+                            CupertinoButton(
+                              padding: EdgeInsets.symmetric(horizontal: 16),
+                              onPressed: () async {
+                                if (controller.text.isNotEmpty) {
+                                  try {
+                                    // Update Firebase
+                                    await FirebaseFirestore.instance
+                                        .collection('users')
+                                        .doc(currentUser.email)
+                                        .update({'dailyCalories': int.parse(controller.text)});
 
-                            // Update local provider
-                            Provider.of<ProfileProvider>(context, listen: false)
-                                .updateNumericValue("Cur. Weight", newValue);
-                          } catch (e) {
-                            print("Error updating weight: $e");
+                                    // Update local provider
+                                    if (mounted) {
+                                      final userInfoProvider = Provider.of<UserInfoProvider>(context, listen: false);
+                                      await userInfoProvider.updateDailyCalories(controller.text);
+                                    }
+                                  } catch (e) {
+                                    print("Error updating calories: $e");
+                                  }
+                                }
+                                Navigator.pop(context);
+                              },
+                              child: Text('Save', style: TextStyle(color: Color(0xFF4A90E2))),
+                            ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(height: 16),
+                      CupertinoTextField(
+                        controller: controller,
+                        autofocus: true,
+                        keyboardType: TextInputType.number,
+                        decoration: BoxDecoration(
+                          color: CupertinoColors.systemGrey6,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        placeholder: 'Enter daily calories',
+                        suffix: Padding(
+                          padding: EdgeInsets.only(right: 8),
+                          child: Text(
+                            'kcal',
+                            style: TextStyle(
+                              color: CupertinoColors.systemGrey,
+                              fontSize: 16,
+                              decoration: TextDecoration.none,
+                            ),
+                          ),
+                        ),
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: CupertinoColors.black,
+                        ),
+                      ),
+                      SizedBox(height: 16),
+                    ],
+                  ),
+                );
+              },
+            );
+          } else {
+            // Android implementation
+            showModalBottomSheet(
+              context: context,
+              isScrollControlled: true,
+              backgroundColor: Colors.white.withOpacity(0.7),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
+              ),
+              builder: (BuildContext context) {
+                return Padding(
+                  padding: EdgeInsets.only(
+                    bottom: MediaQuery.of(context).viewInsets.bottom,
+                    left: 16.h,
+                    right: 16.h,
+                    top: 16.h,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        "Daily Calories Goal",
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          color: Colors.black,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(height: 16.h),
+                      TextField(
+                        controller: controller,
+                        autofocus: true,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          hintText: 'Enter daily calories',
+                          suffixText: ' kcal',
+                          filled: true,
+                          fillColor: Colors.white.withOpacity(0.1),
+                          border: OutlineInputBorder(
+                            borderSide: BorderSide.none,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(color: theme.primaryColor),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                        ],
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: Text('Cancel'),
+                          ),
+                          TextButton(
+                            onPressed: () async {
+                              if (controller.text.isNotEmpty) {
+                                try {
+                                  // Update Firebase
+                                  await FirebaseFirestore.instance
+                                      .collection('users')
+                                      .doc(currentUser.email)
+                                      .update({'dailyCalories': int.parse(controller.text)});
+
+                                  // Update local provider
+                                  Provider.of<ProfileProvider>(context, listen: false)
+                                      .updateNumericValue("Calories Goal", double.parse(controller.text));
+                                } catch (e) {
+                                  print("Error updating calories: $e");
+                                }
+                              }
+                              Navigator.pop(context);
+                            },
+                            child: Text('Save'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                );
+              },
+            );
+          }
+        }
+      });
+    }
+  }
+
+  void _showWeightInputDialog(BuildContext context, String currentWeight) {
+    final TextEditingController controller = TextEditingController(
+      text: currentWeight.replaceAll(" kg", "")
+    );
+
+    if (Platform.isIOS) {
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: CupertinoColors.white,
+        builder: (BuildContext context) {
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+              left: 16,
+              right: 16,
+              top: 16,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: CupertinoColors.white,
+                    border: Border(
+                      bottom: BorderSide(
+                        color: CupertinoColors.systemGrey5,
+                        width: 0.5,
+                      ),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      CupertinoButton(
+                        padding: EdgeInsets.symmetric(horizontal: 16),
+                        onPressed: () => Navigator.pop(context),
+                        child: Text('Cancel', style: TextStyle(color: Color(0xFF4A90E2))),
+                      ),
+                      CupertinoButton(
+                        padding: EdgeInsets.symmetric(horizontal: 16),
+                        onPressed: () async {
+                          final newValue = double.tryParse(controller.text);
+                          if (newValue != null) {
+                            final currentUser = FirebaseAuth.instance.currentUser;
+                            if (currentUser?.email != null) {
+                              try {
+                                // Update Firebase
+                                await FirebaseFirestore.instance
+                                    .collection('users')
+                                    .doc(currentUser!.email)
+                                    .update({'weight': newValue});
+
+                                // Update local provider
+                                Provider.of<ProfileProvider>(context, listen: false)
+                                    .updateNumericValue("Cur. Weight", newValue);
+                              } catch (e) {
+                                print("Error updating weight: $e");
+                              }
+                            }
+                          }
+                          Navigator.pop(context);
+                        },
+                        child: Text('Save', style: TextStyle(color: Color(0xFF4A90E2))),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(height: 16),
+                CupertinoTextField(
+                  controller: controller,
+                  autofocus: true,
+                  keyboardType: TextInputType.numberWithOptions(decimal: true),
+                  decoration: BoxDecoration(
+                    color: CupertinoColors.systemGrey6,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  placeholder: 'Enter current weight',
+                  suffix: Padding(
+                    padding: EdgeInsets.only(right: 8),
+                    child: Text(
+                      'kg',
+                      style: TextStyle(
+                        color: CupertinoColors.systemGrey,
+                        fontSize: 16,
+                        decoration: TextDecoration.none,
+                      ),
+                    ),
+                  ),
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: CupertinoColors.black,
+                  ),
+                ),
+                SizedBox(height: 16),
+              ],
+            ),
+          );
+        },
+      );
+    } else {
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.white.withOpacity(0.7),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
+        ),
+        builder: (BuildContext context) {
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+              left: 16.h,
+              right: 16.h,
+              top: 16.h,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  "Current Weight",
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                SizedBox(height: 16.h),
+                TextField(
+                  controller: controller,
+                  autofocus: true,
+                  keyboardType: TextInputType.numberWithOptions(decimal: true),
+                  decoration: InputDecoration(
+                    hintText: 'Enter current weight',
+                    suffixText: 'kg',
+                    filled: true,
+                    fillColor: Colors.white.withOpacity(0.1),
+                    border: OutlineInputBorder(
+                      borderSide: BorderSide.none,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: theme.primaryColor),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: Text('Cancel'),
+                    ),
+                    TextButton(
+                      onPressed: () async {
+                        final newValue = double.tryParse(controller.text);
+                        if (newValue != null) {
+                          final currentUser = FirebaseAuth.instance.currentUser;
+                          if (currentUser?.email != null) {
+                            try {
+                              // Update Firebase
+                              await FirebaseFirestore.instance
+                                  .collection('users')
+                                  .doc(currentUser!.email)
+                                  .update({'weight': newValue});
+
+                              // Update local provider
+                              Provider.of<ProfileProvider>(context, listen: false)
+                                  .updateNumericValue("Cur. Weight", newValue);
+                            } catch (e) {
+                              print("Error updating weight: $e");
+                            }
                           }
                         }
-                      }
-                      Navigator.pop(context);
-                    },
-                    child: Text('Save'),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        );
-      },
-    );
+                        Navigator.pop(context);
+                      },
+                      child: Text('Save'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          );
+        },
+      );
+    }
   }
 
   void _showGenericNumberInputDialog(BuildContext context, String title, TextEditingController controller) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
-      ),
-      builder: (BuildContext context) {
-        return Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
-            left: 16.h,
-            right: 16.h,
-            top: 16.h,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                title,
-                style: theme.textTheme.titleLarge?.copyWith(
-                  color: Colors.black,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              SizedBox(height: 16.h),
-              TextField(
-                controller: controller,
-                autofocus: true,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  hintText: 'Enter value',
-                  suffixText: title == "Carbs Goal" || title == "Protein Goal" || title == "Fat Goal" ? " g" : null,
-                ),
-                inputFormatters: [
-                  FilteringTextInputFormatter.digitsOnly,
-                ],
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: Text('Cancel'),
+    if (Platform.isIOS) {
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: CupertinoColors.white,
+        builder: (BuildContext context) {
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+              left: 16,
+              right: 16,
+              top: 16,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: CupertinoColors.white,
+                    border: Border(
+                      bottom: BorderSide(
+                        color: CupertinoColors.systemGrey5,
+                        width: 0.5,
+                      ),
+                    ),
                   ),
-                  TextButton(
-                    onPressed: () async {
-                      final newValue = double.tryParse(controller.text);
-                      if (newValue != null) {
-                        final currentUser = FirebaseAuth.instance.currentUser;
-                        if (currentUser?.email != null) {
-                          try {
-                            // First update Firebase
-                            if (title == "Carbs Goal") {
-                              await FirebaseFirestore.instance
-                                  .collection('users')
-                                  .doc(currentUser!.email)
-                                  .update({'carbsgoal': newValue});
-                            } else if (title == "Protein Goal") {
-                              await FirebaseFirestore.instance
-                                  .collection('users')
-                                  .doc(currentUser!.email)
-                                  .update({'proteingoal': newValue});
-                            } else if (title == "Fat Goal") {
-                              await FirebaseFirestore.instance
-                                  .collection('users')
-                                  .doc(currentUser!.email)
-                                  .update({'fatgoal': newValue});
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      CupertinoButton(
+                        padding: EdgeInsets.symmetric(horizontal: 16),
+                        onPressed: () => Navigator.pop(context),
+                        child: Text('Cancel', style: TextStyle(color: Color(0xFF4A90E2))),
+                      ),
+                      CupertinoButton(
+                        padding: EdgeInsets.symmetric(horizontal: 16),
+                        onPressed: () async {
+                          final newValue = double.tryParse(controller.text);
+                          if (newValue != null) {
+                            final currentUser = FirebaseAuth.instance.currentUser;
+                            if (currentUser?.email != null) {
+                              try {
+                                String fieldName = '';
+                                if (title == "Carbs Goal") {
+                                  fieldName = 'carbsgoal';
+                                } else if (title == "Protein Goal") {
+                                  fieldName = 'proteingoal';
+                                } else if (title == "Fat Goal") {
+                                  fieldName = 'fatgoal';
+                                }
+                                  
+                                // Update Firebase
+                                await FirebaseFirestore.instance
+                                    .collection('users')
+                                    .doc(currentUser!.email)
+                                    .update({fieldName: newValue});
+
+                                // Update local provider
+                                Provider.of<ProfileProvider>(context, listen: false)
+                                    .updateNumericValue(title, newValue);
+                              } catch (e) {
+                                print("Error updating $title: $e");
+                              }
                             }
-                          } catch (e) {
-                            print("Error updating goal in Firebase: $e");
+                          }
+                          Navigator.pop(context);
+                        },
+                        child: Text('Save', style: TextStyle(color: Color(0xFF4A90E2))),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(height: 16),
+                CupertinoTextField(
+                  controller: controller,
+                  autofocus: true,
+                  keyboardType: TextInputType.number,
+                  decoration: BoxDecoration(
+                    color: CupertinoColors.systemGrey6,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  placeholder: 'Enter ${title.toLowerCase()}',
+                  suffix: Padding(
+                    padding: EdgeInsets.only(right: 8),
+                    child: Text(
+                      ' g',
+                      style: TextStyle(
+                        color: CupertinoColors.systemGrey,
+                        fontSize: 16,
+                        decoration: TextDecoration.none,
+                      ),
+                    ),
+                  ),
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: CupertinoColors.black,
+                  ),
+                ),
+                SizedBox(height: 16),
+              ],
+            ),
+          );
+        },
+      );
+    } else {
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.white.withOpacity(0.7),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
+        ),
+        builder: (BuildContext context) {
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+              left: 16.h,
+              right: 16.h,
+              top: 16.h,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  title,
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                SizedBox(height: 16.h),
+                TextField(
+                  controller: controller,
+                  autofocus: true,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    hintText: 'Enter ${title.toLowerCase()}',
+                    suffixText: ' g',
+                    filled: true,
+                    fillColor: Colors.white.withOpacity(0.1),
+                    border: OutlineInputBorder(
+                      borderSide: BorderSide.none,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: theme.primaryColor),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                  ],
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: Text('Cancel'),
+                    ),
+                    TextButton(
+                      onPressed: () async {
+                        final newValue = double.tryParse(controller.text);
+                        if (newValue != null) {
+                          final currentUser = FirebaseAuth.instance.currentUser;
+                          if (currentUser?.email != null) {
+                            try {
+                              String fieldName = '';
+                              if (title == "Carbs Goal") {
+                                fieldName = 'carbsgoal';
+                              } else if (title == "Protein Goal") {
+                                fieldName = 'proteingoal';
+                              } else if (title == "Fat Goal") {
+                                fieldName = 'fatgoal';
+                              }
+                              
+                              // Update Firebase
+                              await FirebaseFirestore.instance
+                                  .collection('users')
+                                  .doc(currentUser!.email)
+                                  .update({fieldName: newValue});
+
+                              // Update local provider
+                              Provider.of<ProfileProvider>(context, listen: false)
+                                  .updateNumericValue(title, newValue);
+                            } catch (e) {
+                              print("Error updating $title: $e");
+                            }
                           }
                         }
-                      }
-                      Navigator.pop(context);
-                    },
-                    child: Text('Save'),
+                        Navigator.pop(context);
+                      },
+                      child: Text('Save'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          );
+        },
+      );
+    }
+  }
+
+  void _updateSelectedValue() {
+    setState(() {
+      _selectedWeeklyGoalValue = _selectedSign * _selectedValue;
+    });
+  }
+
+  int _getInitialSignIndex(String currentValue) {
+    try {
+      final value = double.parse(currentValue);
+      return value >= 0 ? 0 : 1;
+    } catch (e) {
+      return 0; // Default to positive
+    }
+  }
+
+  int _getInitialValueIndex(String currentValue) {
+    try {
+      final value = double.parse(currentValue);
+      return (value.abs() * 10).round().clamp(0, 15);
+    } catch (e) {
+      return 0; // Default to 0.0
+    }
+  }
+
+  void _showWeeklyGoalInputDialog(BuildContext context) {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser?.email != null) {
+      // First get the current weekly goal from Firebase
+      FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentUser!.email)
+          .get()
+          .then((doc) {
+        if (doc.exists) {
+          final userData = doc.data()!;
+          final weeklyGoal = userData['weeklygoal']?.toString() ?? '0.0';
+          
+          // Initialize the selected values
+          try {
+            final value = double.parse(weeklyGoal);
+            _selectedSign = value >= 0 ? 1 : -1;
+            _selectedValue = double.parse(value.abs().toStringAsFixed(1));
+            _selectedWeeklyGoalValue = value;
+          } catch (e) {
+            _selectedSign = 1;
+            _selectedValue = 0.0;
+            _selectedWeeklyGoalValue = 0.0;
+          }
+
+          if (Platform.isIOS) {
+            showCupertinoModalPopup(
+              context: context,
+              builder: (BuildContext context) {
+                return Container(
+                  height: 250,
+                  color: CupertinoColors.white,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: CupertinoColors.white,
+                          border: Border(
+                            bottom: BorderSide(
+                              color: CupertinoColors.systemGrey5,
+                              width: 0.5,
+                            ),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            CupertinoButton(
+                              padding: EdgeInsets.symmetric(horizontal: 16),
+                              onPressed: () => Navigator.pop(context),
+                              child: Text('Cancel', style: TextStyle(color: Color(0xFF4A90E2))),
+                            ),
+                            CupertinoButton(
+                              padding: EdgeInsets.symmetric(horizontal: 16),
+                              onPressed: () async {
+                                try {
+                                  // Update Firebase
+                                  await FirebaseFirestore.instance
+                                      .collection('users')
+                                      .doc(currentUser.email)
+                                      .update({'weeklygoal': _selectedWeeklyGoalValue});
+
+                                  // Update local provider
+                                  Provider.of<ProfileProvider>(context, listen: false)
+                                      .updateNumericValue("Weekly Goal", _selectedWeeklyGoalValue);
+                                } catch (e) {
+                                  print("Error updating weekly goal: $e");
+                                }
+                                Navigator.pop(context);
+                              },
+                              child: Text('Save', style: TextStyle(color: Color(0xFF4A90E2))),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Expanded(
+                        child: Row(
+                          children: [
+                            // Sign picker
+                            Flexible(
+                              flex: 1,
+                              child: CupertinoPicker(
+                                scrollController: FixedExtentScrollController(
+                                  initialItem: _selectedSign == 1 ? 0 : 1,
+                                ),
+                                itemExtent: 44,
+                                onSelectedItemChanged: (int index) {
+                                  _selectedSign = index == 0 ? 1 : -1;
+                                  _updateSelectedValue();
+                                },
+                                children: [
+                                  Center(
+                                    child: Text(
+                                      '+',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        color: CupertinoColors.black,
+                                      ),
+                                    ),
+                                  ),
+                                  Center(
+                                    child: Text(
+                                      '-',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        color: CupertinoColors.black,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            // Value picker
+                            Flexible(
+                              flex: 4,
+                              child: CupertinoPicker(
+                                scrollController: FixedExtentScrollController(
+                                  initialItem: (_selectedValue * 10).round(),
+                                ),
+                                itemExtent: 44,
+                                onSelectedItemChanged: (int index) {
+                                  _selectedValue = index * 0.1;
+                                  _updateSelectedValue();
+                                },
+                                children: List<Widget>.generate(16, (index) {
+                                  final value = index * 0.1;
+                                  return Center(
+                                    child: Text(
+                                      '${value.toStringAsFixed(1)} kg',
+                                      style: TextStyle(
+                                        fontSize: 20,
+                                        color: CupertinoColors.black,
+                                      ),
+                                    ),
+                                  );
+                                }),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                );
+              },
+            );
+          } else {
+            showModalBottomSheet(
+              context: context,
+              isScrollControlled: true,
+              backgroundColor: Colors.white.withOpacity(0.7),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
               ),
-            ],
-          ),
-        );
-      },
-    );
+              builder: (BuildContext context) {
+                final TextEditingController controller = TextEditingController(
+                  text: _selectedWeeklyGoalValue.toStringAsFixed(1)
+                );
+                return Padding(
+                  padding: EdgeInsets.only(
+                    bottom: MediaQuery.of(context).viewInsets.bottom,
+                    left: 16.h,
+                    right: 16.h,
+                    top: 16.h,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        "Weekly Goal",
+                        style: CupertinoTheme.of(context).textTheme.navTitleTextStyle.copyWith(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      SizedBox(height: 16.h),
+                      TextField(
+                        controller: controller,
+                        autofocus: true,
+                        keyboardType: TextInputType.numberWithOptions(decimal: true, signed: true),
+                        decoration: InputDecoration(
+                          hintText: 'Enter weekly goal in kg',
+                          suffixText: ' kg',
+                          filled: true,
+                          fillColor: Colors.white.withOpacity(0.1),
+                          border: OutlineInputBorder(
+                            borderSide: BorderSide.none,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(color: theme.primaryColor),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(RegExp(r'^-?\d*\.?\d*')),
+                        ],
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: Text('Cancel'),
+                          ),
+                          TextButton(
+                            onPressed: () async {
+                              final newValue = double.tryParse(controller.text);
+                              if (newValue != null) {
+                                try {
+                                  // Update Firebase
+                                  await FirebaseFirestore.instance
+                                      .collection('users')
+                                      .doc(currentUser.email)
+                                      .update({'weeklygoal': newValue});
+
+                                  // Update local provider
+                                  Provider.of<ProfileProvider>(context, listen: false)
+                                      .updateNumericValue("Weekly Goal", newValue);
+                                } catch (e) {
+                                  print("Error updating weekly goal: $e");
+                                }
+                              }
+                              Navigator.pop(context);
+                            },
+                            child: Text('Save'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                );
+              },
+            );
+          }
+        }
+      });
+    }
   }
 }
