@@ -120,7 +120,8 @@ class FindFriendsScreenState extends State<FindFriendsScreen> {
                 SizedBox(height: 18.h),
 
                 // Content section
-                if (provider.findFriendsModelObj.findFriendsItemList.isNotEmpty) ...[
+                if (provider
+                    .findFriendsModelObj.findFriendsItemList.isNotEmpty) ...[
                   Container(
                     width: double.maxFinite,
                     padding: EdgeInsets.all(14.h),
@@ -130,19 +131,23 @@ class FindFriendsScreenState extends State<FindFriendsScreen> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(
-                          "People you may know",
-                          style: theme.textTheme.titleLarge,
-                        ),
-                        SizedBox(height: 18.h),
+                        if (provider.searchController.text.isEmpty) ...[
+                          Text(
+                            "People you may know",
+                            style: theme.textTheme.titleLarge,
+                          ),
+                          SizedBox(height: 18.h),
+                        ],
                         ListView.separated(
                           physics: NeverScrollableScrollPhysics(),
                           shrinkWrap: true,
-                          separatorBuilder: (context, index) => SizedBox(height: 8.h),
-                          itemCount: provider.findFriendsModelObj.findFriendsItemList.length,
+                          separatorBuilder: (context, index) =>
+                              SizedBox(height: 8.h),
+                          itemCount: provider
+                              .findFriendsModelObj.findFriendsItemList.length,
                           itemBuilder: (context, index) {
-                            FindFriendsItemModel model =
-                                provider.findFriendsModelObj.findFriendsItemList[index];
+                            FindFriendsItemModel model = provider
+                                .findFriendsModelObj.findFriendsItemList[index];
                             return FindFriendsItemWidget(model);
                           },
                         ),
