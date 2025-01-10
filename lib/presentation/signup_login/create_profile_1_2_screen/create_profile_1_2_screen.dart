@@ -133,6 +133,32 @@ class CreateProfile12ScreenState extends State<CreateProfile12Screen> {
               ),
               SizedBox(height: 8.h),
               _buildGender(context),
+              SizedBox(height: 8.h),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Padding(
+                  padding: EdgeInsets.only(left: 8.h),
+                  child: Text(
+                    "Username",
+                    style: CustomTextStyles.titleSmallBlack90015,
+                  ),
+                ),
+              ),
+              SizedBox(height: 8.h),
+              _buildUsername(context),
+              SizedBox(height: 8.h),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Padding(
+                  padding: EdgeInsets.only(left: 8.h),
+                  child: Text(
+                    "Email",
+                    style: CustomTextStyles.titleSmallBlack90015,
+                  ),
+                ),
+              ),
+              SizedBox(height: 8.h),
+              _buildEmail(context),
               Spacer(),
               _buildNext(context),
               SizedBox(height: 48.h),
@@ -398,6 +424,98 @@ class CreateProfile12ScreenState extends State<CreateProfile12Screen> {
                 );
               }
             },
+          );
+        },
+      ),
+    );
+  }
+
+  /// Username Field
+  Widget _buildUsername(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 8.h),
+      child: Consumer<CreateProfile12Provider>(
+        builder: (context, provider, child) {
+          print('Username field rebuilt. Error: ${provider.usernameError}');
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              CustomTextFormField(
+                controller: provider.usernameController,
+                hintText: "Choose a username",
+                hintStyle: CustomTextStyles.bodyLargeGray500,
+                textInputType: TextInputType.text,
+                textInputAction: TextInputAction.next,
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 16.h,
+                  vertical: 12.h,
+                ),
+                onChanged: (value) {
+                  print('Username changed to: $value');
+                  // The provider already has a listener that will trigger validation
+                },
+                borderDecoration: provider.usernameError != null
+                    ? TextFormFieldStyleHelper.outlineError
+                    : TextFormFieldStyleHelper.outlineBlueGrayTL8,
+              ),
+              if (provider.usernameError != null)
+                Padding(
+                  padding: EdgeInsets.only(top: 5.h, left: 16.h),
+                  child: Text(
+                    provider.usernameError!,
+                    style: TextStyle(
+                      color: Colors.red,
+                      fontSize: 12.h,
+                    ),
+                  ),
+                ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  /// Email Field
+  Widget _buildEmail(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 8.h),
+      child: Consumer<CreateProfile12Provider>(
+        builder: (context, provider, child) {
+          print('Email field rebuilt. Error: ${provider.emailError}');
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              CustomTextFormField(
+                controller: provider.emailController,
+                hintText: "Enter your email",
+                hintStyle: CustomTextStyles.bodyLargeGray500,
+                textInputType: TextInputType.emailAddress,
+                textInputAction: TextInputAction.next,
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 16.h,
+                  vertical: 12.h,
+                ),
+                onChanged: (value) {
+                  print('Email changed to: $value');
+                  // The provider already has a listener that will trigger validation
+                },
+                borderDecoration: provider.emailError != null
+                    ? TextFormFieldStyleHelper.outlineError
+                    : TextFormFieldStyleHelper.outlineBlueGrayTL8,
+              ),
+              if (provider.emailError != null)
+                Padding(
+                  padding: EdgeInsets.only(top: 5.h, left: 16.h),
+                  child: Text(
+                    provider.emailError!,
+                    style: TextStyle(
+                      color: Colors.red,
+                      fontSize: 12.h,
+                    ),
+                  ),
+                ),
+            ],
           );
         },
       ),

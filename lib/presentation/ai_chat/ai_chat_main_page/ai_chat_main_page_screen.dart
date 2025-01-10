@@ -356,21 +356,25 @@ class AiChatMainScreenState extends State<AiChatMainScreen> {
           ),
         ),
       ),
-      bottomNavigationBar: CustomBottomBar(
-        backgroundColor: appTheme.cyan900,
-        onChanged: (BottomBarEnum type) {
-          switch (type) {
-            case BottomBarEnum.Home:
-              Navigator.pushReplacementNamed(context, AppRoutes.homeScreen);
-              break;
-            case BottomBarEnum.Leaderboard:
-              Navigator.pushNamed(context, "/leaderboard");
-              break;
-            case BottomBarEnum.AI:
-              // Already on AI chat page, no navigation needed
-              break;
-          }
-        },
+      bottomNavigationBar: Material(
+        elevation: 0,
+        color: appTheme.cyan900,
+        child: CustomBottomBar(
+          backgroundColor: appTheme.cyan900,
+          onChanged: (BottomBarEnum type) {
+            switch (type) {
+              case BottomBarEnum.Home:
+                Navigator.pushReplacementNamed(context, AppRoutes.homeScreen);
+                break;
+              case BottomBarEnum.Leaderboard:
+                Navigator.pushNamed(context, "/leaderboard");
+                break;
+              case BottomBarEnum.AI:
+                // Already on AI chat page, no navigation needed
+                break;
+            }
+          },
+        ),
       ),
     );
   }

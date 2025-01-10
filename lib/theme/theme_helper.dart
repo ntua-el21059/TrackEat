@@ -309,3 +309,44 @@ class LightCodeColors {
 
   // Add additional colors as required
 }
+
+class TextFormFieldStyleHelper {
+  static OutlineInputBorder get outlineBlueGrayTL8 => OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8.h),
+        borderSide: BorderSide(
+          color: appTheme.blueGray100,
+          width: 1,
+        ),
+      );
+
+  static OutlineInputBorder get outlineError => OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8.h),
+        borderSide: BorderSide(
+          color: Colors.red,
+          width: 1,
+        ),
+      );
+
+  static OutlineInputBorder get fillGray => OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16.h),
+        borderSide: BorderSide.none,
+      );
+
+  static OutlineInputBorder get outlineGray => OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16.h),
+        borderSide: BorderSide(
+          color: appTheme.gray30002,
+          width: 1,
+        ),
+      );
+
+  static OutlineInputBorder get fillOnErrorContainer => OutlineInputBorder(
+        borderRadius: BorderRadius.circular(22.h),
+        borderSide: BorderSide.none,
+      );
+
+  static OutlineInputBorder get fillBlueGray => OutlineInputBorder(
+        borderRadius: BorderRadius.circular(20.h),
+        borderSide: BorderSide.none,
+      );
+}

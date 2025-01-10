@@ -15,6 +15,8 @@ class LoginProvider extends ChangeNotifier {
   bool isShowPassword = true;
   bool? keepmesignedin = false;
   bool isLoading = false;
+  String? emailError;
+  String? passwordError;
 
   // Keys for SharedPreferences
   static const String _rememberMeKey = 'remember_me';
@@ -24,6 +26,8 @@ class LoginProvider extends ChangeNotifier {
 
   LoginProvider() {
     _loadSavedState();
+    userNameController.addListener(_textChanged);
+    passwordtwoController.addListener(_textChanged);
   }
 
   Future<void> _loadSavedState() async {
@@ -46,9 +50,11 @@ class LoginProvider extends ChangeNotifier {
   }
 
   Future<void> saveLoginState(String email) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_isLoggedInKey, true);
-    await prefs.setString(_userEmailKey, email);
+    if (keepmesignedin!) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_isLoggedInKey, true);
+      await prefs.setString(_userEmailKey, email);
+    }
   }
 
   static Future<bool> isUserLoggedIn() async {
@@ -65,6 +71,30 @@ class LoginProvider extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_isLoggedInKey);
     await prefs.remove(_userEmailKey);
+  }
+
+  void _textChanged() {
+    // Clear errors when user starts typing
+    if (emailError != null || passwordError != null) {
+      clearErrors();
+    }
+    notifyListeners();
+  }
+
+  void setEmailError(String error) {
+    emailError = error;
+    notifyListeners();
+  }
+
+  void setPasswordError(String error) {
+    passwordError = error;
+    notifyListeners();
+  }
+
+  void clearErrors() {
+    emailError = null;
+    passwordError = null;
+    notifyListeners();
   }
 
   void changePasswordVisibility() {
@@ -85,6 +115,8 @@ class LoginProvider extends ChangeNotifier {
 
   @override
   void dispose() {
+    userNameController.removeListener(_textChanged);
+    passwordtwoController.removeListener(_textChanged);
     userNameController.dispose();
     passwordtwoController.dispose();
     super.dispose();

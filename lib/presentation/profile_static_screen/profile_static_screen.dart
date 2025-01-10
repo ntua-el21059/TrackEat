@@ -611,6 +611,22 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> {
             ),
           ),
         ),
+        actions: [
+          GestureDetector(
+            onTap: () {
+              Navigator.pushNamed(context, AppRoutes.accessibilitySettingsScreen);
+            },
+            child: Container(
+              margin: EdgeInsets.only(right: 16.h),
+              child: SvgPicture.asset(
+                'assets/images/accessibility.fill.svg',
+                height: 24.h,
+                width: 24.h,
+                color: theme.colorScheme.primary,
+              ),
+            ),
+          ),
+        ],
       ),
       body: SafeArea(
         top: false,
@@ -688,6 +704,22 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> {
                             "Birthday",
                             userInfo.birthdate,
                             false,
+                          ),
+                        ),
+                        _buildProfileItem(
+                          label: "Gender",
+                          value: userInfo.gender.isEmpty ? "Not set" : userInfo.gender,
+                          onTap: () => _showGenderSelector(
+                            context,
+                            userInfo.gender.isEmpty ? "Not set" : userInfo.gender,
+                          ),
+                        ),
+                        _buildProfileItem(
+                          label: "Height",
+                          value: userInfo.height <= 0 ? "Not set" : "${userInfo.height} cm",
+                          onTap: () => _showHeightInputDialog(
+                            context,
+                            userInfo.height.toString(),
                           ),
                         ),
                         _buildProfileItem(
