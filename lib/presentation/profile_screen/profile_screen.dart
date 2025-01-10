@@ -469,8 +469,9 @@ class ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _showCaloriesInputDialog(BuildContext context, String currentValue) {
-    final TextEditingController controller =
-        TextEditingController(text: currentValue);
+    final TextEditingController controller = TextEditingController(
+      text: currentValue.replaceAll(" kcal", "")  // Remove "kcal" from the initial value
+    );
 
     if (Platform.isIOS) {
       showModalBottomSheet(
@@ -632,13 +633,8 @@ class ProfileScreenState extends State<ProfileScreen> {
                                 .update({'dailyCalories': int.parse(controller.text)});
 
                             // Update local provider
-                            if (mounted) {
-                              final userInfoProvider =
-                                  Provider.of<UserInfoProvider>(context,
-                                      listen: false);
-                              await userInfoProvider
-                                  .updateDailyCalories(newValue);
-                            }
+                            Provider.of<ProfileProvider>(context, listen: false)
+                                .updateNumericValue("Calories Goal", double.parse(controller.text));
                           } catch (e) {
                             print("Error updating calories: $e");
                           }
@@ -1123,33 +1119,33 @@ class ProfileScreenState extends State<ProfileScreen> {
                                       .doc(currentUser.email)
                                       .update({'weeklygoal': newValue});
 
-                                // Update local provider
-                                Provider.of<ProfileProvider>(context,
-                                        listen: false)
-                                    .updateNumericValue(
-                                        "Goal Weight", newValue);
-                              } catch (e) {
-                                print("Error updating goal weight: $e");
+                                  // Update local provider
+                                  Provider.of<ProfileProvider>(context,
+                                          listen: false)
+                                      .updateNumericValue(
+                                          "Goal Weight", newValue);
+                                } catch (e) {
+                                  print("Error updating goal weight: $e");
+                                }
                               }
-                            }
-                            Navigator.pop(context);
-                          },
-                          child: Text('Save'),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              );
-            },
-          );
+                              Navigator.pop(context);
+                            },
+                            child: Text('Save'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                );
+              },
+            );
+          }
         }
       });
     }
   }
 
-  void _showNumberInputDialog(
-      BuildContext context, String title, String currentValue) {
+  void _showNumberInputDialog(BuildContext context, String title, String currentValue) {
     if (title == "Goal Weight") {
       _showGoalWeightInputDialog(context);
     } else if (title == "Cur. Weight") {
@@ -1164,7 +1160,7 @@ class ProfileScreenState extends State<ProfileScreen> {
           if (doc.exists) {
             final userData = doc.data()!;
             final weight = userData['weight']?.toString() ?? '0';
-
+            
             // Show dialog with current weight from Firebase
             _showWeightInputDialog(context, weight);
           }
@@ -1175,10 +1171,212 @@ class ProfileScreenState extends State<ProfileScreen> {
     } else if (title == "Calories Goal") {
       _showCaloriesGoalInputDialog(context);
     } else {
-      // For other numeric fields
-      final TextEditingController controller =
-          TextEditingController(text: currentValue);
+      // For carbs, protein, and fat goals
+      final TextEditingController controller = TextEditingController(
+        text: currentValue.replaceAll(" g", "")  // Remove "g" from the initial value
+      );
       _showGenericNumberInputDialog(context, title, controller);
+    }
+  }
+
+  void _showWeeklyGoalInputDialog(BuildContext context) {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser?.email != null) {
+      FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentUser!.email)
+          .get()
+          .then((doc) {
+        if (doc.exists) {
+          final userData = doc.data()!;
+          final weeklyGoal = userData['weeklygoal']?.toString() ?? '0';
+          
+          final TextEditingController controller = TextEditingController(
+            text: weeklyGoal.replaceAll(" kg", "")  // Remove "kg" from the initial value
+          );
+
+          if (Platform.isIOS) {
+            showModalBottomSheet(
+              context: context,
+              isScrollControlled: true,
+              backgroundColor: CupertinoColors.white,
+              builder: (BuildContext context) {
+                return Padding(
+                  padding: EdgeInsets.only(
+                    bottom: MediaQuery.of(context).viewInsets.bottom,
+                    left: 16,
+                    right: 16,
+                    top: 16,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: CupertinoColors.white,
+                          border: Border(
+                            bottom: BorderSide(
+                              color: CupertinoColors.systemGrey5,
+                              width: 0.5,
+                            ),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            CupertinoButton(
+                              padding: EdgeInsets.symmetric(horizontal: 16),
+                              onPressed: () => Navigator.pop(context),
+                              child: Text('Cancel', style: TextStyle(color: Color(0xFF4A90E2))),
+                            ),
+                            CupertinoButton(
+                              padding: EdgeInsets.symmetric(horizontal: 16),
+                              onPressed: () async {
+                                final newValue = double.tryParse(controller.text);
+                                if (newValue != null) {
+                                  try {
+                                    // Update Firebase
+                                    await FirebaseFirestore.instance
+                                        .collection('users')
+                                        .doc(currentUser.email)
+                                        .update({'weeklygoal': newValue});
+
+                                    // Update local provider
+                                    Provider.of<ProfileProvider>(context, listen: false)
+                                        .updateNumericValue("Weekly Goal", newValue);
+                                  } catch (e) {
+                                    print("Error updating weekly goal: $e");
+                                  }
+                                }
+                                Navigator.pop(context);
+                              },
+                              child: Text('Save', style: TextStyle(color: Color(0xFF4A90E2))),
+                            ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(height: 16),
+                      CupertinoTextField(
+                        controller: controller,
+                        autofocus: true,
+                        keyboardType: TextInputType.numberWithOptions(decimal: true, signed: true),
+                        decoration: BoxDecoration(
+                          color: CupertinoColors.systemGrey6,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        placeholder: 'Enter weekly goal',
+                        suffix: Padding(
+                          padding: EdgeInsets.only(right: 8),
+                          child: Text(
+                            ' kg',
+                            style: TextStyle(
+                              color: CupertinoColors.systemGrey,
+                              fontSize: 16,
+                              decoration: TextDecoration.none,
+                            ),
+                          ),
+                        ),
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: CupertinoColors.black,
+                        ),
+                      ),
+                      SizedBox(height: 16),
+                    ],
+                  ),
+                );
+              },
+            );
+          } else {
+            showModalBottomSheet(
+              context: context,
+              isScrollControlled: true,
+              backgroundColor: Colors.white.withOpacity(0.7),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
+              ),
+              builder: (BuildContext context) {
+                return Padding(
+                  padding: EdgeInsets.only(
+                    bottom: MediaQuery.of(context).viewInsets.bottom,
+                    left: 16.h,
+                    right: 16.h,
+                    top: 16.h,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        "Weekly Goal",
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          color: Colors.black,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(height: 16.h),
+                      TextField(
+                        controller: controller,
+                        autofocus: true,
+                        keyboardType: TextInputType.numberWithOptions(decimal: true, signed: true),
+                        decoration: InputDecoration(
+                          hintText: 'Enter weekly goal',
+                          suffixText: ' kg',
+                          filled: true,
+                          fillColor: Colors.white.withOpacity(0.1),
+                          border: OutlineInputBorder(
+                            borderSide: BorderSide.none,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(color: theme.primaryColor),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(RegExp(r'^-?\d*\.?\d*')),
+                        ],
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: Text('Cancel'),
+                          ),
+                          TextButton(
+                            onPressed: () async {
+                              final newValue = double.tryParse(controller.text);
+                              if (newValue != null) {
+                                try {
+                                  // Update Firebase
+                                  await FirebaseFirestore.instance
+                                      .collection('users')
+                                      .doc(currentUser.email)
+                                      .update({'weeklygoal': newValue});
+
+                                  // Update local provider
+                                  Provider.of<ProfileProvider>(context, listen: false)
+                                      .updateNumericValue("Weekly Goal", newValue);
+                                } catch (e) {
+                                  print("Error updating weekly goal: $e");
+                                }
+                              }
+                              Navigator.pop(context);
+                            },
+                            child: Text('Save'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                );
+              },
+            );
+          }
+        }
+      });
     }
   }
 
@@ -1573,94 +1771,209 @@ class ProfileScreenState extends State<ProfileScreen> {
 
   void _showGenericNumberInputDialog(
       BuildContext context, String title, TextEditingController controller) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
-      ),
-      builder: (BuildContext context) {
-        return Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
-            left: 16.h,
-            right: 16.h,
-            top: 16.h,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                title,
-                style: theme.textTheme.titleLarge?.copyWith(
-                  color: Colors.black,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              SizedBox(height: 16.h),
-              TextField(
-                controller: controller,
-                autofocus: true,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  hintText: 'Enter value',
-                  suffixText: title == "Carbs Goal" ||
-                          title == "Protein Goal" ||
-                          title == "Fat Goal"
-                      ? " g"
-                      : null,
-                ),
-                inputFormatters: [
-                  FilteringTextInputFormatter.digitsOnly,
-                ],
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: Text('Cancel'),
+    if (Platform.isIOS) {
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: CupertinoColors.white,
+        builder: (BuildContext context) {
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+              left: 16,
+              right: 16,
+              top: 16,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: CupertinoColors.white,
+                    border: Border(
+                      bottom: BorderSide(
+                        color: CupertinoColors.systemGrey5,
+                        width: 0.5,
+                      ),
+                    ),
                   ),
-                  TextButton(
-                    onPressed: () async {
-                      final newValue = double.tryParse(controller.text);
-                      if (newValue != null) {
-                        final currentUser = FirebaseAuth.instance.currentUser;
-                        if (currentUser?.email != null) {
-                          try {
-                            // First update Firebase
-                            if (title == "Carbs Goal") {
-                              await FirebaseFirestore.instance
-                                  .collection('users')
-                                  .doc(currentUser!.email)
-                                  .update({'carbsgoal': newValue});
-                            } else if (title == "Protein Goal") {
-                              await FirebaseFirestore.instance
-                                  .collection('users')
-                                  .doc(currentUser!.email)
-                                  .update({'proteingoal': newValue});
-                            } else if (title == "Fat Goal") {
-                              await FirebaseFirestore.instance
-                                  .collection('users')
-                                  .doc(currentUser!.email)
-                                  .update({'fatgoal': newValue});
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      CupertinoButton(
+                        padding: EdgeInsets.symmetric(horizontal: 16),
+                        onPressed: () => Navigator.pop(context),
+                        child: Text('Cancel', style: TextStyle(color: Color(0xFF4A90E2))),
+                      ),
+                      CupertinoButton(
+                        padding: EdgeInsets.symmetric(horizontal: 16),
+                        onPressed: () async {
+                          final newValue = double.tryParse(controller.text);
+                          if (newValue != null) {
+                            final currentUser = FirebaseAuth.instance.currentUser;
+                            if (currentUser?.email != null) {
+                              try {
+                                String fieldName = '';
+                                if (title == "Carbs Goal") {
+                                  fieldName = 'carbsgoal';
+                                } else if (title == "Protein Goal") {
+                                  fieldName = 'proteingoal';
+                                } else if (title == "Fat Goal") {
+                                  fieldName = 'fatgoal';
+                                }
+                                
+                                // Update Firebase
+                                await FirebaseFirestore.instance
+                                    .collection('users')
+                                    .doc(currentUser!.email)
+                                    .update({fieldName: newValue});
+
+                                // Update local provider
+                                Provider.of<ProfileProvider>(context, listen: false)
+                                    .updateNumericValue(title, newValue);
+                              } catch (e) {
+                                print("Error updating $title: $e");
+                              }
                             }
-                          } catch (e) {
-                            print("Error updating goal in Firebase: $e");
+                          }
+                          Navigator.pop(context);
+                        },
+                        child: Text('Save', style: TextStyle(color: Color(0xFF4A90E2))),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(height: 16),
+                CupertinoTextField(
+                  controller: controller,
+                  autofocus: true,
+                  keyboardType: TextInputType.number,
+                  decoration: BoxDecoration(
+                    color: CupertinoColors.systemGrey6,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  placeholder: 'Enter ${title.toLowerCase()}',
+                  suffix: Padding(
+                    padding: EdgeInsets.only(right: 8),
+                    child: Text(
+                      ' g',
+                      style: TextStyle(
+                        color: CupertinoColors.systemGrey,
+                        fontSize: 16,
+                        decoration: TextDecoration.none,
+                      ),
+                    ),
+                  ),
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: CupertinoColors.black,
+                  ),
+                ),
+                SizedBox(height: 16),
+              ],
+            ),
+          );
+        },
+      );
+    } else {
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.white.withOpacity(0.7),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
+        ),
+        builder: (BuildContext context) {
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+              left: 16.h,
+              right: 16.h,
+              top: 16.h,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  title,
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                SizedBox(height: 16.h),
+                TextField(
+                  controller: controller,
+                  autofocus: true,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    hintText: 'Enter ${title.toLowerCase()}',
+                    suffixText: ' g',
+                    filled: true,
+                    fillColor: Colors.white.withOpacity(0.1),
+                    border: OutlineInputBorder(
+                      borderSide: BorderSide.none,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: theme.primaryColor),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                  ],
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: Text('Cancel'),
+                    ),
+                    TextButton(
+                      onPressed: () async {
+                        final newValue = double.tryParse(controller.text);
+                        if (newValue != null) {
+                          final currentUser = FirebaseAuth.instance.currentUser;
+                          if (currentUser?.email != null) {
+                            try {
+                              String fieldName = '';
+                              if (title == "Carbs Goal") {
+                                fieldName = 'carbsgoal';
+                              } else if (title == "Protein Goal") {
+                                fieldName = 'proteingoal';
+                              } else if (title == "Fat Goal") {
+                                fieldName = 'fatgoal';
+                              }
+                              
+                              // Update Firebase
+                              await FirebaseFirestore.instance
+                                  .collection('users')
+                                  .doc(currentUser!.email)
+                                  .update({fieldName: newValue});
+
+                              // Update local provider
+                              Provider.of<ProfileProvider>(context, listen: false)
+                                  .updateNumericValue(title, newValue);
+                            } catch (e) {
+                              print("Error updating $title: $e");
+                            }
                           }
                         }
-                      }
-                      Navigator.pop(context);
-                    },
-                    child: Text('Save'),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        );
-      },
-    );
+                        Navigator.pop(context);
+                      },
+                      child: Text('Save'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          );
+        },
+      );
+    }
   }
 }
