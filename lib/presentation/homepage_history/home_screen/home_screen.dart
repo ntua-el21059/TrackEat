@@ -38,6 +38,7 @@ class HomeScreenState extends State<HomeScreen> {
   StreamSubscription<DocumentSnapshot>? _userSubscription;
   final PointsService _pointsService = PointsService();
   DateTime? _lastPointsUpdate;
+  bool _isNavigatingToReward = false;
 
   @override
   void initState() {
@@ -73,24 +74,60 @@ class HomeScreenState extends State<HomeScreen> {
           .listen((snapshot) async {
         if (snapshot.exists && mounted) {
           final userData = snapshot.data()!;
-          final userProvider =
-              Provider.of<UserProvider>(context, listen: false);
-
-          // Update provider with fresh Firestore values
-          userProvider
-              .setDailyCalories(userData['dailyCalories'] as int? ?? 2000);
-          userProvider.setMacronutrientGoals(
-            carbsGoal:
-                double.tryParse(userData['carbsgoal']?.toString() ?? '0'),
-            proteinGoal:
-                double.tryParse(userData['proteingoal']?.toString() ?? '0'),
-            fatGoal: double.tryParse(userData['fatgoal']?.toString() ?? '0'),
-          );
-
+          
+          // Check rings status and show reward if needed
+          checkRingsAndShowReward(userData);
+          
           // Force UI update
           setState(() {});
         }
       });
+    }
+  }
+
+  void checkRingsAndShowReward(Map<String, dynamic> userData) async {
+    // Prevent multiple navigations
+    if (_isNavigatingToReward) return;
+    
+    // Get the current values from meal history
+    final userEmail = FirebaseAuth.instance.currentUser?.email;
+    if (userEmail == null) return;
+
+    final mealService = MealService();
+    final now = DateTime.now();
+    
+    // Get actual consumed macros from meal history
+    final macros = await mealService.getTotalMacrosForDate(userEmail, now);
+    final proteinConsumed = macros['protein'] ?? 0.0;
+    final fatConsumed = macros['fats'] ?? 0.0;
+    final carbsConsumed = macros['carbs'] ?? 0.0;
+
+    // Get the goals from userData
+    final proteinGoal = double.tryParse(userData['proteingoal']?.toString() ?? '0') ?? 98.0;
+    final fatGoal = double.tryParse(userData['fatgoal']?.toString() ?? '0') ?? 70.0;
+    final carbsGoal = double.tryParse(userData['carbsgoal']?.toString() ?? '0') ?? 110.0;
+
+    // Calculate percentages
+    final proteinPercent = (proteinConsumed / proteinGoal * 100).clamp(0, 100);
+    final fatPercent = (fatConsumed / fatGoal * 100).clamp(0, 100);
+    final carbsPercent = (carbsConsumed / carbsGoal * 100).clamp(0, 100);
+
+    final homeProvider = Provider.of<HomeProvider>(context, listen: false);
+    final bool allRingsClosed = proteinPercent >= 100 && fatPercent >= 100 && carbsPercent >= 100;
+    final bool ringsWereClosed = await homeProvider.areRingsClosed();
+
+    if (!allRingsClosed) {
+      // If any ring is not at 100%, set the variable to 0
+      await homeProvider.setRingChanged(false);
+      await homeProvider.setRingsClosed(false);
+    } else if (!ringsWereClosed) {
+      // Rings are now closed but weren't before, show reward
+      if (mounted) {
+        _isNavigatingToReward = true;
+        Navigator.pushNamed(context, AppRoutes.rewardScreenRingsClosedScreen);
+      }
+      await homeProvider.setRingsClosed(true);
+      await homeProvider.setRingChanged(true);
     }
   }
 
@@ -128,56 +165,6 @@ class HomeScreenState extends State<HomeScreen> {
         }
       } catch (e) {
         print("Error fetching user data: $e");
-      }
-    }
-  }
-
-  void checkRingsAndShowReward(Map<String, dynamic> userData) async {
-    // Prevent multiple updates within 2 seconds
-    final now = DateTime.now();
-    if (_lastPointsUpdate != null &&
-        now.difference(_lastPointsUpdate!) < Duration(seconds: 2)) {
-      return;
-    }
-    _lastPointsUpdate = now;
-
-    final dailyCalories = userData['dailyCalories'] as int? ?? 0;
-
-    // Get consumed calories from meal history
-    final userEmail = FirebaseAuth.instance.currentUser?.email;
-    final mealService = MealService();
-    final consumedCalories =
-        await mealService.getTotalCaloriesForDate(userEmail!, now);
-
-    final caloriesPercent =
-        ((consumedCalories / dailyCalories) * 100).clamp(0, 100);
-
-    final homeProvider = Provider.of<HomeProvider>(context, listen: false);
-    final bool caloriesGoalReached = caloriesPercent >= 100;
-    final bool hasRingChanged = await homeProvider.hasRingChanged();
-    final bool wereRingsClosed = await homeProvider.areRingsClosed();
-
-    // If calories goal was not reached before but is now reached, award points
-    if (!wereRingsClosed && caloriesGoalReached) {
-      await _pointsService.addCaloriesCompletePoints();
-    }
-    // If calories goal was reached before but is now not reached, deduct points
-    else if (wereRingsClosed && !caloriesGoalReached) {
-      await _pointsService.removeCaloriesCompletePoints();
-    }
-
-    // Update rings closed state
-    await homeProvider.setRingsClosed(caloriesGoalReached);
-
-    // Show reward screen only if:
-    // 1. Calories goal is reached AND
-    // 2. Either rings were previously changed (not reached) or not shown yet
-    if (caloriesGoalReached && hasRingChanged) {
-      // Reset the ring changed state since we're showing the reward
-      await homeProvider.setRingChanged(false);
-
-      if (mounted) {
-        Navigator.pushNamed(context, AppRoutes.rewardScreenRingsClosedScreen);
       }
     }
   }

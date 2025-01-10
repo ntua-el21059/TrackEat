@@ -4,6 +4,8 @@ import '../../core/app_export.dart';
 import 'provider/reward_screen_rings_closed_provider.dart';
 import '../homepage_history/home_screen/provider/home_provider.dart';
 import 'package:sensors_plus/sensors_plus.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class RewardScreenRingsClosedScreen extends StatefulWidget {
   const RewardScreenRingsClosedScreen({super.key});
@@ -174,6 +176,23 @@ class RewardScreenRingsClosedScreenState
     setState(() {
       _isNavigating = true;
     });
+
+    // Add 50 points to the user's total points
+    final userEmail = FirebaseAuth.instance.currentUser?.email;
+    if (userEmail != null) {
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userEmail)
+          .get();
+      
+      if (userDoc.exists) {
+        final currentPoints = userDoc.data()?['points'] as int? ?? 0;
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(userEmail)
+            .update({'points': currentPoints + 50});
+      }
+    }
 
     final homeProvider = Provider.of<HomeProvider>(context, listen: false);
     await homeProvider.markRewardScreenAsShown();

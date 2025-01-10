@@ -308,96 +308,89 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
 
   /// Section Widget
   Widget _buildProfilePreview(BuildContext context) {
-    return Container(
-      width: double.maxFinite,
-      padding: EdgeInsets.symmetric(
-        horizontal: 10.h,
-        vertical: 12.h,
-      ),
-      margin: EdgeInsets.symmetric(horizontal: 4.h),
-      decoration: AppDecoration.lightBlueLayoutPadding.copyWith(
-        borderRadius: BorderRadiusStyle.roundedBorder20,
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Container(
-            margin: EdgeInsets.only(left: 8.h),
-            width: 72.h,
-            height: 72.h,
-            alignment: Alignment.center,
-            child: FirebaseAuth.instance.currentUser?.email != null
-              ? CachedProfilePicture(
-                  email: FirebaseAuth.instance.currentUser!.email!,
-                  size: 56.h,
-                )
-              : _buildDefaultProfilePicture(),
-          ),
-          Expanded(
-            child: Container(
-              margin: EdgeInsets.only(top: 4.h, left: 0.h),
-              padding: EdgeInsets.only(left: 4.h, right: 12.h),
-                    child: GestureDetector(
-                      onTap: () {
-                        Navigator.pushNamed(context, AppRoutes.profileStaticScreen);
-                      },
-                      child: StreamBuilder<DocumentSnapshot>(
-                        stream: FirebaseFirestore.instance
-                            .collection('users')
-                            .doc(FirebaseAuth.instance.currentUser?.email)
-                            .snapshots(),
-                        builder: (context, snapshot) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.pushNamed(context, AppRoutes.profileStaticScreen);
+      },
+      child: Container(
+        width: double.maxFinite,
+        padding: EdgeInsets.symmetric(
+          horizontal: 10.h,
+          vertical: 12.h,
+        ),
+        margin: EdgeInsets.symmetric(horizontal: 4.h),
+        decoration: AppDecoration.lightBlueLayoutPadding.copyWith(
+          borderRadius: BorderRadiusStyle.roundedBorder20,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Container(
+              margin: EdgeInsets.only(left: 8.h),
+              width: 72.h,
+              height: 72.h,
+              alignment: Alignment.center,
+              child: FirebaseAuth.instance.currentUser?.email != null
+                ? CachedProfilePicture(
+                    email: FirebaseAuth.instance.currentUser!.email!,
+                    size: 56.h,
+                  )
+                : _buildDefaultProfilePicture(),
+            ),
+            Expanded(
+              child: Container(
+                margin: EdgeInsets.only(top: 4.h, left: 0.h),
+                padding: EdgeInsets.only(left: 4.h, right: 12.h),
+                child: StreamBuilder<DocumentSnapshot>(
+                  stream: FirebaseFirestore.instance
+                      .collection('users')
+                      .doc(FirebaseAuth.instance.currentUser?.email)
+                      .snapshots(),
+                  builder: (context, snapshot) {
                     if (snapshot.hasData &&
                         snapshot.data != null &&
                         snapshot.data!.exists) {
                       final userData =
                           snapshot.data!.data() as Map<String, dynamic>;
-                            final firstName = userData['firstName']?.toString() ?? '';
-                            final lastName = userData['lastName']?.toString() ?? '';
-                            final username = userData['username']?.toString() ?? '';
-                            
-                            return Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  "$firstName $lastName",
-                                  style: theme.textTheme.titleLarge?.copyWith(
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                Text(
-                                  "@$username",
-                                  style: theme.textTheme.bodyMedium?.copyWith(
-                                    color: Colors.white.withOpacity(0.8),
-                                  ),
-                                ),
-                              ],
-                            );
-                          }
-                          return Container();
-                        },
-                      ),
-                    ),
-                  ),
-          ),
-          GestureDetector(
-            onTap: () {
-              Navigator.pushNamed(context, AppRoutes.profileStaticScreen);
-            },
-            child: CustomImageView(
-                    imagePath: ImageConstant.imgArrowRight,
-                    height: 18.h,
-                    width: 18.h,
-                    alignment: Alignment.center,
-                    margin: EdgeInsets.only(
-                right: 8.h,
-                    ),
-                    color: Colors.white,
+                      final firstName = userData['firstName']?.toString() ?? '';
+                      final lastName = userData['lastName']?.toString() ?? '';
+                      final username = userData['username']?.toString() ?? '';
+                      
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            "$firstName $lastName",
+                            style: theme.textTheme.titleLarge?.copyWith(
+                              color: Colors.white,
+                            ),
+                          ),
+                          Text(
+                            "@$username",
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: Colors.white.withOpacity(0.8),
+                            ),
+                          ),
+                        ],
+                      );
+                    }
+                    return Container();
+                  },
+                ),
+              ),
             ),
-          ),
-        ],
+            CustomImageView(
+              imagePath: ImageConstant.imgArrowRight,
+              height: 18.h,
+              width: 18.h,
+              alignment: Alignment.center,
+              margin: EdgeInsets.only(right: 8.h),
+              color: Colors.white,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -475,6 +468,12 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
     required bool isScrollControlled,
     Color? backgroundColor,
   }) {
+    late AnimationController controller;
+    controller = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: isScrollControlled,
@@ -484,12 +483,13 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
       ),
-      transitionAnimationController: AnimationController(
-        duration: Duration(milliseconds: 300),
-        vsync: this,
-      ),
-      builder: (BuildContext context) => child,
-    );
+      transitionAnimationController: controller,
+      builder: (BuildContext context) {
+        return child;
+      },
+    ).whenComplete(() {
+      controller.dispose();
+    });
   }
 
   void _showCaloriesInputDialog(BuildContext context, String currentValue) {
@@ -522,7 +522,7 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
               children: [
                 Container(
                   height: 44,
-            decoration: BoxDecoration(
+                  decoration: BoxDecoration(
                     color: CupertinoColors.white,
                     border: Border(
                       bottom: BorderSide(
@@ -629,9 +629,9 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
                 ),
                 SizedBox(height: 16.h),
                 TextField(
-                    controller: controller,
-                    autofocus: true,
-                    keyboardType: TextInputType.number,
+                  controller: controller,
+                  autofocus: true,
+                  keyboardType: TextInputType.number,
                   decoration: InputDecoration(
                     hintText: 'Enter daily calories goal',
                     suffixText: ' kcal',
@@ -646,10 +646,10 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
-                    ],
-                  ),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                  ],
+                ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
@@ -741,12 +741,12 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
                           final newValue = double.tryParse(controller.text);
                           if (newValue != null) {
                             final currentUser = FirebaseAuth.instance.currentUser;
-                            if (currentUser?.email != null) {
+                            if (currentUser != null && currentUser.email != null) {
                               try {
                                 // Update Firebase
                                 await FirebaseFirestore.instance
                                     .collection('users')
-                                    .doc(currentUser!.email)
+                                    .doc(currentUser.email)
                                     .update({'weight': newValue});
 
                                 // Update local provider
@@ -757,7 +757,7 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
                               }
                             }
                           }
-                            Navigator.pop(context);
+                          Navigator.pop(context);
                         },
                         child: Text('Save', style: TextStyle(color: Color(0xFF4A90E2))),
                       ),
@@ -859,12 +859,12 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
                         final newValue = double.tryParse(controller.text);
                         if (newValue != null) {
                           final currentUser = FirebaseAuth.instance.currentUser;
-                          if (currentUser?.email != null) {
+                          if (currentUser != null && currentUser.email != null) {
                             try {
                               // Update Firebase
                               await FirebaseFirestore.instance
                                   .collection('users')
-                                  .doc(currentUser!.email)
+                                  .doc(currentUser.email)
                                   .update({'weight': newValue});
 
                               // Update local provider
@@ -930,7 +930,7 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
                       final newValue = double.tryParse(controller.text);
                       if (newValue != null) {
                         final currentUser = FirebaseAuth.instance.currentUser;
-                        if (currentUser?.email != null) {
+                        if (currentUser != null && currentUser.email != null) {
                           try {
                             String fieldName = '';
                             if (title == "Carbs Goal") {
@@ -940,16 +940,16 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
                             } else if (title == "Fat Goal") {
                               fieldName = 'fatgoal';
                             }
-                              
-                              // Update Firebase
-                              await FirebaseFirestore.instance
-                                  .collection('users')
-                                  .doc(currentUser!.email)
-                                  .update({fieldName: newValue});
 
-                              // Update local provider
-                              Provider.of<ProfileProvider>(context, listen: false)
-                                  .updateNumericValue(title, newValue);
+                            // Update Firebase
+                            await FirebaseFirestore.instance
+                                .collection('users')
+                                .doc(currentUser.email)
+                                .update({fieldName: newValue});
+
+                            // Update local provider
+                            Provider.of<ProfileProvider>(context, listen: false)
+                                .updateNumericValue(title, newValue);
                           } catch (e) {
                             print("Error updating $title: $e");
                           }
@@ -1004,81 +1004,72 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
           children: [
             Text(
               title,
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    color: Colors.black,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                SizedBox(height: 16.h),
-                TextField(
-                  controller: controller,
-                  autofocus: true,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
+              style: theme.textTheme.titleLarge?.copyWith(
+                color: Colors.black,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 16.h),
+            TextField(
+              controller: controller,
+              autofocus: true,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
                 hintText: 'Enter ${title.toLowerCase()}',
                 suffixText: ' g',
-                    filled: true,
-                    fillColor: Colors.white.withOpacity(0.1),
-                    border: OutlineInputBorder(
-                      borderSide: BorderSide.none,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: theme.primaryColor),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  inputFormatters: [
-                    FilteringTextInputFormatter.digitsOnly,
-                  ],
+                filled: true,
+                fillColor: Colors.white.withOpacity(0.1),
+                border: OutlineInputBorder(
+                  borderSide: BorderSide.none,
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: Text('Cancel'),
-                    ),
-                    TextButton(
-                      onPressed: () async {
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: theme.primaryColor),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly,
+              ],
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: () async {
                     final newValue = double.tryParse(controller.text);
                     if (newValue != null) {
-                          final currentUser = FirebaseAuth.instance.currentUser;
-                          if (currentUser?.email != null) {
-                            try {
-                          String fieldName = '';
-                          if (title == "Carbs Goal") {
-                            fieldName = 'carbsgoal';
-                          } else if (title == "Protein Goal") {
-                            fieldName = 'proteingoal';
-                          } else if (title == "Fat Goal") {
-                            fieldName = 'fatgoal';
-                          }
-                              
+                      final currentUser = FirebaseAuth.instance.currentUser;
+                      if (currentUser != null && currentUser.email != null) {
+                        try {
                           // Update Firebase
-                              await FirebaseFirestore.instance
-                                  .collection('users')
-                                  .doc(currentUser!.email)
-                              .update({fieldName: newValue});
+                          await FirebaseFirestore.instance
+                              .collection('users')
+                              .doc(currentUser.email)
+                              .update({title: newValue});
 
-                              // Update local provider
+                          // Update local provider
                           Provider.of<ProfileProvider>(context, listen: false)
                               .updateNumericValue(title, newValue);
-                            } catch (e) {
+                        } catch (e) {
                           print("Error updating $title: $e");
-                            }
-                          }
                         }
-                          Navigator.pop(context);
-                      },
-                      child: Text('Save'),
-                    ),
-                  ],
+                      }
+                    }
+                    Navigator.pop(context);
+                  },
+                  child: Text('Save'),
                 ),
               ],
-        ),
             ),
-      );
+          ],
+        ),
+      ),
+    );
   }
 
   void _showDietSelectionDialog(BuildContext context) {
@@ -1135,11 +1126,11 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
                         onPressed: () async {
                           final diet = menuChoices[_selectedDietIndex];
                           final currentUser = FirebaseAuth.instance.currentUser;
-                          if (currentUser?.email != null) {
+                          if (currentUser != null && currentUser.email != null) {
                             try {
                               await FirebaseFirestore.instance
                                   .collection('users')
-                                  .doc(currentUser!.email)
+                                  .doc(currentUser.email)
                                   .update({'diet': diet});
 
                               if (context.mounted) {
@@ -1212,12 +1203,12 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
                   tileColor: diet == currentDiet ? Colors.blue.withOpacity(0.1) : null,
                   onTap: () async {
                     final currentUser = FirebaseAuth.instance.currentUser;
-                    if (currentUser?.email != null) {
+                    if (currentUser != null && currentUser.email != null) {
                       try {
                         // Update Firebase
                         await FirebaseFirestore.instance
                             .collection('users')
-                            .doc(currentUser!.email)
+                            .doc(currentUser.email)
                             .update({'diet': diet});
 
                         // Update local provider
@@ -1295,24 +1286,24 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
                         padding: EdgeInsets.symmetric(horizontal: 16),
                         onPressed: () async {
                           final activity = activityLevels[_selectedActivityIndex];
-                    final currentUser = FirebaseAuth.instance.currentUser;
-                    if (currentUser?.email != null) {
-                      try {
-                        await FirebaseFirestore.instance
-                            .collection('users')
-                            .doc(currentUser!.email)
+                          final currentUser = FirebaseAuth.instance.currentUser;
+                          if (currentUser != null && currentUser.email != null) {
+                            try {
+                              await FirebaseFirestore.instance
+                                  .collection('users')
+                                  .doc(currentUser.email)
                                   .update({'activity': activity});
 
-                        if (context.mounted) {
-                          Provider.of<ProfileProvider>(context, listen: false)
+                              if (context.mounted) {
+                                Provider.of<ProfileProvider>(context, listen: false)
                                     .updateActivityLevel(activity);
-                        }
-                      } catch (e) {
-                        print("Error updating activity level: $e");
-                      }
-                    }
-                    Navigator.pop(context);
-                  },
+                              }
+                            } catch (e) {
+                              print("Error updating activity level: $e");
+                            }
+                          }
+                          Navigator.pop(context);
+                        },
                         child: Text('Save', style: TextStyle(color: Color(0xFF4A90E2))),
                       ),
                     ],
@@ -1327,12 +1318,12 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
                     },
                     children: activityLevels.map((activity) => 
                       Center(
-                  child: Text(
+                        child: Text(
                           activity,
-                    style: TextStyle(
+                          style: TextStyle(
                             fontSize: 20,
                             color: CupertinoColors.black,
-                    ),
+                          ),
                         ),
                       )
                     ).toList(),
@@ -1373,12 +1364,12 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
                   tileColor: activity == currentActivity ? Colors.blue.withOpacity(0.1) : null,
                   onTap: () async {
                     final currentUser = FirebaseAuth.instance.currentUser;
-                    if (currentUser?.email != null) {
+                    if (currentUser != null && currentUser.email != null) {
                       try {
                         // Update Firebase
                         await FirebaseFirestore.instance
                             .collection('users')
-                            .doc(currentUser!.email)
+                            .doc(currentUser.email)
                             .update({'activity': activity});
 
                         // Update local provider
@@ -1417,15 +1408,15 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
       _showGoalWeightInputDialog(context);
     } else if (title == "Cur. Weight") {
       // Get the current value from Firebase first
-    final currentUser = FirebaseAuth.instance.currentUser;
-    if (currentUser?.email != null) {
-      FirebaseFirestore.instance
-          .collection('users')
-            .doc(currentUser?.email)
-          .get()
-          .then((doc) {
-        if (doc.exists) {
-          final userData = doc.data()!;
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser != null && currentUser.email != null) {
+        FirebaseFirestore.instance
+            .collection('users')
+            .doc(currentUser.email)
+            .get()
+            .then((doc) {
+          if (doc.exists) {
+            final userData = doc.data()!;
             final weight = userData['weight']?.toString() ?? '0';
             
             // Show dialog with current weight from Firebase
@@ -1443,11 +1434,11 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
         text: currentValue.replaceAll(" g", "")  // Remove "g" from the initial value
       );
 
-          if (Platform.isIOS) {
-            showModalBottomSheet(
-              context: context,
-              isScrollControlled: true,
-              backgroundColor: CupertinoColors.white,
+      if (Platform.isIOS) {
+        showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: CupertinoColors.white,
           enableDrag: true,
           isDismissible: true,
           useRootNavigator: true,
@@ -1455,43 +1446,43 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
           ),
-              builder: (BuildContext context) {
-                return Padding(
-                  padding: EdgeInsets.only(
-                    bottom: MediaQuery.of(context).viewInsets.bottom,
-                    left: 16,
-                    right: 16,
-                    top: 16,
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: CupertinoColors.white,
-                          border: Border(
-                            bottom: BorderSide(
-                              color: CupertinoColors.systemGrey5,
-                              width: 0.5,
-                            ),
-                          ),
+          builder: (BuildContext context) {
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+                left: 16,
+                right: 16,
+                top: 16,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: CupertinoColors.white,
+                      border: Border(
+                        bottom: BorderSide(
+                          color: CupertinoColors.systemGrey5,
+                          width: 0.5,
                         ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            CupertinoButton(
-                              padding: EdgeInsets.symmetric(horizontal: 16),
-                              onPressed: () => Navigator.pop(context),
-                              child: Text('Cancel', style: TextStyle(color: Color(0xFF4A90E2))),
-                            ),
-                            CupertinoButton(
-                              padding: EdgeInsets.symmetric(horizontal: 16),
-                              onPressed: () async {
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        CupertinoButton(
+                          padding: EdgeInsets.symmetric(horizontal: 16),
+                          onPressed: () => Navigator.pop(context),
+                          child: Text('Cancel', style: TextStyle(color: Color(0xFF4A90E2))),
+                        ),
+                        CupertinoButton(
+                          padding: EdgeInsets.symmetric(horizontal: 16),
+                          onPressed: () async {
                             final newValue = double.tryParse(controller.text);
-                                if (newValue != null) {
+                            if (newValue != null) {
                               final currentUser = FirebaseAuth.instance.currentUser;
-                              if (currentUser?.email != null) {
+                              if (currentUser != null && currentUser.email != null) {
                                 try {
                                   String fieldName = '';
                                   if (title == "Carbs Goal") {
@@ -1503,170 +1494,161 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
                                   }
                                   
                                   // Update Firebase
-                                    await FirebaseFirestore.instance
-                                        .collection('users')
-                                      .doc(currentUser!.email)
+                                  await FirebaseFirestore.instance
+                                      .collection('users')
+                                      .doc(currentUser.email)
                                       .update({fieldName: newValue});
 
                                   // Update local provider
-                                    Provider.of<ProfileProvider>(context, listen: false)
+                                  Provider.of<ProfileProvider>(context, listen: false)
                                       .updateNumericValue(title, newValue);
-                                  } catch (e) {
+                                } catch (e) {
                                   print("Error updating $title: $e");
                                 }
-                                  }
-                                }
-                                Navigator.pop(context);
-                              },
-                              child: Text('Save', style: TextStyle(color: Color(0xFF4A90E2))),
-                            ),
-                          ],
+                              }
+                            }
+                            Navigator.pop(context);
+                          },
+                          child: Text('Save', style: TextStyle(color: Color(0xFF4A90E2))),
                         ),
-                      ),
-                      SizedBox(height: 16),
-                      CupertinoTextField(
-                        controller: controller,
-                        autofocus: true,
-                    keyboardType: TextInputType.number,
-                        decoration: BoxDecoration(
-                          color: CupertinoColors.systemGrey6,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    placeholder: 'Enter ${title.toLowerCase()}',
-                        suffix: Padding(
-                          padding: EdgeInsets.only(right: 8),
-                          child: Text(
-                        ' g',
-                            style: TextStyle(
-                              color: CupertinoColors.systemGrey,
-                              fontSize: 16,
-                              decoration: TextDecoration.none,
-                            ),
-                          ),
-                        ),
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: CupertinoColors.black,
-                        ),
-                      ),
-                      SizedBox(height: 16),
-                    ],
+                      ],
+                    ),
                   ),
-                );
-              },
+                  SizedBox(height: 16),
+                  CupertinoTextField(
+                    controller: controller,
+                    autofocus: true,
+                    keyboardType: TextInputType.number,
+                    decoration: BoxDecoration(
+                      color: CupertinoColors.systemGrey6,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    placeholder: 'Enter ${title.toLowerCase()}',
+                    suffix: Padding(
+                      padding: EdgeInsets.only(right: 8),
+                      child: Text(
+                        ' g',
+                        style: TextStyle(
+                          color: CupertinoColors.systemGrey,
+                          fontSize: 16,
+                          decoration: TextDecoration.none,
+                        ),
+                      ),
+                    ),
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: CupertinoColors.black,
+                    ),
+                  ),
+                  SizedBox(height: 16),
+                ],
+              ),
             );
-          } else {
-            showModalBottomSheet(
-              context: context,
-              isScrollControlled: true,
-              backgroundColor: Colors.white.withOpacity(0.7),
+          },
+        );
+      } else {
+        showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.white.withOpacity(0.7),
           enableDrag: true,
           isDismissible: true,
           useRootNavigator: true,
           barrierColor: Colors.black.withOpacity(0.5),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
+          ),
+          builder: (BuildContext context) {
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+                left: 16.h,
+                right: 16.h,
+                top: 16.h,
               ),
-              builder: (BuildContext context) {
-                return Padding(
-                  padding: EdgeInsets.only(
-                    bottom: MediaQuery.of(context).viewInsets.bottom,
-                    left: 16.h,
-                    right: 16.h,
-                    top: 16.h,
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
                     title,
                     style: theme.textTheme.titleLarge?.copyWith(
                       color: Colors.black,
                       fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      SizedBox(height: 16.h),
-                      TextField(
-                        controller: controller,
-                        autofocus: true,
+                    ),
+                  ),
+                  SizedBox(height: 16.h),
+                  TextField(
+                    controller: controller,
+                    autofocus: true,
                     keyboardType: TextInputType.number,
-                        decoration: InputDecoration(
+                    decoration: InputDecoration(
                       hintText: 'Enter ${title.toLowerCase()}',
                       suffixText: ' g',
-                          filled: true,
-                          fillColor: Colors.white.withOpacity(0.1),
-                          border: OutlineInputBorder(
-                            borderSide: BorderSide.none,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: theme.primaryColor),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
-                        ],
+                      filled: true,
+                      fillColor: Colors.white.withOpacity(0.1),
+                      border: OutlineInputBorder(
+                        borderSide: BorderSide.none,
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context),
-                            child: Text('Cancel'),
-                          ),
-                          TextButton(
-                            onPressed: () async {
-                              final newValue = double.tryParse(controller.text);
-                              if (newValue != null) {
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: theme.primaryColor),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                    ],
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: Text('Cancel'),
+                      ),
+                      TextButton(
+                        onPressed: () async {
+                          final newValue = double.tryParse(controller.text);
+                          if (newValue != null) {
                             final currentUser = FirebaseAuth.instance.currentUser;
-                            if (currentUser?.email != null) {
+                            if (currentUser != null && currentUser.email != null) {
                               try {
-                                String fieldName = '';
-                                if (title == "Carbs Goal") {
-                                  fieldName = 'carbsgoal';
-                                } else if (title == "Protein Goal") {
-                                  fieldName = 'proteingoal';
-                                } else if (title == "Fat Goal") {
-                                  fieldName = 'fatgoal';
-                                }
-                                
-                                  // Update Firebase
-                                  await FirebaseFirestore.instance
-                                      .collection('users')
-                                    .doc(currentUser!.email)
-                                    .update({fieldName: newValue});
+                                // Update Firebase
+                                await FirebaseFirestore.instance
+                                    .collection('users')
+                                    .doc(currentUser.email)
+                                    .update({title: newValue});
 
-                                  // Update local provider
-                                  Provider.of<ProfileProvider>(context, listen: false)
+                                // Update local provider
+                                Provider.of<ProfileProvider>(context, listen: false)
                                     .updateNumericValue(title, newValue);
-                                } catch (e) {
+                              } catch (e) {
                                 print("Error updating $title: $e");
                               }
-                                }
-                              }
-                              Navigator.pop(context);
-                            },
-                            child: Text('Save'),
-                          ),
-                        ],
+                            }
+                          }
+                          Navigator.pop(context);
+                        },
+                        child: Text('Save'),
                       ),
                     ],
                   ),
-                );
-              },
+                ],
+              ),
             );
-          }
+          },
+        );
+      }
     }
   }
 
   void _showGoalWeightInputDialog(BuildContext context) {
     final currentUser = FirebaseAuth.instance.currentUser;
-    if (currentUser?.email != null) {
+    if (currentUser != null && currentUser.email != null) {
       FirebaseFirestore.instance
           .collection('users')
-          .doc(currentUser!.email)
+          .doc(currentUser.email)
           .get()
           .then((doc) {
         if (doc.exists) {
@@ -1866,11 +1848,11 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
 
   void _showWeeklyGoalInputDialog(BuildContext context) {
     final currentUser = FirebaseAuth.instance.currentUser;
-    if (currentUser?.email != null) {
+    if (currentUser != null && currentUser.email != null) {
       // First get the current weekly goal from Firebase
       FirebaseFirestore.instance
           .collection('users')
-          .doc(currentUser!.email)
+          .doc(currentUser.email)
           .get()
           .then((doc) {
         if (doc.exists) {
@@ -1889,19 +1871,19 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
             _selectedWeeklyGoalValue = 0.0;
           }
 
-    if (Platform.isIOS) {
-      showCupertinoModalPopup(
-        context: context,
-        builder: (BuildContext context) {
-          return Container(
+          if (Platform.isIOS) {
+            showCupertinoModalPopup(
+              context: context,
+              builder: (BuildContext context) {
+                return Container(
                   height: 250,
                   color: CupertinoColors.white,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
                       Container(
                         height: 44,
-                  decoration: BoxDecoration(
+                        decoration: BoxDecoration(
                           color: CupertinoColors.white,
                           border: Border(
                             bottom: BorderSide(
@@ -1910,37 +1892,37 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
                             ),
                           ),
                         ),
-                  child: Row(
+                        child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      CupertinoButton(
-                        padding: EdgeInsets.symmetric(horizontal: 16),
-                        onPressed: () => Navigator.pop(context),
-                        child: Text('Cancel', style: TextStyle(color: Color(0xFF4A90E2))),
-                      ),
-                      CupertinoButton(
-                        padding: EdgeInsets.symmetric(horizontal: 16),
-                        onPressed: () async {
-                              try {
-                                // Update Firebase
-                                await FirebaseFirestore.instance
-                                    .collection('users')
+                          children: [
+                            CupertinoButton(
+                              padding: EdgeInsets.symmetric(horizontal: 16),
+                              onPressed: () => Navigator.pop(context),
+                              child: Text('Cancel', style: TextStyle(color: Color(0xFF4A90E2))),
+                            ),
+                            CupertinoButton(
+                              padding: EdgeInsets.symmetric(horizontal: 16),
+                              onPressed: () async {
+                                try {
+                                  // Update Firebase
+                                  await FirebaseFirestore.instance
+                                      .collection('users')
                                       .doc(currentUser.email)
                                       .update({'weeklygoal': _selectedWeeklyGoalValue});
 
-                                // Update local provider
-                                Provider.of<ProfileProvider>(context, listen: false)
+                                  // Update local provider
+                                  Provider.of<ProfileProvider>(context, listen: false)
                                       .updateNumericValue("Weekly Goal", _selectedWeeklyGoalValue);
-                              } catch (e) {
+                                } catch (e) {
                                   print("Error updating weekly goal: $e");
-                          }
-                          Navigator.pop(context);
-                        },
-                        child: Text('Save', style: TextStyle(color: Color(0xFF4A90E2))),
+                                }
+                                Navigator.pop(context);
+                              },
+                              child: Text('Save', style: TextStyle(color: Color(0xFF4A90E2))),
+                            ),
+                          ],
+                        ),
                       ),
-                    ],
-                  ),
-                ),
                       Expanded(
                         child: Row(
                           children: [
@@ -2005,101 +1987,101 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
                               ),
                             ),
                           ],
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ],
-            ),
-          );
-        },
-      );
-    } else {
-      showModalBottomSheet(
-        context: context,
-        isScrollControlled: true,
-        backgroundColor: Colors.white.withOpacity(0.7),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
-        ),
-        builder: (BuildContext context) {
+                );
+              },
+            );
+          } else {
+            showModalBottomSheet(
+              context: context,
+              isScrollControlled: true,
+              backgroundColor: Colors.white.withOpacity(0.7),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
+              ),
+              builder: (BuildContext context) {
                 final TextEditingController controller = TextEditingController(
                   text: _selectedWeeklyGoalValue.toStringAsFixed(1)
                 );
-          return Padding(
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewInsets.bottom,
-              left: 16.h,
-              right: 16.h,
-              top: 16.h,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
+                return Padding(
+                  padding: EdgeInsets.only(
+                    bottom: MediaQuery.of(context).viewInsets.bottom,
+                    left: 16.h,
+                    right: 16.h,
+                    top: 16.h,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
                         "Weekly Goal",
-                  style: CupertinoTheme.of(context).textTheme.navTitleTextStyle.copyWith(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                SizedBox(height: 16.h),
-                TextField(
-                  controller: controller,
-                  autofocus: true,
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          color: Colors.black,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(height: 16.h),
+                      TextField(
+                        controller: controller,
+                        autofocus: true,
                         keyboardType: TextInputType.numberWithOptions(decimal: true, signed: true),
-                  decoration: InputDecoration(
+                        decoration: InputDecoration(
                           hintText: 'Enter weekly goal in kg',
-                    suffixText: ' kg',
-                    filled: true,
-                    fillColor: Colors.white.withOpacity(0.1),
-                    border: OutlineInputBorder(
-                      borderSide: BorderSide.none,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: theme.primaryColor),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
+                          suffixText: ' kg',
+                          filled: true,
+                          fillColor: Colors.white.withOpacity(0.1),
+                          border: OutlineInputBorder(
+                            borderSide: BorderSide.none,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(color: theme.primaryColor),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
                         inputFormatters: [
                           FilteringTextInputFormatter.allow(RegExp(r'^-?\d*\.?\d*')),
                         ],
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: Text('Cancel'),
-                    ),
-                    TextButton(
-                      onPressed: () async {
-                        final newValue = double.tryParse(controller.text);
-                        if (newValue != null) {
-                            try {
-                              // Update Firebase
-                              await FirebaseFirestore.instance
-                                  .collection('users')
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: Text('Cancel'),
+                          ),
+                          TextButton(
+                            onPressed: () async {
+                              final newValue = double.tryParse(controller.text);
+                              if (newValue != null) {
+                                try {
+                                  // Update Firebase
+                                  await FirebaseFirestore.instance
+                                      .collection('users')
                                       .doc(currentUser.email)
                                       .update({'weeklygoal': newValue});
 
-                              // Update local provider
-                              Provider.of<ProfileProvider>(context, listen: false)
+                                  // Update local provider
+                                  Provider.of<ProfileProvider>(context, listen: false)
                                       .updateNumericValue("Weekly Goal", newValue);
-                            } catch (e) {
+                                } catch (e) {
                                   print("Error updating weekly goal: $e");
-                          }
-                        }
-                        Navigator.pop(context);
-                      },
-                      child: Text('Save'),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          );
-        },
-      );
+                                }
+                              }
+                              Navigator.pop(context);
+                            },
+                            child: Text('Save'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                );
+              },
+            );
           }
         }
       });
@@ -2164,12 +2146,12 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
                         onPressed: () async {
                           if (controller.text.isNotEmpty) {
                             final currentUser = FirebaseAuth.instance.currentUser;
-                            if (currentUser?.email != null) {
+                            if (currentUser != null && currentUser.email != null) {
                               try {
                                 // Update Firebase
                                 await FirebaseFirestore.instance
                                     .collection('users')
-                                    .doc(currentUser!.email)
+                                    .doc(currentUser.email)
                                     .update({'firstName': controller.text});
                               } catch (e) {
                                 print("Error updating name: $e");
@@ -2221,9 +2203,9 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
           return Padding(
             padding: EdgeInsets.only(
               bottom: MediaQuery.of(context).viewInsets.bottom,
-              left: 16.h,
-              right: 16.h,
-              top: 16.h,
+              left: 16,
+              right: 16,
+              top: 16,
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -2235,7 +2217,7 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                SizedBox(height: 16.h),
+                SizedBox(height: 16),
                 TextField(
                   controller: controller,
                   autofocus: true,
@@ -2249,7 +2231,7 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
                       borderRadius: BorderRadius.circular(8),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: theme.primaryColor),
+                      borderSide: BorderSide(color: Theme.of(context).primaryColor),
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
@@ -2265,12 +2247,12 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
                       onPressed: () async {
                         if (controller.text.isNotEmpty) {
                           final currentUser = FirebaseAuth.instance.currentUser;
-                          if (currentUser?.email != null) {
+                          if (currentUser != null && currentUser.email != null) {
                             try {
                               // Update Firebase
-                                await FirebaseFirestore.instance
-                                    .collection('users')
-                                    .doc(currentUser!.email)
+                              await FirebaseFirestore.instance
+                                  .collection('users')
+                                  .doc(currentUser.email)
                                   .update({'firstName': controller.text});
                             } catch (e) {
                               print("Error updating name: $e");
@@ -2296,9 +2278,9 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
       text: currentSurname
     );
 
-          if (Platform.isIOS) {
+    if (Platform.isIOS) {
       showModalBottomSheet(
-              context: context,
+        context: context,
         isScrollControlled: true,
         backgroundColor: CupertinoColors.white,
         enableDrag: true,
@@ -2308,7 +2290,7 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
         ),
-              builder: (BuildContext context) {
+        builder: (BuildContext context) {
           return Padding(
             padding: EdgeInsets.only(
               bottom: MediaQuery.of(context).viewInsets.bottom,
@@ -2316,157 +2298,163 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
               right: 16,
               top: 16,
             ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: CupertinoColors.white,
+                    border: Border(
+                      bottom: BorderSide(
+                        color: CupertinoColors.systemGrey5,
+                        width: 0.5,
+                      ),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Container(
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: CupertinoColors.white,
-                          border: Border(
-                            bottom: BorderSide(
-                              color: CupertinoColors.systemGrey5,
-                              width: 0.5,
-                            ),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            CupertinoButton(
-                              padding: EdgeInsets.symmetric(horizontal: 16),
-                              onPressed: () => Navigator.pop(context),
-                              child: Text('Cancel', style: TextStyle(color: Color(0xFF4A90E2))),
-                            ),
-                            CupertinoButton(
-                              padding: EdgeInsets.symmetric(horizontal: 16),
-                              onPressed: () async {
+                      CupertinoButton(
+                        padding: EdgeInsets.symmetric(horizontal: 16),
+                        onPressed: () => Navigator.pop(context),
+                        child: Text('Cancel', style: TextStyle(color: Color(0xFF4A90E2))),
+                      ),
+                      CupertinoButton(
+                        padding: EdgeInsets.symmetric(horizontal: 16),
+                        onPressed: () async {
                           if (controller.text.isNotEmpty) {
                             final currentUser = FirebaseAuth.instance.currentUser;
-                            if (currentUser?.email != null) {
-                                try {
-                                  // Update Firebase
-                                  await FirebaseFirestore.instance
-                                      .collection('users')
-                                    .doc(currentUser!.email)
+                            if (currentUser != null && currentUser.email != null) {
+                              try {
+                                // Update Firebase
+                                await FirebaseFirestore.instance
+                                    .collection('users')
+                                    .doc(currentUser.email)
                                     .update({'lastName': controller.text});
-                                } catch (e) {
+                              } catch (e) {
                                 print("Error updating surname: $e");
                               }
                             }
-                                }
-                                Navigator.pop(context);
-                              },
-                              child: Text('Save', style: TextStyle(color: Color(0xFF4A90E2))),
-                            ),
-                          ],
-                        ),
+                          }
+                          Navigator.pop(context);
+                        },
+                        child: Text('Save', style: TextStyle(color: Color(0xFF4A90E2))),
                       ),
+                    ],
+                  ),
+                ),
                 SizedBox(height: 16),
-                CupertinoTextField(
+                TextField(
                   controller: controller,
                   autofocus: true,
                   keyboardType: TextInputType.name,
-                  decoration: BoxDecoration(
-                    color: CupertinoColors.systemGrey6,
-                    borderRadius: BorderRadius.circular(8),
+                  decoration: InputDecoration(
+                    hintText: 'Enter surname',
+                    filled: true,
+                    fillColor: Colors.white.withOpacity(0.1),
+                    border: OutlineInputBorder(
+                      borderSide: BorderSide.none,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Theme.of(context).primaryColor),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
-                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  placeholder: 'Enter surname',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        color: CupertinoColors.black,
-                                      ),
-                                    ),
+                ),
                 SizedBox(height: 16),
-                    ],
-                  ),
-                );
-              },
-            );
-          } else {
-            showModalBottomSheet(
-              context: context,
-              isScrollControlled: true,
-              backgroundColor: Colors.white.withOpacity(0.7),
+              ],
+            ),
+          );
+        },
+      );
+    } else {
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.white.withOpacity(0.7),
         enableDrag: true,
         isDismissible: true,
         useRootNavigator: true,
         barrierColor: Colors.black.withOpacity(0.5),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
-              ),
-              builder: (BuildContext context) {
-                return Padding(
-                  padding: EdgeInsets.only(
-                    bottom: MediaQuery.of(context).viewInsets.bottom,
-                    left: 16.h,
-                    right: 16.h,
-                    top: 16.h,
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
+        ),
+        builder: (BuildContext context) {
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+              left: 16.h,
+              right: 16.h,
+              top: 16.h,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
                   "Surname",
                   style: theme.textTheme.titleLarge?.copyWith(
                     color: Colors.black,
                     fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      SizedBox(height: 16.h),
-                      TextField(
-                        controller: controller,
-                        autofocus: true,
+                  ),
+                ),
+                SizedBox(height: 16.h),
+                TextField(
+                  controller: controller,
+                  autofocus: true,
                   keyboardType: TextInputType.name,
-                        decoration: InputDecoration(
+                  decoration: InputDecoration(
                     hintText: 'Enter surname',
-                          filled: true,
-                          fillColor: Colors.white.withOpacity(0.1),
-                          border: OutlineInputBorder(
-                            borderSide: BorderSide.none,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: theme.primaryColor),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context),
-                            child: Text('Cancel'),
-                          ),
-                          TextButton(
-                            onPressed: () async {
+                    filled: true,
+                    fillColor: Colors.white.withOpacity(0.1),
+                    border: OutlineInputBorder(
+                      borderSide: BorderSide.none,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Theme.of(context).primaryColor),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                  ],
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: Text('Cancel'),
+                    ),
+                    TextButton(
+                      onPressed: () async {
                         if (controller.text.isNotEmpty) {
                           final currentUser = FirebaseAuth.instance.currentUser;
-                          if (currentUser?.email != null) {
-                                try {
-                                  // Update Firebase
-                                  await FirebaseFirestore.instance
-                                      .collection('users')
-                                  .doc(currentUser!.email)
+                          if (currentUser != null && currentUser.email != null) {
+                            try {
+                              // Update Firebase
+                              await FirebaseFirestore.instance
+                                  .collection('users')
+                                  .doc(currentUser.email)
                                   .update({'lastName': controller.text});
-                                } catch (e) {
+                            } catch (e) {
                               print("Error updating surname: $e");
                             }
-                                }
-                              }
-                              Navigator.pop(context);
-                            },
-                            child: Text('Save'),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                );
-              },
-            );
-          }
-        }
+                          }
+                        }
+                        Navigator.pop(context);
+                      },
+                      child: Text('Save'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          );
+        },
+      );
     }
+  }
+}
