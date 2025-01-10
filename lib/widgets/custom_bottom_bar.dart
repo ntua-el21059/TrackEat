@@ -43,9 +43,9 @@ class CustomBottomBarState extends State<CustomBottomBar> {
             ),
           ),
           child: Container(
-            padding: const EdgeInsets.only(
+            padding: EdgeInsets.only(
               top: 5,
-              bottom: 15,
+              bottom: Platform.isAndroid ? 5 : 15,
             ),
             constraints: BoxConstraints(maxWidth: ThemeConstants.maxWidth),
             child: Row(
@@ -105,7 +105,10 @@ class CustomBottomBarState extends State<CustomBottomBar> {
       content = SafeArea(
         top: false,
         bottom: true,
-        child: content,
+        child: Container(
+          padding: EdgeInsets.zero, // Remove any extra padding
+          child: content,
+        ),
       );
     } else if (Platform.isIOS) {
       content = Padding(
@@ -126,7 +129,7 @@ class CustomBottomBarState extends State<CustomBottomBar> {
     required bool isSelected,
   }) {
     final Color selectedColor = const Color(0xFF007AFF);
-    
+
     return GestureDetector(
       onTap: () {
         widget.onChanged?.call(type);
