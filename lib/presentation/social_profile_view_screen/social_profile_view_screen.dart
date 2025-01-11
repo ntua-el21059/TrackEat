@@ -9,6 +9,7 @@ import '../../widgets/app_bar/appbar_leading_image.dart';
 import '../../widgets/app_bar/appbar_subtitle.dart';
 import '../../widgets/app_bar/custom_app_bar.dart';
 import '../../widgets/custom_elevated_button.dart';
+import '../../widgets/cached_profile_picture.dart';
 import '../social_profile_message_from_profile_screen/social_profile_message_from_profile_screen.dart';
 import '../social_profile_myself_screen/widgets/gridvector_one_item_widget.dart';
 import '../social_profile_myself_screen/widgets/listvegan_item_widget.dart';
@@ -19,9 +20,6 @@ import '../../services/friend_service.dart';
 class SocialProfileViewScreen extends StatefulWidget {
   final String username;
   final String backButtonText;
-  
-  // Static cache for profile pictures
-  static final Map<String, Uint8List> _profilePictureCache = {};
   
   const SocialProfileViewScreen({
     Key? key,
@@ -171,16 +169,6 @@ class SocialProfileViewScreenState extends State<SocialProfileViewScreen> {
     final lastName = data?['lastName']?.toString() ?? '';
     final username = data?['username']?.toString() ?? '';
     final email = data?['email']?.toString() ?? '';
-    final profilePicture = data?['profilePicture'] as String?;
-
-    // Check if we need to update the cache
-    if (profilePicture != null && profilePicture.isNotEmpty) {
-      final decodedImage = base64Decode(profilePicture);
-      if (!SocialProfileViewScreen._profilePictureCache.containsKey(username) ||
-          !listEquals(SocialProfileViewScreen._profilePictureCache[username]!, decodedImage)) {
-        SocialProfileViewScreen._profilePictureCache[username] = decodedImage;
-      }
-    }
 
     return Container(
       width: double.maxFinite,
@@ -190,28 +178,13 @@ class SocialProfileViewScreenState extends State<SocialProfileViewScreen> {
         children: [
           Row(
             children: [
-              ClipOval(
-                child: SocialProfileViewScreen._profilePictureCache.containsKey(username)
-                    ? Image.memory(
-                        SocialProfileViewScreen._profilePictureCache[username]!,
-                        height: 80.h,
-                        width: 80.h,
-                        fit: BoxFit.cover,
-                      )
-                    : Container(
-                        height: 80.h,
-                        width: 80.h,
-                        decoration: BoxDecoration(
-                          color: Colors.grey[200],
-                          shape: BoxShape.circle,
-                        ),
-                        child: SvgPicture.asset(
-                          'assets/images/person.crop.circle.fill.svg',
-                          height: 80.h,
-                          width: 80.h,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
+              SizedBox(
+                height: 80.h,
+                width: 80.h,
+                child: CachedProfilePicture(
+                  email: email,
+                  size: 80.h,
+                ),
               ),
               SizedBox(width: 12.h),
               Expanded(
@@ -569,7 +542,6 @@ class FriendButton extends StatefulWidget {
 class _FriendButtonState extends State<FriendButton> {
   final FriendService _friendService = FriendService();
   bool _isFriend = false;
-  bool _isLoading = false;
   StreamSubscription? _friendStatusSubscription;
 
   @override
@@ -578,7 +550,6 @@ class _FriendButtonState extends State<FriendButton> {
     // First check the cache
     if (FriendButton._friendStatusCache.containsKey(widget.userId)) {
       _isFriend = FriendButton._friendStatusCache[widget.userId]!;
-      _isLoading = false;
     } else {
       // If not in cache, do initial fetch
       _checkFriendStatus();
@@ -598,7 +569,6 @@ class _FriendButtonState extends State<FriendButton> {
       if (mounted && FriendButton._friendStatusCache[widget.userId] != isFollowing) {
         setState(() {
           _isFriend = isFollowing;
-          _isLoading = false;
         });
         FriendButton._friendStatusCache[widget.userId] = isFollowing;
       }
@@ -607,12 +577,10 @@ class _FriendButtonState extends State<FriendButton> {
 
   Future<void> _checkFriendStatus() async {
     if (!FriendButton._friendStatusCache.containsKey(widget.userId)) {
-      setState(() => _isLoading = true);
       final isFollowing = await _friendService.isFollowing(widget.userId);
       if (mounted) {
         setState(() {
           _isFriend = isFollowing;
-          _isLoading = false;
         });
         FriendButton._friendStatusCache[widget.userId] = isFollowing;
       }
@@ -620,57 +588,47 @@ class _FriendButtonState extends State<FriendButton> {
   }
 
   Future<void> _toggleFriendStatus() async {
-    setState(() => _isLoading = true);
+    // Update UI immediately for better UX
+    setState(() {
+      _isFriend = !_isFriend;
+    });
+    FriendButton._friendStatusCache[widget.userId] = _isFriend;
+    
     try {
       if (_isFriend) {
-        await _friendService.removeFriend(widget.userId);
-      } else {
         await _friendService.addFriend(widget.userId);
-      }
-      // Update cache immediately for better UX
-      FriendButton._friendStatusCache[widget.userId] = !_isFriend;
-      if (mounted) {
-        setState(() {
-          _isFriend = !_isFriend;
-          _isLoading = false;
-        });
+      } else {
+        await _friendService.removeFriend(widget.userId);
       }
     } catch (e) {
       print('Error toggling friend status: $e');
-      // Revert cache on error
-      FriendButton._friendStatusCache[widget.userId] = _isFriend;
+      // Revert UI on error
       if (mounted) {
-        setState(() => _isLoading = false);
+        setState(() {
+          _isFriend = !_isFriend;
+        });
       }
+      FriendButton._friendStatusCache[widget.userId] = !_isFriend;
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return CustomElevatedButton(
-      text: _isLoading ? "Loading..." : (_isFriend ? "Friends" : "Add Friend"),
+      text: _isFriend ? "Friends" : "Add Friend",
       height: 48.h,
-      rightIcon: _isLoading 
-          ? SizedBox(
-              height: 16.h,
-              width: 16.h,
-              child: CircularProgressIndicator(
-                color: Colors.white,
-                strokeWidth: 2,
-              ),
-            )
-          : Container(
-              margin: EdgeInsets.only(left: 6.h),
-              child: SizedBox(
-                height: 16.h,
-                width: 16.h,
-                child: CustomImageView(
-                  imagePath: _isFriend ? ImageConstant.imgFriendsIcon : ImageConstant.imgAddFriend,
-                  fit: BoxFit.contain,
-                  color: Colors.white,
-                ),
-              ),
-            ),
+      rightIcon: Container(
+        margin: EdgeInsets.only(left: 6.h),
+        child: SizedBox(
+          height: 16.h,
+          width: 16.h,
+          child: CustomImageView(
+            imagePath: _isFriend ? ImageConstant.imgFriendsIcon : ImageConstant.imgAddFriend,
+            fit: BoxFit.contain,
+            color: Colors.white,
+          ),
+        ),
+      ),
       buttonStyle: ButtonStyle(
         backgroundColor: MaterialStateProperty.all(theme.colorScheme.primary),
         shape: MaterialStateProperty.all(
@@ -681,7 +639,7 @@ class _FriendButtonState extends State<FriendButton> {
         elevation: MaterialStateProperty.all(0),
       ),
       buttonTextStyle: CustomTextStyles.titleSmallSemiBold.copyWith(color: Colors.white),
-      onPressed: _isLoading ? null : _toggleFriendStatus,
+      onPressed: _toggleFriendStatus,
     );
   }
 } 

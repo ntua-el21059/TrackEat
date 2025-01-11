@@ -159,6 +159,29 @@ class LeaderboardProvider extends ChangeNotifier {
       }
 
       // If no cache, fetch fresh data
+      final List<LeaderboardUserModel> initialUsers = [];
+
+      // First, add the current user
+      final currentUserDoc = await _firestore.collection('users').doc(currentUser.email).get();
+      if (currentUserDoc.exists) {
+        final data = currentUserDoc.data()!;
+        if (data['username'] != null && data['username'].toString().isNotEmpty) {
+          String? profilePicture = await _profilePictureCache.getOrUpdateCache(currentUser.email!, null);
+          
+          final user = LeaderboardUserModel(
+            username: data['username'] ?? '',
+            fullName: "${data['firstName'] ?? ''} ${data['lastName'] ?? ''}".trim(),
+            points: (data['points'] as num?)?.toInt() ?? 0,
+            email: currentUser.email!,
+            isCurrentUser: true,
+            profileImage: profilePicture,
+          );
+          initialUsers.add(user);
+          _userCache[currentUser.email!] = user;
+        }
+      }
+
+      // Then fetch friends
       final friendsSnapshot = await _firestore
           .collection('friends')
           .where('followerId', isEqualTo: currentUser.email)
@@ -168,10 +191,7 @@ class LeaderboardProvider extends ChangeNotifier {
           .map((doc) => doc.data()['followingId'] as String)
           .toList();
 
-      friendEmails.add(currentUser.email!);
-
-      // Fetch all users at once first time
-      final List<LeaderboardUserModel> initialUsers = [];
+      // Fetch friend details
       for (String email in friendEmails) {
         final userDoc = await _firestore.collection('users').doc(email).get();
         if (userDoc.exists) {
@@ -184,7 +204,7 @@ class LeaderboardProvider extends ChangeNotifier {
               fullName: "${data['firstName'] ?? ''} ${data['lastName'] ?? ''}".trim(),
               points: (data['points'] as num?)?.toInt() ?? 0,
               email: email,
-              isCurrentUser: email == currentUser.email,
+              isCurrentUser: false,
               profileImage: profilePicture,
             );
             initialUsers.add(user);

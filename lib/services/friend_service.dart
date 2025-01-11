@@ -56,6 +56,7 @@ class FriendService {
             'timestamp': FieldValue.serverTimestamp(),
             'isRead': false,
             'type': 'friend_request',
+            'senderId': currentUserEmail,
           });
           print('Notification created successfully');
         } else {
@@ -72,7 +73,8 @@ class FriendService {
 
   // Remove a friend/unfollow a user
   Future<void> removeFriend(String followingId) async {
-    final currentUserEmail = _auth.currentUser?.email;
+    final currentUser = _auth.currentUser;
+    final currentUserEmail = currentUser?.email;
     if (currentUserEmail == null) return;
 
     try {
@@ -83,13 +85,35 @@ class FriendService {
           .where('followingId', isEqualTo: followingId)
           .get();
 
-      // Delete all matching documents (should only be one)
-      for (var doc in querySnapshot.docs) {
-        await doc.reference.delete();
-      }
+      // Delete the exact friend document
+      if (querySnapshot.docs.isNotEmpty) {
+        final friendDoc = querySnapshot.docs.first;
+        await friendDoc.reference.delete();
 
-      // Remove points for removing a friend
-      await _pointsService.removeFriendPoints();
+        // Get current user's username to find and delete the notification
+        final currentUserDoc = await _firestore.collection('users').doc(currentUserEmail).get();
+        if (currentUserDoc.exists) {
+          final currentUsername = currentUserDoc.data()?['username'] as String?;
+          if (currentUsername != null) {
+            // Delete the friend request notification from the other user's notifications
+            final notificationsQuery = await _firestore
+                .collection('users')
+                .doc(followingId)
+                .collection('notifications')
+                .where('message', isEqualTo: '@$currentUsername added you as a friend')
+                .where('type', isEqualTo: 'friend_request')
+                .where('senderId', isEqualTo: currentUserEmail)
+                .get();
+                
+            for (var doc in notificationsQuery.docs) {
+              await doc.reference.delete();
+            }
+          }
+        }
+
+        // Remove points for removing a friend
+        await _pointsService.removeFriendPoints();
+      }
     } catch (e) {
       print('Error removing friend: $e');
       rethrow;
