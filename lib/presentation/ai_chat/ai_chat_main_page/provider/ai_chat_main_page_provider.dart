@@ -4,12 +4,10 @@ import 'package:image_picker/image_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:convert';
 import '../../../../models/meal.dart';
-import '../../../../models/award_model.dart';
 import '../../../../services/meal_service.dart';
 import '../../../../services/points_service.dart';
 import '../../../../services/awards_service.dart';
 import '../models/ai_chat_main_page_model.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 const String apiKey = 'AIzaSyDe5fyQXDIfgZ1paU5Ax5HNj6gNyWA0MAA';
 const List<String> modelNames = [
@@ -416,21 +414,30 @@ class AiChatMainProvider extends ChangeNotifier {
                     servingSize = '1 serving';
                   }
                   
-                  // Check if it's a whole item
-                  bool isWholeItem = servingSize.toLowerCase().contains('whole');
-                  
-                  String formattedServingSize = servingSize;
-                  if (!isWholeItem) {  // Only apply quantity formatting if not a whole item
-                    if (quantity != 1.0) {
-                      formattedServingSize = "${quantity.toStringAsFixed(0)}x $servingSize";
+                  // Format serving size based on type
+                  if (servingSize.toLowerCase().contains('slice')) {
+                    nutritionData['serving_size'] = quantity == 1.0 ? "1 slice" : "${quantity.toInt()} slices";
+                  } else {
+                    // Check if it's a whole item or specific unit
+                    bool isWholeItem = servingSize.toLowerCase().contains('whole') || 
+                                     servingSize.toLowerCase().contains('piece') ||
+                                     servingSize.toLowerCase().contains('cup');
+                    
+                    if (!isWholeItem) {  // Only apply quantity formatting if not a whole item
+                      if (quantity != 1.0) {
+                        servingSize = "${quantity.toInt()}x $servingSize";
+                      }
+                      // Only apply size modifier for single portions
+                      if (quantity == 1.0 && sizeModifier != null && sizeModifier != 'null') {
+                        servingSize = "$sizeModifier $servingSize";
+                      }
+                    } else if (quantity != 1.0) {
+                      // For whole items with quantity > 1, just show the number
+                      servingSize = "${quantity.toInt()} $servingSize";
                     }
-                    // Only apply size modifier for single portions and non-whole items
-                    if (quantity == 1.0 && sizeModifier != null && sizeModifier != 'null') {
-                      formattedServingSize = "$sizeModifier $formattedServingSize";
-                    }
+                    nutritionData['serving_size'] = servingSize;
                   }
                   
-                  nutritionData['serving_size'] = formattedServingSize;
                   lastNutritionData = nutritionData;
                   
                   String formattedResponse = _formatNutritionResponse(nutritionData);
@@ -476,8 +483,8 @@ class AiChatMainProvider extends ChangeNotifier {
       final analysis = await _analyzeMessage(message, previousFood: _previousFood);
 
       // Check for "don't know" responses first
-      final initialResponseType = await _checkResponseType(message);
-      if (initialResponseType == "dontknow" || initialResponseType == "estimate") {
+      final responseType = await _checkResponseType(message);
+      if (responseType == "dontknow" || responseType == "estimate") {
         if (_previousFood != null && _previousFood!.isNotEmpty) {
           // Get nutrition data with default estimations
           final nutritionData = await _getNutritionFromText(_previousFood!);
@@ -514,47 +521,72 @@ class AiChatMainProvider extends ChangeNotifier {
           final response = await _chat.sendMessage(Content.text(message));
           if (response.text != null) {
             _addMessageAndNotify(response.text!.trim(), role: 'assistant');
+            isLoading = false;
+            notifyListeners();
+            return;  // Return after successful message
           }
         } catch (e, stackTrace) {
           print('Error sending message: $e');
           print('Stacktrace: $stackTrace');
-          _addMessageAndNotify('Sorry, I encountered an error. Please try again.', role: 'assistant');
+          
+          // Try all available models
+          bool success = false;
+          for (int i = 0; i < modelNames.length; i++) {
+            try {
+              print('🤖 Attempting with model ${i + 1}/${modelNames.length}: ${modelNames[_currentModelIndex]}');
+              
+              await _switchToNextModel();
+              _chat = _model.startChat(history: [
+                Content.text(_systemPrompt),
+                ...messages.map((msg) => Content.text(msg['content']!)),
+              ]);
+              
+              final response = await _chat.sendMessage(Content.text(message));
+              if (response.text != null) {
+                _addMessageAndNotify(response.text!.trim(), role: 'assistant');
+                success = true;
+                print('🤖 Success with model: ${modelNames[_currentModelIndex]}');
+                isLoading = false;
+                notifyListeners();
+                // Reset the model to use this successful one for future operations
+                await _resetModel('continueWithSuccessfulModel');
+                return;  // Return immediately after successful model switch
+              }
+            } catch (retryError) {
+              print('🤖 Error with model attempt ${i + 1}: $retryError');
+              if (i < modelNames.length - 1) {
+                print('🤖 Trying next model...');
+                continue;
+              }
+            }
+          }
+          
+          if (!success) {
+            print('🤖 All models failed. Sending error message to user.');
+            if (e.toString().contains('Resource has been exhausted') || 
+                e.toString().contains('503')) {
+              _addMessageAndNotify('Server is overloaded. Try again in a bit!', role: 'assistant');
+            } else {
+              _addMessageAndNotify('Sorry, I encountered an error. Please try again.', role: 'assistant');
+            }
+          }
+          
+          notifyListeners();
+          if (onMessageAdded != null) onMessageAdded!();
+          isLoading = false;
+          notifyListeners();
+          return;  // Return after error handling
         }
-        isLoading = false;
-        notifyListeners();
-        return;
       }
 
-      // Check response type and handle estimation/don't know/negative responses
-      final responseType = await _checkResponseType(message);
-      if (responseType != "none") {
-        // Get nutrition data for the previous food with default values
-        final nutritionData = await _getNutritionFromText(_previousFood ?? message);
-        lastNutritionData = nutritionData;
-
-        String formattedResponse = _formatNutritionResponse(nutritionData);
+      // If tracking dialog is visible and we have a don't know/estimate response, use default estimation
+      if (showTrackDialog && lastNutritionData != null && (responseType == "dontknow" || responseType == "estimate")) {
+        String formattedResponse = _formatNutritionResponse(lastNutritionData!);
         _addMessageAndNotify(formattedResponse, role: 'assistant');
-        
         showTrackDialog = true;
-        _userProvidedNutrition = null;
-        isLoading = false;
         notifyListeners();
         if (onMessageAdded != null) onMessageAdded!();
         return;
-      }
-
-      // If tracking dialog is visible, check for food specification or modification
-      if (showTrackDialog && lastNutritionData != null) {
-        final unknownResponse = await _checkResponseType(message);
-        if (unknownResponse == "dontknow" || unknownResponse == "estimate") {
-          // Use default estimation for the food
-          String formattedResponse = _formatNutritionResponse(lastNutritionData!);
-          _addMessageAndNotify(formattedResponse, role: 'assistant');
-          showTrackDialog = true;
-          notifyListeners();
-          if (onMessageAdded != null) onMessageAdded!();
-          return;
-        }
       }
 
       // Handle new tracking intent
@@ -579,8 +611,12 @@ class AiChatMainProvider extends ChangeNotifier {
             nutritionData['carbs'] = (nutritionData['carbs'] as num) * quantity * multiplier;
             nutritionData['fat'] = (nutritionData['fat'] as num) * quantity * multiplier;
             
-            String sizePrefix = sizeModifier != null ? "${sizeModifier} " : "";
-            nutritionData['serving_size'] = "${quantity}x ${sizePrefix}${nutritionData['serving_size']}";
+            String sizePrefix = sizeModifier != null && sizeModifier != 'null' ? "$sizeModifier " : "";
+            if (nutritionData['serving_size'].toString().toLowerCase().contains('slice')) {
+              nutritionData['serving_size'] = quantity == 1 ? "1 slice" : "${quantity.toInt()} slices";
+            } else {
+              nutritionData['serving_size'] = quantity == 1 ? "${sizePrefix}${nutritionData['serving_size']}" : "${quantity.toInt()}x ${sizePrefix}${nutritionData['serving_size']}";
+            }
             
             lastNutritionData = nutritionData;
 
@@ -744,6 +780,9 @@ class AiChatMainProvider extends ChangeNotifier {
     if (lastNutritionData == null || _auth.currentUser == null) return;
 
     selectedMealType = mealType;
+    showMealTypeSelection = false;
+    showTrackDialog = true;  // Keep this true to show the success message
+    showTrackingSuccess = true;
     notifyListeners();
 
     try {
@@ -763,27 +802,22 @@ class AiChatMainProvider extends ChangeNotifier {
         date: DateTime.now(),
       );
 
+      // Save the meal and update points
       await _mealService.addMeal(meal);
       await _pointsService.addMealPoints();
 
-      // Check and update award status
+      // Update award status
       try {
         final userEmail = _auth.currentUser!.email!;
-        
-        // Update the existing award with id = 1
         await _awardsService.updateAwardStatus(userEmail, '1', true);
       } catch (e) {
         print('Error updating award status: $e');
       }
 
-      showTrackingSuccess = true;
+      // Auto-dismiss after 2 seconds
+      await Future.delayed(const Duration(seconds: 2));
+      _resetAllStates();  // Use the reset method to clean up all states
       notifyListeners();
-
-      // Auto-dismiss after 2 seconds and reset all states
-      Future.delayed(Duration(seconds: 2), () {
-        _resetAllStates();
-        notifyListeners();
-      });
     } catch (e) {
       print('Error saving meal: $e');
       _resetAllStates();
@@ -910,6 +944,11 @@ class AiChatMainProvider extends ChangeNotifier {
       print('Error analyzing message: $e');
     }
     return {};
+  }
+
+  void setTrackingSuccess(bool value) {
+    showTrackingSuccess = value;
+    notifyListeners();
   }
 
   @override

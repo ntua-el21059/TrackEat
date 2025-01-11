@@ -82,9 +82,9 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> with TickerPro
               vsync: this,
             );
 
-            showModalBottomSheet(
-              context: context,
-              isScrollControlled: true,
+          showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
               backgroundColor: CupertinoColors.white,
               enableDrag: true,
               isDismissible: true,
@@ -98,7 +98,7 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> with TickerPro
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
               ),
-              builder: (BuildContext context) {
+            builder: (BuildContext context) {
                 return GestureDetector(
                   onTap: () => FocusScope.of(context).unfocus(),
                   behavior: HitTestBehavior.opaque,
@@ -106,8 +106,8 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> with TickerPro
                     child: SingleChildScrollView(
                       physics: ClampingScrollPhysics(),
                       child: Container(
-                        padding: EdgeInsets.only(
-                          bottom: MediaQuery.of(context).viewInsets.bottom,
+                padding: EdgeInsets.only(
+                  bottom: MediaQuery.of(context).viewInsets.bottom,
                         ),
                         child: WillPopScope(
                           onWillPop: () async {
@@ -119,10 +119,10 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> with TickerPro
                             padding: EdgeInsets.symmetric(
                               horizontal: 16,
                               vertical: 16,
-                            ),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
                                 Container(
                                   height: 44,
                                   decoration: BoxDecoration(
@@ -275,12 +275,12 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> with TickerPro
                                 ),
                               ),
                               SizedBox(height: 16.h),
-                              TextField(
-                                controller: _textController,
-                                autofocus: true,
+                    TextField(
+                      controller: _textController,
+                      autofocus: true,
                                 keyboardType: TextInputType.name,
                                 style: TextStyle(color: Colors.black),
-                                decoration: InputDecoration(
+                      decoration: InputDecoration(
                                   hintText: 'Enter ${title.toLowerCase()}',
                                   filled: true,
                                   fillColor: Colors.white.withOpacity(0.1),
@@ -297,79 +297,79 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> with TickerPro
                                   FilteringTextInputFormatter.digitsOnly,
                                   LengthLimitingTextInputFormatter(3),
                                 ],
-                              ),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  TextButton(
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
                                     onPressed: () {
                                       FocusScope.of(context).unfocus();
                                       Navigator.pop(context);
                                       _textController?.clear();
                                     },
-                                    child: Text('Cancel'),
-                                  ),
-                                  TextButton(
-                                    onPressed: () async {
+                          child: Text('Cancel'),
+                        ),
+                        TextButton(
+                          onPressed: () async {
                                       FocusScope.of(context).unfocus();
                                       final newValue = _textController?.text.trim() ?? '';
                                       Navigator.pop(context);
                                       _textController?.clear();
                                       
-                                      if (newValue.isNotEmpty) {
-                                        try {
-                                          await FirebaseFirestore.instance
-                                              .collection('users')
-                                              .doc(currentUser!.email)
-                                              .update({
-                                            if (title == "Name") 'firstName': newValue,
-                                            if (title == "Surname") 'lastName': newValue,
-                                            if (title == "Birthday") 'birthdate': newValue,
-                                            if (title == "Gender") 'gender': newValue,
-                                            if (title == "Height") 'height': newValue.replaceAll(" cm", ""),
-                                            if (title == "Username") 'username': newValue,
-                                          });
+                            if (newValue.isNotEmpty) {
+                                try {
+                                  await FirebaseFirestore.instance
+                                      .collection('users')
+                                      .doc(currentUser!.email)
+                                      .update({
+                                    if (title == "Name") 'firstName': newValue,
+                                    if (title == "Surname") 'lastName': newValue,
+                                    if (title == "Birthday") 'birthdate': newValue,
+                                    if (title == "Gender") 'gender': newValue,
+                                    if (title == "Height") 'height': newValue.replaceAll(" cm", ""),
+                                    if (title == "Username") 'username': newValue,
+                                  });
 
-                                          if (mounted) {
-                                            final userInfoProvider = Provider.of<UserInfoProvider>(context, listen: false);
-                                            switch (title) {
-                                              case "Name":
-                                                await userInfoProvider.updateName(newValue, userInfoProvider.lastName);
-                                                break;
-                                              case "Surname":
-                                                await userInfoProvider.updateName(userInfoProvider.firstName, newValue);
-                                                break;
-                                              case "Birthday":
-                                                await userInfoProvider.updateBirthdate(newValue);
-                                                break;
-                                              case "Gender":
-                                                await userInfoProvider.updateGender(newValue);
-                                                break;
-                                              case "Height":
-                                                await userInfoProvider.updateHeight(newValue.replaceAll(" cm", ""));
-                                                break;
-                                              case "Username":
-                                                await userInfoProvider.updateUsername(newValue);
-                                                break;
-                                            }
-                                          }
-                                        } catch (e) {
-                                          print("Error updating Firestore: $e");
-                                        }
-                                      }
-                                    },
-                                    child: Text('Save'),
-                                  ),
-                                ],
-                              ),
-                            ],
+                                  if (mounted) {
+                                    final userInfoProvider = Provider.of<UserInfoProvider>(context, listen: false);
+                                    switch (title) {
+                                      case "Name":
+                                        await userInfoProvider.updateName(newValue, userInfoProvider.lastName);
+                                        break;
+                                      case "Surname":
+                                        await userInfoProvider.updateName(userInfoProvider.firstName, newValue);
+                                        break;
+                                      case "Birthday":
+                                        await userInfoProvider.updateBirthdate(newValue);
+                                        break;
+                                      case "Gender":
+                                        await userInfoProvider.updateGender(newValue);
+                                        break;
+                                      case "Height":
+                                        await userInfoProvider.updateHeight(newValue.replaceAll(" cm", ""));
+                                        break;
+                                      case "Username":
+                                        await userInfoProvider.updateUsername(newValue);
+                                        break;
+                                    }
+                                  }
+                                } catch (e) {
+                                  print("Error updating Firestore: $e");
+                                }
+                            }
+                          },
+                          child: Text('Save'),
+                        ),
+                      ],
+                    ),
+                  ],
                           ),
                         ),
                       ),
                     ),
-                  ),
-                );
-              },
+                ),
+              );
+            },
             ).whenComplete(() {
               // No need for any cleanup here as it's handled in the dismiss actions
             });
@@ -391,21 +391,21 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> with TickerPro
           final userData = doc.data()!;
           final birthdate = userData['birthdate']?.toString() ?? '';
           
-          DateTime initialDate = DateTime.now().subtract(Duration(days: 365 * 18)); // Default to 18 years ago
-          try {
+    DateTime initialDate = DateTime.now().subtract(Duration(days: 365 * 18)); // Default to 18 years ago
+    try {
             if (birthdate.isNotEmpty) {
               List<String> parts = birthdate.split('/');
-              if (parts.length == 3) {
-                initialDate = DateTime(
-                  int.parse(parts[2]),  // year
-                  int.parse(parts[1]),  // month
-                  int.parse(parts[0]),  // day
-                );
-              }
-            }
-          } catch (e) {
-            print("Error parsing date: $e");
-          }
+        if (parts.length == 3) {
+          initialDate = DateTime(
+            int.parse(parts[2]),  // year
+            int.parse(parts[1]),  // month
+            int.parse(parts[0]),  // day
+          );
+        }
+      }
+    } catch (e) {
+      print("Error parsing date: $e");
+    }
 
           if (Platform.isIOS) {
             showModalBottomSheet(
@@ -522,43 +522,43 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> with TickerPro
                         width: double.infinity,
                         child: OutlinedButton(
                           onPressed: () async {
-                            final DateTime? picked = await showDatePicker(
-                              context: context,
-                              initialDate: initialDate,
-                              firstDate: DateTime(1900),
-                              lastDate: DateTime.now(),
-                              builder: (BuildContext context, Widget? child) {
-                                return Theme(
-                                  data: Theme.of(context).copyWith(
-                                    colorScheme: ColorScheme.light(
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+      builder: (BuildContext context, Widget? child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
                                       primary: theme.primaryColor,
-                                      onPrimary: Colors.white,
-                                      surface: Colors.white,
-                                      onSurface: Colors.black,
-                                    ),
-                                  ),
-                                  child: child!,
-                                );
-                              },
-                            );
+              onPrimary: Colors.white,
+              surface: Colors.white,
+              onSurface: Colors.black,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
 
-                            if (picked != null) {
-                              String formattedDate = '${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}';
-                              try {
+    if (picked != null) {
+      String formattedDate = '${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}';
+        try {
                                 // Update Firebase
-                                await FirebaseFirestore.instance
-                                    .collection('users')
-                                    .doc(currentUser!.email)
-                                    .update({'birthdate': formattedDate});
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(currentUser!.email)
+              .update({'birthdate': formattedDate});
 
-                                // Update local provider
-                                if (context.mounted) {
-                                  final userInfoProvider = Provider.of<UserInfoProvider>(context, listen: false);
-                                  await userInfoProvider.updateBirthdate(formattedDate);
-                                }
-                              } catch (e) {
-                                print("Error updating birthdate: $e");
-                              }
+          // Update local provider
+          if (context.mounted) {
+            final userInfoProvider = Provider.of<UserInfoProvider>(context, listen: false);
+            await userInfoProvider.updateBirthdate(formattedDate);
+          }
+        } catch (e) {
+          print("Error updating birthdate: $e");
+        }
                               if (context.mounted) {
                                 Navigator.pop(context);
                               }
@@ -617,15 +617,15 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> with TickerPro
           _textController?.text = heightValue.replaceAll(" cm", "").trim();
 
           if (Platform.isIOS) {
-            showModalBottomSheet(
-              context: context,
-              isScrollControlled: true,
+          showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
               backgroundColor: CupertinoColors.white,
               enableDrag: true,
               isDismissible: true,
               useRootNavigator: true,
               barrierColor: Colors.black.withOpacity(0.5),
-              shape: RoundedRectangleBorder(
+            shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
               ),
               builder: (BuildContext context) {
@@ -725,33 +725,33 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> with TickerPro
               backgroundColor: Colors.white.withOpacity(0.7),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
-              ),
-              builder: (BuildContext context) {
-                return Padding(
-                  padding: EdgeInsets.only(
-                    bottom: MediaQuery.of(context).viewInsets.bottom,
-                    left: 16.h,
-                    right: 16.h,
-                    top: 16.h,
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        "Height",
-                        style: theme.textTheme.titleLarge?.copyWith(
-                          color: Colors.black,
-                          fontWeight: FontWeight.bold,
-                        ),
+            ),
+            builder: (BuildContext context) {
+              return Padding(
+                padding: EdgeInsets.only(
+                  bottom: MediaQuery.of(context).viewInsets.bottom,
+                  left: 16.h,
+                  right: 16.h,
+                  top: 16.h,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      "Height",
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        color: Colors.black,
+                        fontWeight: FontWeight.bold,
                       ),
-                      SizedBox(height: 16.h),
-                      TextField(
-                        controller: _textController,
-                        autofocus: true,
-                        keyboardType: TextInputType.number,
-                        style: TextStyle(color: Colors.black),
-                        decoration: InputDecoration(
-                          hintText: 'Enter height (100-251 cm)',
+                    ),
+                    SizedBox(height: 16.h),
+                    TextField(
+                      controller: _textController,
+                      autofocus: true,
+                      keyboardType: TextInputType.number,
+                      style: TextStyle(color: Colors.black),
+                      decoration: InputDecoration(
+                        hintText: 'Enter height (100-251 cm)',
                           suffixText: ' cm',
                           filled: true,
                           fillColor: Colors.white.withOpacity(0.1),
@@ -763,49 +763,49 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> with TickerPro
                             borderSide: BorderSide(color: theme.primaryColor),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                        ),
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                          LengthLimitingTextInputFormatter(3),
-                        ],
                       ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context),
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(3),
+                      ],
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
                             child: Text('Cancel'),
-                          ),
-                          TextButton(
-                            onPressed: () async {
+                            ),
+                        TextButton(
+                          onPressed: () async {
                               if (_textController?.text.isNotEmpty ?? false) {
-                                try {
+                              try {
                                   // Update Firebase
-                                  await FirebaseFirestore.instance
-                                      .collection('users')
-                                      .doc(currentUser!.email)
+                                await FirebaseFirestore.instance
+                                    .collection('users')
+                                    .doc(currentUser!.email)
                                       .update({'height': _textController?.text ?? ''});
 
-                                  // Update local provider
+                                // Update local provider
                                   if (mounted) {
-                                    final userInfoProvider = Provider.of<UserInfoProvider>(context, listen: false);
+                                  final userInfoProvider = Provider.of<UserInfoProvider>(context, listen: false);
                                     await userInfoProvider.updateHeight(_textController?.text ?? '');
-                                  }
-                                } catch (e) {
-                                  print("Error updating height: $e");
                                 }
+                              } catch (e) {
+                                print("Error updating height: $e");
+                              }
                               }
                               Navigator.pop(context);
                             },
                             child: Text('Save'),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                );
-              },
-            );
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            },
+          );
           }
         }
       });
@@ -890,10 +890,10 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> with TickerPro
         if (doc.exists) {
           final userData = doc.data()!;
           selectedGender = userData['gender']?.toString() ?? 'Male';
-          
-          if (Platform.isIOS) {
+
+    if (Platform.isIOS) {
             showModalBottomSheet(
-              context: context,
+        context: context,
               isScrollControlled: true,
               backgroundColor: CupertinoColors.white,
               enableDrag: true,
@@ -903,8 +903,8 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> with TickerPro
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
               ),
-              builder: (BuildContext context) {
-                return Container(
+        builder: (BuildContext context) {
+          return Container(
                   height: 320,
                   padding: EdgeInsets.only(top: 16),
                   child: Column(
@@ -933,18 +933,18 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> with TickerPro
                               padding: EdgeInsets.symmetric(horizontal: 16),
                               onPressed: () async {
                                 try {
-                                  await FirebaseFirestore.instance
-                                      .collection('users')
-                                      .doc(currentUser!.email)
+                      await FirebaseFirestore.instance
+                          .collection('users')
+                          .doc(currentUser!.email)
                                       .update({'gender': selectedGender});
 
-                                  if (context.mounted) {
-                                    final userInfoProvider = Provider.of<UserInfoProvider>(context, listen: false);
+                      if (context.mounted) {
+                        final userInfoProvider = Provider.of<UserInfoProvider>(context, listen: false);
                                     await userInfoProvider.updateGender(selectedGender);
-                                  }
-                                } catch (e) {
-                                  print("Error updating gender: $e");
-                                }
+                      }
+                    } catch (e) {
+                      print("Error updating gender: $e");
+                    }
                                 Navigator.pop(context);
                               },
                               child: Text('Save', style: TextStyle(color: Color(0xFF4A90E2))),
@@ -960,86 +960,86 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> with TickerPro
                           itemExtent: 44,
                           onSelectedItemChanged: (int index) {
                             selectedGender = genderOptions[index];
-                          },
-                          children: genderOptions.map((gender) => 
+                },
+                children: genderOptions.map((gender) => 
                             Center(
                               child: Text(
-                                gender,
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  color: CupertinoColors.black,
+                    gender,
+                    style: TextStyle(
+                      fontSize: 20,
+                      color: CupertinoColors.black,
                                 ),
-                              ),
-                            )
-                          ).toList(),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            );
-          } else {
-            showModalBottomSheet(
-              context: context,
-              backgroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
+                    ),
+                  )
+                ).toList(),
               ),
-              builder: (BuildContext context) {
-                return Container(
-                  padding: EdgeInsets.symmetric(vertical: 20.h),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        "Select Gender",
-                        style: theme.textTheme.titleLarge?.copyWith(
-                          color: Colors.black,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      SizedBox(height: 16.h),
-                      ...genderOptions.map((gender) => ListTile(
-                        title: Text(
-                          gender,
-                          style: CustomTextStyles.bodyLargeBlack90018,
-                          textAlign: TextAlign.center,
-                        ),
-                        tileColor: gender == selectedGender ? Colors.blue.withOpacity(0.1) : null,
-                        onTap: () async {
-                          try {
-                            await FirebaseFirestore.instance
-                                .collection('users')
-                                .doc(currentUser!.email)
-                                .update({'gender': gender});
-
-                            if (context.mounted) {
-                              final userInfoProvider = Provider.of<UserInfoProvider>(context, listen: false);
-                              await userInfoProvider.updateGender(gender);
-                            }
-                          } catch (e) {
-                            print("Error updating gender: $e");
-                          }
-                          Navigator.pop(context);
-                        },
-                      )).toList(),
-                      SizedBox(height: 8.h),
-                      TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: Text(
-                          'Cancel',
-                          style: TextStyle(
-                            fontSize: 16.h,
-                            color: Colors.blue,
-                          ),
-                        ),
                       ),
                     ],
+            ),
+          );
+        },
+      );
+    } else {
+      showModalBottomSheet(
+        context: context,
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
+        ),
+        builder: (BuildContext context) {
+          return Container(
+            padding: EdgeInsets.symmetric(vertical: 20.h),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  "Select Gender",
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
                   ),
-                );
-              },
-            );
+                ),
+                SizedBox(height: 16.h),
+                ...genderOptions.map((gender) => ListTile(
+                  title: Text(
+                    gender,
+                    style: CustomTextStyles.bodyLargeBlack90018,
+                    textAlign: TextAlign.center,
+                  ),
+                        tileColor: gender == selectedGender ? Colors.blue.withOpacity(0.1) : null,
+                  onTap: () async {
+                      try {
+                        await FirebaseFirestore.instance
+                            .collection('users')
+                            .doc(currentUser!.email)
+                            .update({'gender': gender});
+
+                        if (context.mounted) {
+                          final userInfoProvider = Provider.of<UserInfoProvider>(context, listen: false);
+                          await userInfoProvider.updateGender(gender);
+                        }
+                      } catch (e) {
+                        print("Error updating gender: $e");
+                    }
+                    Navigator.pop(context);
+                  },
+                )).toList(),
+                SizedBox(height: 8.h),
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text(
+                    'Cancel',
+                    style: TextStyle(
+                      fontSize: 16.h,
+                      color: Colors.blue,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      );
           }
         }
       });

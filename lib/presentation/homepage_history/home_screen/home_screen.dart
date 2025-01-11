@@ -249,39 +249,42 @@ class HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: theme.colorScheme.onErrorContainer,
-      extendBodyBehindAppBar: false,
-      appBar: _buildAppbar(context),
-      body: Container(
-        width: double.maxFinite,
-        decoration: AppDecoration.graysWhite,
-        child: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                child: Container(
-                  width: double.maxFinite,
-                  padding: EdgeInsets.only(
-                    left: 4.h,
-                    top: 22.h,
-                    right: 4.h,
-                  ),
-                  child: Column(
-                    children: [
-                      _buildCalories(context),
-                      SizedBox(height: 16.h),
-                      _buildSuggestionsone(context),
-                      SizedBox(height: 14.h)
-                    ],
+    return WillPopScope(
+      onWillPop: () async => false, // Disable back button and swipe gesture
+      child: Scaffold(
+        backgroundColor: theme.colorScheme.onErrorContainer,
+        extendBodyBehindAppBar: false,
+        appBar: _buildAppbar(context),
+        body: Container(
+          width: double.maxFinite,
+          decoration: AppDecoration.graysWhite,
+          child: Column(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Container(
+                    width: double.maxFinite,
+                    padding: EdgeInsets.only(
+                      left: 4.h,
+                      top: 22.h,
+                      right: 4.h,
+                    ),
+                    child: Column(
+                      children: [
+                        _buildCalories(context),
+                        SizedBox(height: 16.h),
+                        _buildSuggestionsone(context),
+                        SizedBox(height: 14.h)
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            )
-          ],
+              )
+            ],
+          ),
         ),
+        bottomNavigationBar: _buildBottombar(context),
       ),
-      bottomNavigationBar: _buildBottombar(context),
     );
   }
 

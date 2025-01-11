@@ -21,16 +21,42 @@ class AiChatMainScreen extends StatefulWidget {
   }
 }
 
-class AiChatMainScreenState extends State<AiChatMainScreen> {
+class AiChatMainScreenState extends State<AiChatMainScreen> with SingleTickerProviderStateMixin {
   late ScrollController _scrollController;
   late stt.SpeechToText _speech;
   bool _isListening = false;
+  bool _isSending = false;
+  bool _isManualStop = false;
+  late AnimationController _breathingController;
+  late Animation<double> _breathingAnimation;
 
   @override
   void initState() {
     super.initState();
     _scrollController = ScrollController();
     _speech = stt.SpeechToText();
+    
+    // Initialize breathing animation controller with faster speed
+    _breathingController = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: 1000),
+    );
+    
+    // Create breathing animation with larger range
+    _breathingAnimation = Tween<double>(begin: 1.0, end: 1.5)
+      .animate(CurvedAnimation(
+        parent: _breathingController,
+        curve: Curves.easeInOut,
+      ));
+    
+    // Make the animation repeat in both directions
+    _breathingController.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        _breathingController.reverse();
+      } else if (status == AnimationStatus.dismissed) {
+        _breathingController.forward();
+      }
+    });
     
     // Wait for the provider to be available
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -50,80 +76,96 @@ class AiChatMainScreenState extends State<AiChatMainScreen> {
     });
   }
 
-  Future<void> _listen() async {
-    if (!mounted) return;
-    final provider = Provider.of<AiChatMainProvider>(context, listen: false);
+  Future<void> _handleMessageSend() async {
+    if (_isSending) return;
     
-    if (!_isListening) {
-      try {
-        bool available = await _speech.initialize(
-          onStatus: (status) {
-            if (!mounted) return;
-            print('Speech recognition status: $status');
-            setState(() {
-              _isListening = status == 'listening';
-            });
-          },
-          onError: (errorNotification) {
-            if (!mounted) return;
-            print('Speech recognition error: ${errorNotification.errorMsg}');
-            setState(() => _isListening = false);
-            
-            String errorMessage = 'Could not recognize speech. Please try again.';
-            if (errorNotification.errorMsg.contains('timeout')) {
-              errorMessage = 'Please start speaking when you see "Listening..."';
-            }
-            
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(errorMessage),
-                duration: Duration(seconds: 3),
-              ),
-            );
-          },
-        );
+    final provider = Provider.of<AiChatMainProvider>(context, listen: false);
+    final message = provider.messageController.text.trim();
+    if (message.isEmpty) return;
 
-        if (available) {
-          setState(() => _isListening = true);
-          
-          // Show visual indicator that we're about to listen
-          if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Listening...'),
-              backgroundColor: Colors.green,
-              duration: Duration(seconds: 2),
-            ),
-          );
-          
-          await _speech.listen(
-            onResult: (result) {
+    setState(() {
+      _isSending = true;
+      _isManualStop = true;  // Set manual stop flag
+    });
+
+    // Stop listening if active and ensure complete cleanup
+    if (_isListening) {
+      setState(() {
+        _isListening = false;
+        _isManualStop = true;
+      });
+      _breathingController.stop();
+      await _speech.stop();
+      // Small delay to ensure speech recognition is fully stopped
+      await Future.delayed(Duration(milliseconds: 100));
+    }
+
+    // Send message
+    provider.sendMessage(message);
+    
+    // Clear message box and reset states
+    setState(() {
+      provider.messageController.text = '';
+      _isSending = false;
+      _isManualStop = false;
+    });
+  }
+
+  void _listen() async {
+    if (!_isListening) {
+      bool available = await _speech.initialize(
+        onStatus: (status) {
+          if (status == 'done' || status == 'notListening') {
+            if (!_isManualStop) {  // Only handle if not manual stop
+              setState(() {
+                _isListening = false;
+              });
+              _breathingController.stop();
+            }
+          }
+        },
+        onError: (error) {
+          print('Error: $error');
+          setState(() {
+            _isListening = false;
+            _isSending = false;
+            _isManualStop = false;
+          });
+          _breathingController.stop();
+        },
+      );
+
+      if (available) {
+        setState(() {
+          _isListening = true;
+          _isManualStop = false;
+        });
+        _breathingController.forward();
+        
+        await _speech.listen(
+          onResult: (result) {
+            if (!mounted || _isManualStop || _isSending) return;
+            
+            final provider = Provider.of<AiChatMainProvider>(context, listen: false);
+            if (!_isManualStop && !_isSending) {  // Double check to prevent updates after sending
               setState(() {
                 provider.messageController.text = result.recognizedWords;
               });
-            },
-            listenFor: Duration(seconds: 30),
-            pauseFor: Duration(seconds: 8),
-            partialResults: true,
-            cancelOnError: false,
-            listenMode: stt.ListenMode.dictation,
-            localeId: 'en_US', // Explicitly set to English
-          );
-        } else {
-          if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Speech recognition not available on this device')),
-          );
-        }
-      } catch (e) {
-        print('Speech recognition initialization error: $e');
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not initialize speech recognition. Please check app permissions.')),
+            }
+          },
+          listenFor: Duration(seconds: 30),
+          pauseFor: Duration(seconds: 8),
+          partialResults: true,
+          cancelOnError: false,
+          listenMode: stt.ListenMode.dictation,
         );
       }
     } else {
-      setState(() => _isListening = false);
+      setState(() {
+        _isListening = false;
+        _isManualStop = true;  // Ensure manual stop is set when stopping listening
+      });
+      _breathingController.stop();
       await _speech.stop();
     }
   }
@@ -131,6 +173,7 @@ class AiChatMainScreenState extends State<AiChatMainScreen> {
   @override
   void dispose() {
     _scrollController.dispose();
+    _breathingController.dispose();
     _speech.stop();
     super.dispose();
   }
@@ -161,243 +204,246 @@ class AiChatMainScreenState extends State<AiChatMainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      resizeToAvoidBottomInset: true,
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            stops: [0.0, 0.3, 1.0],
-            colors: [
-              Color(0xFF2A85B5), // Lighter blue
-              Color(0xFF1B6A9C), // Mid blue
-              appTheme.cyan900,   // Current cyan
-            ],
+    return WillPopScope(
+      onWillPop: () async => false,
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        resizeToAvoidBottomInset: true,
+        body: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              stops: [0.0, 0.3, 1.0],
+              colors: [
+                Color(0xFF2A85B5), // Lighter blue
+                Color(0xFF1B6A9C), // Mid blue
+                appTheme.cyan900,   // Current cyan
+              ],
+            ),
           ),
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              Consumer<AiChatMainProvider>(
-                builder: (context, provider, child) {
-                  // Only show welcome content if messages are empty and keyboard is closed
-                  if (provider.messages.isEmpty && MediaQuery.of(context).viewInsets.bottom == 0) {
-                    return Column(
-                      children: [
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: Padding(
-                            padding: EdgeInsets.only(right: 20.h, top: 16.h),
-                            child: GestureDetector(
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  PageRouteBuilder(
-                                    opaque: false,
-                                    transitionDuration: Duration(milliseconds: 150),
-                                    reverseTransitionDuration: Duration(milliseconds: 150),
-                                    pageBuilder: (context, _, __) => const InfoBlurScreen(),
-                                    transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                                      return Stack(
-                                        children: [
-                                          FadeTransition(
-                                            opacity: animation,
-                                            child: child,
-                                          ),
-                                          FadeTransition(
-                                            opacity: Tween<double>(begin: 1.0, end: 0.0).animate(animation),
-                                            child: CustomImageView(
-                                              imagePath: ImageConstant.imgInfo,
-                                              height: 24.h,
-                                              width: 24.h,
+          child: SafeArea(
+            child: Column(
+              children: [
+                Consumer<AiChatMainProvider>(
+                  builder: (context, provider, child) {
+                    // Only show welcome content if messages are empty and keyboard is closed
+                    if (provider.messages.isEmpty && MediaQuery.of(context).viewInsets.bottom == 0) {
+                      return Column(
+                        children: [
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: Padding(
+                              padding: EdgeInsets.only(right: 20.h, top: 16.h),
+                              child: GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    PageRouteBuilder(
+                                      opaque: false,
+                                      transitionDuration: Duration(milliseconds: 150),
+                                      reverseTransitionDuration: Duration(milliseconds: 150),
+                                      pageBuilder: (context, _, __) => const InfoBlurScreen(),
+                                      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                                        return Stack(
+                                          children: [
+                                            FadeTransition(
+                                              opacity: animation,
+                                              child: child,
                                             ),
-                                          ),
-                                        ],
-                                      );
-                                    },
-                                  ),
-                                );
-                              },
-                              child: CustomImageView(
-                                imagePath: ImageConstant.imgInfo,
-                                height: 24.h,
-                                width: 24.h,
+                                            FadeTransition(
+                                              opacity: Tween<double>(begin: 1.0, end: 0.0).animate(animation),
+                                              child: CustomImageView(
+                                                imagePath: ImageConstant.imgInfo,
+                                                height: 24.h,
+                                                width: 24.h,
+                                              ),
+                                            ),
+                                          ],
+                                        );
+                                      },
+                                    ),
+                                  );
+                                },
+                                child: CustomImageView(
+                                  imagePath: ImageConstant.imgInfo,
+                                  height: 24.h,
+                                  width: 24.h,
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                        SizedBox(height: SizeUtils.height * 0.05),
-                        Text(
-                          "What can I help\nyou with?",
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 32.h,
-                            fontWeight: FontWeight.w300,
+                          SizedBox(height: SizeUtils.height * 0.05),
+                          Text(
+                            "What can I help\nyou with?",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 32.h,
+                              fontWeight: FontWeight.w300,
+                            ),
                           ),
-                        ),
-                        SizedBox(height: 24.h),
-                        CustomImageView(
-                          imagePath: ImageConstant.imgSiriGraph,
-                          height: 46.h,
-                          width: double.maxFinite,
-                        ),
-                        SizedBox(height: 24.h),
-                      ],
-                    );
-                  }
-                  return const SizedBox.shrink();
-                },
-              ),
-              Expanded(
-                child: Consumer<AiChatMainProvider>(
-                  builder: (context, provider, child) {
-                    if (provider.messages.isEmpty) {
-                      return const SizedBox.shrink();
+                          SizedBox(height: 24.h),
+                          CustomImageView(
+                            imagePath: ImageConstant.imgSiriGraph,
+                            height: 46.h,
+                            width: double.maxFinite,
+                          ),
+                          SizedBox(height: 24.h),
+                        ],
+                      );
                     }
-                    
-                    return ListView.builder(
-                      controller: _scrollController,
-                      reverse: false,
-                      itemCount: provider.messages.length,
-                      padding: EdgeInsets.only(
-                        top: 16.h,
-                        bottom: MediaQuery.of(context).viewInsets.bottom + 80.h, // Add padding when keyboard is open
-                      ),
-                      itemBuilder: (context, index) {
-                        final message = provider.messages[index];
-                        final isUser = message['role'] == 'user';
-                        
-                        // Check if the message contains an image path
-                        final bool hasImagePath = message['content']?.contains('📸') ?? false;
-                        
-                        // If it's a user message with an image
-                        if (isUser && hasImagePath) {
-                          final imagePath = message['content']!.split('\n').last.trim();
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Container(
-                                margin: EdgeInsets.symmetric(vertical: 4.h, horizontal: 16.h),
-                                width: SizeUtils.width * 0.7, // 70% of screen width
-                                height: SizeUtils.height * 0.3, // 30% of screen height
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(16.h),
-                                  image: DecorationImage(
-                                    image: FileImage(File(imagePath)),
-                                    fit: BoxFit.cover,
-                                  ),
-                                ),
-                              ),
-                              if (message['content']!.contains('User note:'))
+                    return const SizedBox.shrink();
+                  },
+                ),
+                Expanded(
+                  child: Consumer<AiChatMainProvider>(
+                    builder: (context, provider, child) {
+                      if (provider.messages.isEmpty) {
+                        return const SizedBox.shrink();
+                      }
+                      
+                      return ListView.builder(
+                        controller: _scrollController,
+                        reverse: false,
+                        itemCount: provider.messages.length,
+                        padding: EdgeInsets.only(
+                          top: 16.h,
+                          bottom: MediaQuery.of(context).viewInsets.bottom + 80.h, // Add padding when keyboard is open
+                        ),
+                        itemBuilder: (context, index) {
+                          final message = provider.messages[index];
+                          final isUser = message['role'] == 'user';
+                          
+                          // Check if the message contains an image path
+                          final bool hasImagePath = message['content']?.contains('📸') ?? false;
+                          
+                          // If it's a user message with an image
+                          if (isUser && hasImagePath) {
+                            final imagePath = message['content']!.split('\n').last.trim();
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
                                 Container(
-                                  margin: EdgeInsets.only(right: 16.h, bottom: 4.h),
-                                  padding: EdgeInsets.symmetric(horizontal: 16.h, vertical: 12.h),
+                                  margin: EdgeInsets.symmetric(vertical: 4.h, horizontal: 16.h),
+                                  width: SizeUtils.width * 0.7, // 70% of screen width
+                                  height: SizeUtils.height * 0.3, // 30% of screen height
                                   decoration: BoxDecoration(
-                                    color: appTheme.lightBlue300,
                                     borderRadius: BorderRadius.circular(16.h),
-                                  ),
-                                  child: Text(
-                                    message['content']!.split('\n')[1].replaceAll('User note: ', ''),
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 16.h,
+                                    image: DecorationImage(
+                                      image: FileImage(File(imagePath)),
+                                      fit: BoxFit.cover,
                                     ),
                                   ),
                                 ),
-                            ],
-                          );
-                        }
-                        
-                        // For nutrition info messages
-                        if (!isUser && message['content']?.contains('🍽️') == true) {
+                                if (message['content']!.contains('User note:'))
+                                  Container(
+                                    margin: EdgeInsets.only(right: 16.h, bottom: 4.h),
+                                    padding: EdgeInsets.symmetric(horizontal: 16.h, vertical: 12.h),
+                                    decoration: BoxDecoration(
+                                      color: appTheme.lightBlue300,
+                                      borderRadius: BorderRadius.circular(16.h),
+                                    ),
+                                    child: Text(
+                                      message['content']!.split('\n')[1].replaceAll('User note: ', ''),
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 16.h,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            );
+                          }
+                          
+                          // For nutrition info messages
+                          if (!isUser && message['content']?.contains('🍽️') == true) {
+                            return Align(
+                              alignment: Alignment.centerLeft,
+                              child: Container(
+                                margin: EdgeInsets.symmetric(vertical: 4.h, horizontal: 16.h),
+                                padding: EdgeInsets.all(12.h),
+                                constraints: BoxConstraints(
+                                  maxWidth: SizeUtils.width * 0.85,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF9747FF),
+                                  borderRadius: BorderRadius.circular(16.h),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: message['content']!
+                                      .split('\n')
+                                      .map((line) => Padding(
+                                            padding: EdgeInsets.symmetric(vertical: 2.h),
+                                            child: Text(
+                                              line,
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 14.h,
+                                                fontWeight: line.startsWith('Food:') 
+                                                    ? FontWeight.bold 
+                                                    : FontWeight.normal,
+                                              ),
+                                            ),
+                                          ))
+                                      .toList(),
+                                ),
+                              ),
+                            );
+                          }
+                          
+                          // Default message rendering
                           return Align(
-                            alignment: Alignment.centerLeft,
+                            alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
                             child: Container(
                               margin: EdgeInsets.symmetric(vertical: 4.h, horizontal: 16.h),
-                              padding: EdgeInsets.all(12.h),
+                              padding: EdgeInsets.symmetric(horizontal: 16.h, vertical: 12.h),
                               constraints: BoxConstraints(
                                 maxWidth: SizeUtils.width * 0.85,
                               ),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF9747FF),
+                                color: isUser ? appTheme.lightBlue300 : const Color(0xFF9747FF),
                                 borderRadius: BorderRadius.circular(16.h),
                               ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: message['content']!
-                                    .split('\n')
-                                    .map((line) => Padding(
-                                          padding: EdgeInsets.symmetric(vertical: 2.h),
-                                          child: Text(
-                                            line,
-                                            style: TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 14.h,
-                                              fontWeight: line.startsWith('Food:') 
-                                                  ? FontWeight.bold 
-                                                  : FontWeight.normal,
-                                            ),
-                                          ),
-                                        ))
-                                    .toList(),
+                              child: Text(
+                                message['content'] ?? '',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16.h,
+                                ),
                               ),
                             ),
                           );
-                        }
-                        
-                        // Default message rendering
-                        return Align(
-                          alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
-                          child: Container(
-                            margin: EdgeInsets.symmetric(vertical: 4.h, horizontal: 16.h),
-                            padding: EdgeInsets.symmetric(horizontal: 16.h, vertical: 12.h),
-                            constraints: BoxConstraints(
-                              maxWidth: SizeUtils.width * 0.85,
-                            ),
-                            decoration: BoxDecoration(
-                              color: isUser ? appTheme.lightBlue300 : const Color(0xFF9747FF),
-                              borderRadius: BorderRadius.circular(16.h),
-                            ),
-                            child: Text(
-                              message['content'] ?? '',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 16.h,
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    );
-                  },
+                        },
+                      );
+                    },
+                  ),
                 ),
-              ),
-              _buildBottomSection(context),
-            ],
+                _buildBottomSection(context),
+              ],
+            ),
           ),
         ),
-      ),
-      bottomNavigationBar: Material(
-        elevation: 0,
-        color: appTheme.cyan900,
-        child: CustomBottomBar(
-          backgroundColor: appTheme.cyan900,
-          onChanged: (BottomBarEnum type) {
-            switch (type) {
-              case BottomBarEnum.Home:
-                Navigator.pushReplacementNamed(context, AppRoutes.homeScreen);
-                break;
-              case BottomBarEnum.Leaderboard:
-                Navigator.pushNamed(context, "/leaderboard");
-                break;
-              case BottomBarEnum.AI:
-                // Already on AI chat page, no navigation needed
-                break;
-            }
-          },
+        bottomNavigationBar: Material(
+          elevation: 0,
+          color: appTheme.cyan900,
+          child: CustomBottomBar(
+            backgroundColor: appTheme.cyan900,
+            onChanged: (BottomBarEnum type) {
+              switch (type) {
+                case BottomBarEnum.Home:
+                  Navigator.pushReplacementNamed(context, AppRoutes.homeScreen);
+                  break;
+                case BottomBarEnum.Leaderboard:
+                  Navigator.pushNamed(context, "/leaderboard");
+                  break;
+                case BottomBarEnum.AI:
+                  // Already on AI chat page, no navigation needed
+                  break;
+              }
+            },
+          ),
         ),
       ),
     );
@@ -448,11 +494,14 @@ class AiChatMainScreenState extends State<AiChatMainScreen> {
                     if (provider.showTrackDialog)
                       Container(
                         decoration: BoxDecoration(
-                          color: const Color(0xFF0B2840),
+                          color: provider.showTrackingSuccess ? Colors.transparent : const Color(0xFF0B2840),
                           borderRadius: BorderRadius.circular(20.h),
                         ),
-                        padding: EdgeInsets.symmetric(horizontal: 16.h, vertical: 12.h),
-                        margin: EdgeInsets.only(bottom: 12.h),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: provider.showTrackingSuccess ? 0 : 16.h, 
+                          vertical: provider.showTrackingSuccess ? 0 : 12.h
+                        ),
+                        margin: EdgeInsets.only(bottom: provider.showTrackingSuccess ? 0 : 12.h),
                         child: Column(
                           children: [
                             if (!provider.showTrackingSuccess)
@@ -474,7 +523,44 @@ class AiChatMainScreenState extends State<AiChatMainScreen> {
                                   ),
                                 ),
                               ),
-                            if (!provider.showMealTypeSelection && !provider.showTrackingSuccess)
+                            if (provider.showTrackingSuccess)
+                              AnimatedOpacity(
+                                opacity: provider.showTrackingSuccess ? 1.0 : 0.0,
+                                duration: const Duration(milliseconds: 200),
+                                child: Padding(
+                                  padding: EdgeInsets.only(bottom: 12.h),
+                                  child: Center(
+                                    child: Container(
+                                      padding: EdgeInsets.symmetric(horizontal: 8.h, vertical: 4.h),
+                                      decoration: BoxDecoration(
+                                        color: Colors.green,
+                                        borderRadius: BorderRadius.circular(16.h),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                            'Tracked Successfully',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 13.h,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                          SizedBox(width: 4.h),
+                                          Icon(
+                                            Icons.check,
+                                            color: Colors.white,
+                                            size: 14.h,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            if (!provider.showTrackingSuccess && !provider.showMealTypeSelection)
                               Container(
                                 height: 50.h,
                                 decoration: BoxDecoration(
@@ -498,7 +584,6 @@ class AiChatMainScreenState extends State<AiChatMainScreen> {
                                   },
                                   child: Stack(
                                     children: [
-                                      // Sliding progress indicator
                                       Container(
                                         width: (MediaQuery.of(context).size.width - 72.h) * provider.slideProgress,
                                         decoration: BoxDecoration(
@@ -506,7 +591,6 @@ class AiChatMainScreenState extends State<AiChatMainScreen> {
                                           borderRadius: BorderRadius.circular(25.h),
                                         ),
                                       ),
-                                      // Content
                                       Row(
                                         children: [
                                           Transform.translate(
@@ -544,34 +628,8 @@ class AiChatMainScreenState extends State<AiChatMainScreen> {
                                     ],
                                   ),
                                 ),
-                              )
-                            else if (provider.showTrackingSuccess)
-                              Container(
-                                padding: EdgeInsets.symmetric(horizontal: 16.h, vertical: 8.h),
-                                decoration: BoxDecoration(
-                                  color: Colors.green,
-                                  borderRadius: BorderRadius.circular(20.h),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      'Tracked Successfully',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 14.h,
-                                      ),
-                                    ),
-                                    SizedBox(width: 4.h),
-                                    Icon(
-                                      Icons.check,
-                                      color: Colors.white,
-                                      size: 16.h,
-                                    ),
-                                  ],
-                                ),
-                              )
-                            else
+                              ),
+                            if (!provider.showTrackingSuccess && provider.showMealTypeSelection)
                               Column(
                                 children: [
                                   Text(
@@ -608,22 +666,21 @@ class AiChatMainScreenState extends State<AiChatMainScreen> {
                         minHeight: 50.h,
                         maxHeight: 150.h,
                       ),
-                      child: Row(
+                      child: Stack(
                         children: [
-                          Expanded(
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(30.h),
-                              ),
-                              constraints: BoxConstraints(
-                                minHeight: 50.h,
-                                maxHeight: 120.h,
-                              ),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Row(
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(30.h),
+                                  ),
+                                  constraints: BoxConstraints(
+                                    minHeight: 50.h,
+                                    maxHeight: 120.h,
+                                  ),
+                                  child: Row(
                                     children: [
                                       IconButton(
                                         onPressed: () {
@@ -700,41 +757,68 @@ class AiChatMainScreenState extends State<AiChatMainScreen> {
                                       ),
                                     ],
                                   ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          GestureDetector(
-                            onTap: () => provider.sendMessage(provider.messageController.text),
-                            child: Container(
-                              margin: EdgeInsets.only(right: 4.h),
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [appTheme.lightBlue300, theme.colorScheme.primary],
-                                  begin: Alignment.topCenter,
-                                  end: Alignment.bottomCenter,
                                 ),
-                                shape: BoxShape.circle,
                               ),
-                              child: Padding(
-                                padding: EdgeInsets.all(12.h),
-                                child: provider.isLoading
-                                    ? SizedBox(
-                                        width: 20.h,
-                                        height: 20.h,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              GestureDetector(
+                                onTap: _handleMessageSend,
+                                child: Container(
+                                  margin: EdgeInsets.only(right: 4.h),
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [appTheme.lightBlue300, theme.colorScheme.primary],
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                    ),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Padding(
+                                    padding: EdgeInsets.all(12.h),
+                                    child: provider.isLoading
+                                        ? SizedBox(
+                                            width: 20.h,
+                                            height: 20.h,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                            ),
+                                          )
+                                        : CustomImageView(
+                                            imagePath: ImageConstant.imgArrowIcon,
+                                            height: 20.h,
+                                            width: 20.h,
+                                          ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          // Animated overlay that doesn't affect layout
+                          if (_isListening)
+                            Positioned.fill(
+                              child: IgnorePointer(
+                                child: AnimatedBuilder(
+                                  animation: _breathingAnimation,
+                                  builder: (context, child) {
+                                    return Container(
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(30.h),
+                                        border: Border.all(
+                                          color: appTheme.lightBlue300,
+                                          width: 3.0 * _breathingAnimation.value,
                                         ),
-                                      )
-                                    : CustomImageView(
-                                        imagePath: ImageConstant.imgArrowIcon,
-                                        height: 20.h,
-                                        width: 20.h,
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: appTheme.lightBlue300.withOpacity(0.5),
+                                            blurRadius: 12.0 * _breathingAnimation.value,
+                                            spreadRadius: 4.0 * _breathingAnimation.value,
+                                          )
+                                        ],
                                       ),
+                                    );
+                                  },
+                                ),
                               ),
                             ),
-                          ),
                         ],
                       ),
                     ),
@@ -786,11 +870,15 @@ class AiChatMainScreenState extends State<AiChatMainScreen> {
 
   Widget _buildMealTypeButton(BuildContext context, String mealType, AiChatMainProvider provider) {
     return GestureDetector(
-      onTap: () => provider.selectMealType(mealType),
+      onTap: () {
+        provider.selectMealType(mealType);
+      },
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 16.h, vertical: 8.h),
         decoration: BoxDecoration(
-          color: const Color(0xFF1B6A9C),
+          color: provider.selectedMealType == mealType 
+              ? Colors.green 
+              : const Color(0xFF1B6A9C),
           borderRadius: BorderRadius.circular(16.h),
         ),
         child: Text(
