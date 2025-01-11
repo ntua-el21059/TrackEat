@@ -10,6 +10,9 @@ import '../../../providers/user_provider.dart';
 import '../../../services/firebase/auth/auth_provider.dart' as app_auth;
 import 'provider/calorie_calculator_provider.dart';
 import '../../../services/firebase/firestore/firestore_service.dart';
+import '../../../services/awards_service.dart';
+import '../../../models/award_model.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class CalorieCalculatorScreen extends StatefulWidget {
   const CalorieCalculatorScreen({Key? key}) : super(key: key);
@@ -170,16 +173,17 @@ class CalorieCalculatorScreenState extends State<CalorieCalculatorScreen> {
                     print('Successfully created Firebase Auth user');
                     
                     // Test Firestore connection
-                    final firestoreService = FirestoreService();
+                    final firestoreService = Provider.of<FirestoreService>(context, listen: false);
                     final isConnected = await firestoreService.testConnection();
                     if (!isConnected) {
-                      print('Failed to connect to Firestore');
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Cannot connect to database. Please check your internet connection.'),
-                          duration: Duration(seconds: 5),
-                        ),
-                      );
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Error: Could not connect to Firestore'),
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+                      }
                       return;
                     }
                     print('Firestore connection test passed');
@@ -195,6 +199,30 @@ class CalorieCalculatorScreenState extends State<CalorieCalculatorScreen> {
                       
                       await firestoreService.createUser(userProvider.user);
                       print('Successfully saved user data to Firestore');
+
+                      // Copy existing awards from Firestore
+                      final awardsCollection = await FirebaseFirestore.instance
+                          .collection('awards')
+                          .get();
+
+                      // Add each award to the user's awards subcollection
+                      final awardsService = AwardsService();
+                      for (final doc in awardsCollection.docs) {
+                        final awardData = doc.data();
+                        final award = Award(
+                          id: doc.id,
+                          name: awardData['name'] ?? '',
+                          points: awardData['points'] is int 
+                              ? awardData['points'] 
+                              : int.tryParse(awardData['points']?.toString() ?? '0') ?? 0,
+                          description: awardData['description'] ?? '',
+                          picture: awardData['picture'] ?? 'assets/images/vector.png',
+                          isAwarded: false,
+                          awarded: null,
+                        );
+                        await awardsService.addOrUpdateAward(userProvider.user.email!, award);
+                      }
+                      print('Successfully copied awards to user subcollection');
                       
                       // Navigate to finalized account screen
                       Navigator.pushNamed(context, AppRoutes.finalizedAccountScreen);

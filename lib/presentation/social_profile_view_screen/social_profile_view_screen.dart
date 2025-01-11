@@ -11,12 +11,12 @@ import '../../widgets/app_bar/custom_app_bar.dart';
 import '../../widgets/custom_elevated_button.dart';
 import '../../widgets/cached_profile_picture.dart';
 import '../social_profile_message_from_profile_screen/social_profile_message_from_profile_screen.dart';
-import '../social_profile_myself_screen/widgets/gridvector_one_item_widget.dart';
 import '../social_profile_myself_screen/widgets/listvegan_item_widget.dart';
-import '../social_profile_myself_screen/models/gridvector_one_item_model.dart';
 import '../social_profile_myself_screen/models/listvegan_item_model.dart';
 import '../../services/friend_service.dart';
-import 'package:provider/provider.dart';
+import '../../services/awards_service.dart';
+import '../../models/award_model.dart';
+import '../challenge_award_screen/challenge_award_screen.dart';
 import 'provider/social_profile_view_provider.dart';
 
 class SocialProfileViewScreen extends StatefulWidget {
@@ -33,7 +33,6 @@ class SocialProfileViewScreen extends StatefulWidget {
   SocialProfileViewScreenState createState() => SocialProfileViewScreenState();
 
   static Widget builder(BuildContext context, {required String username, String backButtonText = "Profile"}) {
-    print('SocialProfileViewScreen.builder called with username: $username, backButtonText: $backButtonText');
     return ChangeNotifierProvider(
       create: (context) => SocialProfileViewProvider(),
       child: SocialProfileViewScreen(
@@ -45,15 +44,148 @@ class SocialProfileViewScreen extends StatefulWidget {
 }
 
 class SocialProfileViewScreenState extends State<SocialProfileViewScreen> {
+  final AwardsService _awardsService = AwardsService();
+  Stream<List<Award>>? _awardsStream;
+  Stream<DocumentSnapshot>? _userStream;
+  String? _userEmail;
+  bool _isInitialized = false;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final provider = Provider.of<SocialProfileViewProvider>(context, listen: false);
       provider.setupRealtimeUpdates(widget.username);
-      // Initial data fetch
-      provider.getUserData(widget.username);
+      provider.getUserData(widget.username).then((_) {
+        _initializeData();
+      });
     });
+  }
+
+  Future<void> _initializeData() async {
+    // First get the user's email from their username
+    final userQuery = await FirebaseFirestore.instance
+        .collection('users')
+        .where('username', isEqualTo: widget.username)
+        .get();
+
+    if (userQuery.docs.isNotEmpty) {
+      _userEmail = userQuery.docs.first.id;
+      if (mounted) {
+        setState(() {
+          _awardsStream = _awardsService.getUserAwardsStream(_userEmail!);
+          _userStream = FirebaseFirestore.instance
+              .collection('users')
+              .doc(_userEmail)
+              .snapshots();
+          _isInitialized = true;
+        });
+      }
+    }
+  }
+
+  Widget _buildGridvectorone(BuildContext context) {
+    if (!_isInitialized || _awardsStream == null) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
+
+    return StreamBuilder<List<Award>>(
+      stream: _awardsStream,
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Center(
+            child: Text(
+              'Something went wrong',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          );
+        }
+
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final awards = snapshot.data ?? [];
+
+        if (awards.isEmpty) {
+          return const Center(
+            child: Text(
+              'No awards yet',
+              style: TextStyle(color: Colors.black54),
+            ),
+          );
+        }
+
+        return Padding(
+          padding: EdgeInsets.symmetric(horizontal: 18.h),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final itemWidth = (constraints.maxWidth - 36.h) / 3;
+              return Wrap(
+                spacing: 18.h,
+                runSpacing: 18.h,
+                children: awards.map((award) => SizedBox(
+                  width: itemWidth,
+                  child: _buildAwardItem(award),
+                )).toList(),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildAwardItem(Award award) {
+    return GestureDetector(
+      onTap: award.isAwarded ? () {
+        Navigator.pushNamed(
+          context,
+          AppRoutes.challengeAwardScreen,
+          arguments: {'award': award},
+        );
+      } : null,
+      child: Container(
+        padding: EdgeInsets.all(12.h),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(award.isAwarded ? 0.5 : 0.1),
+          borderRadius: BorderRadius.circular(12.h),
+        ),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            AspectRatio(
+              aspectRatio: 1,
+              child: Opacity(
+                opacity: award.isAwarded ? 1.0 : 0.3,
+                child: Image.asset(
+                  award.picture,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) {
+                    return const Center(child: Icon(Icons.error));
+                  },
+                ),
+              ),
+            ),
+            if (!award.isAwarded)
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                padding: EdgeInsets.all(8.h),
+                child: Icon(
+                  Icons.lock,
+                  color: Colors.black.withOpacity(0.7),
+                  size: 28.h,
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -114,7 +246,7 @@ class SocialProfileViewScreenState extends State<SocialProfileViewScreen> {
                         ),
                       ),
                       SizedBox(height: 6.h),
-                      _buildGridvectorone(context, userData)
+                      _buildGridvectorone(context)
                     ],
                   ),
                 ),
@@ -470,44 +602,6 @@ class SocialProfileViewScreenState extends State<SocialProfileViewScreen> {
             },
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildGridvectorone(BuildContext context, DocumentSnapshot userData) {
-    final gridvectorOneItemList = [
-      GridvectorOneItemModel(image: ImageConstant.imgAward1),
-      GridvectorOneItemModel(image: ImageConstant.imgAward2),
-      GridvectorOneItemModel(image: ImageConstant.imgAward3),
-      GridvectorOneItemModel(image: ImageConstant.imgAward4),
-      GridvectorOneItemModel(image: ImageConstant.imgAward5),
-      GridvectorOneItemModel(image: ImageConstant.imgAward6),
-    ];
-
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 18.h),
-      child: ResponsiveGridListBuilder(
-        minItemWidth: 1,
-        minItemsPerRow: 3,
-        maxItemsPerRow: 3,
-        horizontalGridSpacing: 18.h,
-        verticalGridSpacing: 18.h,
-        builder: (context, items) => ListView(
-          shrinkWrap: true,
-          padding: EdgeInsets.zero,
-          physics: NeverScrollableScrollPhysics(),
-          children: items,
-        ),
-        gridItems: List.generate(
-          gridvectorOneItemList.length,
-          (index) {
-            GridvectorOneItemModel model = gridvectorOneItemList[index];
-            return GridvectorOneItemWidget(
-              model,
-              index: index,
-            );
-          },
-        ),
       ),
     );
   }

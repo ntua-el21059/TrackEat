@@ -9,15 +9,17 @@ import '../../widgets/app_bar/appbar_subtitle_two.dart';
 import '../../widgets/app_bar/custom_app_bar.dart';
 import '../../widgets/custom_elevated_button.dart';
 import '../profile_screen/provider/profile_provider.dart';
-import 'models/gridvector_one_item_model.dart';
 import 'models/listvegan_item_model.dart';
 import 'provider/social_profile_myself_provider.dart';
-import 'widgets/gridvector_one_item_widget.dart';
 import 'widgets/listvegan_item_widget.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../widgets/cached_profile_picture.dart';
+import '../../models/award_model.dart';
+import '../challenge_award_screen/challenge_award_screen.dart';
+import '../../services/awards_service.dart';
+import '../../services/svg_cache_service.dart';
 
 class SocialProfileMyselfScreen extends StatefulWidget {
   final String? backButtonText;
@@ -31,53 +33,69 @@ class SocialProfileMyselfScreen extends StatefulWidget {
   SocialProfileMyselfScreenState createState() => SocialProfileMyselfScreenState();
 
   static Widget builder(BuildContext context) {
+    final profileProvider = Provider.of<ProfileProvider>(context, listen: false);
+    final diet = profileProvider.profileModelObj.profileItemList
+        .firstWhere((item) => item.title == "Diet")
+        .value;
+
     return ChangeNotifierProvider(
-      create: (context) => SocialProfileMyselfProvider()..init(context),
-      child: Consumer<ProfileProvider>(
-        builder: (context, profileProvider, _) {
-          // Get current diet and update social provider
-          final diet = profileProvider.profileModelObj.profileItemList
-              .firstWhere((item) => item.title == "Diet")
-              .value;
-          
-          Provider.of<SocialProfileMyselfProvider>(context, listen: false)
-              .updateDietBox(diet ?? 'Carnivore');
-          
-          return const SocialProfileMyselfScreen();
-        },
-      ),
+      create: (context) {
+        final provider = SocialProfileMyselfProvider();
+        provider.updateDietBox(diet ?? 'Carnivore');
+        provider.init(context);
+        return provider;
+      },
+      child: const SocialProfileMyselfScreen(),
     );
   }
 
-  // Add a new builder method for navigation from leaderboard
   static Widget builderFromLeaderboard(BuildContext context, {String? backButtonText}) {
+    final profileProvider = Provider.of<ProfileProvider>(context, listen: false);
+    final diet = profileProvider.profileModelObj.profileItemList
+        .firstWhere((item) => item.title == "Diet")
+        .value;
+
     return ChangeNotifierProvider(
-      create: (context) => SocialProfileMyselfProvider()..init(context),
-      child: Consumer<ProfileProvider>(
-        builder: (context, profileProvider, _) {
-          // Get current diet and update social provider
-          final diet = profileProvider.profileModelObj.profileItemList
-              .firstWhere((item) => item.title == "Diet")
-              .value;
-          
-          Provider.of<SocialProfileMyselfProvider>(context, listen: false)
-              .updateDietBox(diet ?? 'Carnivore');
-          
-          return SocialProfileMyselfScreen(backButtonText: backButtonText);
-        },
-      ),
+      create: (context) {
+        final provider = SocialProfileMyselfProvider();
+        provider.updateDietBox(diet ?? 'Carnivore');
+        provider.init(context);
+        return provider;
+      },
+      child: SocialProfileMyselfScreen(backButtonText: backButtonText),
     );
   }
 }
 
 class SocialProfileMyselfScreenState extends State<SocialProfileMyselfScreen> {
+  final AwardsService _awardsService = AwardsService();
+  late Stream<List<Award>> _awardsStream;
+  late Stream<DocumentSnapshot> _userStream;
+
+  Future<void> _checkAndUpdateWeightAward(int progress) async {
+    if (progress == 50) {
+      final userEmail = FirebaseAuth.instance.currentUser?.email;
+      if (userEmail != null) {
+        await _awardsService.updateAwardStatus(userEmail, '3', true);
+      }
+    }
+  }
+
   @override
   void initState() {
     super.initState();
-    // Wait for the widget to be built before accessing providers
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<SocialProfileMyselfProvider>(context, listen: false).init(context);
-    });
+    _initializeData();
+  }
+
+  void _initializeData() {
+    _awardsStream = _awardsService.getUserAwardsStream(
+      FirebaseAuth.instance.currentUser?.email ?? ''
+    ).map((awards) => awards.take(6).toList());
+
+    _userStream = FirebaseFirestore.instance
+        .collection('users')
+        .doc(FirebaseAuth.instance.currentUser?.email)
+        .snapshots();
   }
 
   @override
@@ -187,35 +205,99 @@ class SocialProfileMyselfScreenState extends State<SocialProfileMyselfScreen> {
 
   /// Section Widget
   Widget _buildGridvectorone(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 18.h),
-      child: Consumer<SocialProfileMyselfProvider>(
-        builder: (context, provider, child) {
-          return ResponsiveGridListBuilder(
-            minItemWidth: 1,
-            minItemsPerRow: 3,
-            maxItemsPerRow: 3,
-            horizontalGridSpacing: 18.h,
-            verticalGridSpacing: 18.h,
-            builder: (context, items) => ListView(
-              shrinkWrap: true,
-              padding: EdgeInsets.zero,
-              physics: NeverScrollableScrollPhysics(),
-              children: items,
-            ),
-            gridItems: List.generate(
-              provider.socialProfileMyselfModelObj.gridvectorOneItemList.length,
-              (index) {
-                GridvectorOneItemModel model =
-                    provider.socialProfileMyselfModelObj.gridvectorOneItemList[index];
-                return GridvectorOneItemWidget(
-                  model,
-                  index: index,
-                );
-              },
+    return StreamBuilder<List<Award>>(
+      stream: _awardsStream,
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Center(
+            child: Text(
+              'Something went wrong',
+              style: Theme.of(context).textTheme.bodyMedium,
             ),
           );
-        },
+        }
+
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final awards = snapshot.data ?? [];
+
+        if (awards.isEmpty) {
+          return const Center(
+            child: Text(
+              'No awards yet',
+              style: TextStyle(color: Colors.black54),
+            ),
+          );
+        }
+
+        return Padding(
+          padding: EdgeInsets.symmetric(horizontal: 18.h),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final itemWidth = (constraints.maxWidth - 36.h) / 3;
+              return Wrap(
+                spacing: 18.h,
+                runSpacing: 18.h,
+                children: awards.map((award) => SizedBox(
+                  width: itemWidth,
+                  child: _buildAwardItem(award),
+                )).toList(),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildAwardItem(Award award) {
+    return GestureDetector(
+      onTap: award.isAwarded ? () {
+        Navigator.pushNamed(
+          context,
+          AppRoutes.challengeAwardScreen,
+          arguments: {'award': award},
+        );
+      } : null,
+      child: Container(
+        padding: EdgeInsets.all(12.h),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(award.isAwarded ? 0.5 : 0.1),
+          borderRadius: BorderRadius.circular(12.h),
+        ),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            AspectRatio(
+              aspectRatio: 1,
+              child: Opacity(
+                opacity: award.isAwarded ? 1.0 : 0.3,
+                child: Image.asset(
+                  award.picture,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) {
+                    return const Center(child: Icon(Icons.error));
+                  },
+                ),
+              ),
+            ),
+            if (!award.isAwarded)
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                padding: EdgeInsets.all(8.h),
+                child: Icon(
+                  Icons.lock,
+                  color: Colors.black.withOpacity(0.7),
+                  size: 28.h,
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -240,10 +322,7 @@ class SocialProfileMyselfScreenState extends State<SocialProfileMyselfScreen> {
               SizedBox(width: 12.h),
               Expanded(
                 child: StreamBuilder<DocumentSnapshot>(
-                  stream: FirebaseFirestore.instance
-                      .collection('users')
-                      .doc(FirebaseAuth.instance.currentUser?.email)
-                      .snapshots(),
+                  stream: _userStream,
                   builder: (context, snapshot) {
                     if (snapshot.hasData && snapshot.data != null && snapshot.data!.exists) {
                       final userData = snapshot.data!.data() as Map<String, dynamic>;
@@ -414,6 +493,9 @@ class SocialProfileMyselfScreenState extends State<SocialProfileMyselfScreen> {
         if (currentWeight > 0) {
           double calculation = (1 - ((currentWeight - goalWeight) / currentWeight)) * 100;
           progress = calculation.round().clamp(0, 100);
+          
+          // Check and update award status
+          _checkAndUpdateWeightAward(progress);
         }
 
         return Container(

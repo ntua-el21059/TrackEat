@@ -80,5 +80,7 @@ flutter:
   assets:
     - assets/images/
     - assets/images/person.crop.circle.fill.svg
+    - assets/images/vector.svg
+    - assets/images/vector.png
     
     

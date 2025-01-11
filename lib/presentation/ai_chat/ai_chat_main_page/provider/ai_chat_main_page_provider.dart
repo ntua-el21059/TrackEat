@@ -4,9 +4,12 @@ import 'package:image_picker/image_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:convert';
 import '../../../../models/meal.dart';
+import '../../../../models/award_model.dart';
 import '../../../../services/meal_service.dart';
 import '../../../../services/points_service.dart';
+import '../../../../services/awards_service.dart';
 import '../models/ai_chat_main_page_model.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 const String apiKey = 'AIzaSyDe5fyQXDIfgZ1paU5Ax5HNj6gNyWA0MAA';
 const List<String> modelNames = [
@@ -32,6 +35,7 @@ Always maintain a friendly, witty tone while guiding users back to food-related 
 class AiChatMainProvider extends ChangeNotifier {
   final MealService _mealService = MealService();
   final PointsService _pointsService = PointsService();
+  final AwardsService _awardsService = AwardsService();
   final FirebaseAuth _auth = FirebaseAuth.instance;
   TextEditingController messageController = TextEditingController();
   AiChatMainModel aiChatMainModelObj = AiChatMainModel();
@@ -761,6 +765,16 @@ class AiChatMainProvider extends ChangeNotifier {
 
       await _mealService.addMeal(meal);
       await _pointsService.addMealPoints();
+
+      // Check and update award status
+      try {
+        final userEmail = _auth.currentUser!.email!;
+        
+        // Update the existing award with id = 1
+        await _awardsService.updateAwardStatus(userEmail, '1', true);
+      } catch (e) {
+        print('Error updating award status: $e');
+      }
 
       showTrackingSuccess = true;
       notifyListeners();

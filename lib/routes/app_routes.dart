@@ -18,11 +18,13 @@ import '../presentation/ai_chat/ai_chat_main_page/ai_chat_main_page_screen.dart'
 import '../presentation/social_profile_myself_screen/social_profile_myself_screen.dart';
 import '../presentation/challenge_award_screen/challenge_award_screen.dart';
 import '../presentation/reward_screen_rings_closed_screen/reward_screen_rings_closed_screen.dart';
+import '../presentation/reward_screen_new_award_screen/reward_screen_new_award_screen.dart';
 import '../presentation/social_profile_message_from_profile_screen/social_profile_message_from_profile_screen.dart';
 import '../presentation/alkis/leaderboard_screen/leaderboard_screen.dart';
 import '../presentation/alkis/find friends/find_friends_screen.dart';
 import '../presentation/alkis/notifications/notifications_screen.dart';
 import '../presentation/social_profile_view_screen/social_profile_view_screen.dart';
+import '../models/award_model.dart';
 
 class AppRoutes {
   static const String createAccountScreen = '/create_account_screen';
@@ -113,9 +115,31 @@ class AppRoutes {
         AccessibilitySettingsScreen.builder(context),
     socialProfileMyselfScreen: (context) =>
         SocialProfileMyselfScreen.builder(context),
-    challengeAwardScreen: (context) => ChallengeAwardScreen.builder(context),
+    challengeAwardScreen: (context) {
+      final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>?;
+      if (args == null || args['award'] == null) {
+        return ChallengeAwardScreen.builder(
+          context,
+          award: Award(
+            id: '0',
+            name: 'Default Award',
+            points: 0,
+            description: 'This is a default award.',
+            picture: 'assets/images/vector.png',
+            isAwarded: true,
+            awarded: DateTime.now(),
+          ),
+        );
+      }
+      return ChallengeAwardScreen.builder(
+        context,
+        award: args['award'] as Award,
+      );
+    },
     rewardScreenRingsClosedScreen: (context) =>
         RewardScreenRingsClosedScreen.builder(context),
+    rewardScreenNewAwardScreen: (context) =>
+        RewardScreenNewAwardScreen.builder(context),
     socialProfileMessageFromProfileScreen: (context) =>
         SocialProfileMessageFromProfileScreen.builder(context),
     leaderboardScreen: (context) => LeaderboardScreen.builder(context),

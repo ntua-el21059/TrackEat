@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/app_export.dart';
 import '../../../providers/user_provider.dart';
 import '../../../widgets/custom_bottom_bar.dart';
@@ -36,21 +37,35 @@ class HomeScreen extends StatefulWidget {
 class HomeScreenState extends State<HomeScreen> {
   bool _isLoading = true;
   StreamSubscription<DocumentSnapshot>? _userSubscription;
+  StreamSubscription<QuerySnapshot>? _awardsSubscription;
   final PointsService _pointsService = PointsService();
   DateTime? _lastPointsUpdate;
   bool _isNavigatingToReward = false;
+  final Set<String> _shownAwards = {};
+  SharedPreferences? _prefs;
 
   @override
   void initState() {
     super.initState();
-
+    _initPrefs();
+    _initializeUI();
     // Check for monthly points reset
     _pointsService.checkAndResetMonthlyPoints();
-
     // Fetch current user data immediately
     _fetchInitialUserData();
     _setupFirestoreListener();
+  }
 
+  Future<void> _initPrefs() async {
+    _prefs = await SharedPreferences.getInstance();
+    final email = FirebaseAuth.instance.currentUser?.email;
+    if (email != null) {
+      _shownAwards.addAll(_prefs?.getStringList('shown_awards_${email}') ?? []);
+    }
+    _setupAwardsListener();
+  }
+
+  void _initializeUI() {
     // Update UI loading state after a delay
     Future.delayed(Duration(milliseconds: 500), () {
       if (mounted) {
@@ -60,6 +75,67 @@ class HomeScreenState extends State<HomeScreen> {
         // Update suggestions with user's name
         Provider.of<HomeProvider>(context, listen: false)
             .updateSuggestions(context);
+      }
+    });
+  }
+
+  Future<void> _markAwardAsShown(String awardId) async {
+    final email = FirebaseAuth.instance.currentUser?.email;
+    if (email != null && _prefs != null) {
+      _shownAwards.add(awardId);
+      await _prefs!.setStringList(
+        'shown_awards_${email}',
+        _shownAwards.toList()
+      );
+    }
+  }
+
+  void _setupAwardsListener() {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser?.email == null) return;
+
+    print('Setting up awards listener for user: ${currentUser?.email}');
+
+    _awardsSubscription = FirebaseFirestore.instance
+        .collection('users')
+        .doc(currentUser?.email)
+        .collection('awards')
+        .snapshots()
+        .listen((snapshot) {
+      if (!mounted) return;
+
+      for (var change in snapshot.docChanges) {
+        print('Award change detected: ${change.type}');
+        print('Award data: ${change.doc.data()}');
+        
+        if (change.type == DocumentChangeType.modified) {
+          final awardData = change.doc.data();
+          final awardId = change.doc.id;
+          
+          if (awardData != null && 
+              awardData['isAwarded'] == true && 
+              !_shownAwards.contains(awardId) &&
+              !_isNavigatingToReward) {
+            print('Navigating to reward screen for award: ${awardData['name']}');
+            _isNavigatingToReward = true;
+            _markAwardAsShown(awardId);
+            Navigator.pushNamed(
+              context, 
+              AppRoutes.rewardScreenNewAwardScreen,
+              arguments: {
+                'awardId': awardId,
+                'awardName': awardData['name'],
+                'awardDescription': awardData['description'],
+                'awardPicture': awardData['picture'],
+                'awardPoints': awardData['points'] is String ? int.parse(awardData['points']) : (awardData['points'] as num?)?.toInt() ?? 0,
+                'awardedTime': DateTime.now(),
+              }
+            ).then((_) {
+              _isNavigatingToReward = false;
+            });
+            break;
+          }
+        }
       }
     });
   }
@@ -134,6 +210,8 @@ class HomeScreenState extends State<HomeScreen> {
   @override
   void dispose() {
     _userSubscription?.cancel();
+    _awardsSubscription?.cancel();
+    _shownAwards.clear(); // Clear the set on dispose
     super.dispose();
   }
 

@@ -7,7 +7,21 @@ import '../models/reward_screen_new_award_model.dart';
 /// current rewardScreenNewAwardModelObj
 // ignore_for_file: must_be_immutable
 class RewardScreenNewAwardProvider extends ChangeNotifier {
-  RewardScreenNewAwardModel rewardScreenNewAwardModelObj = RewardScreenNewAwardModel();
+  final String awardId;
+  final String awardName;
+  final String awardDescription;
+  final String awardPicture;
+  final int awardPoints;
+  final DateTime awardedTime;
+
+  RewardScreenNewAwardProvider({
+    required this.awardId,
+    required this.awardName,
+    required this.awardDescription,
+    required this.awardPicture,
+    required this.awardPoints,
+    required this.awardedTime,
+  });
 
   @override
   void dispose() {

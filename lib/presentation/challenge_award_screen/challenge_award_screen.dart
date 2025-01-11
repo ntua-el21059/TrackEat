@@ -1,18 +1,23 @@
 import 'package:flutter/services.dart';
 import '../../core/app_export.dart';
 import 'provider/challenge_award_provider.dart';
+import '../../models/award_model.dart';
 
 class ChallengeAwardScreen extends StatefulWidget {
-  final int awardIndex;
-  const ChallengeAwardScreen({Key? key, this.awardIndex = 0}) : super(key: key);
+  final Award award;
+  
+  const ChallengeAwardScreen({
+    Key? key, 
+    required this.award,
+  }) : super(key: key);
 
   @override
   ChallengeAwardScreenState createState() => ChallengeAwardScreenState();
 
-  static Widget builder(BuildContext context, {int awardIndex = 0}) {
+  static Widget builder(BuildContext context, {required Award award}) {
     return ChangeNotifierProvider(
-      create: (context) => ChallengeAwardProvider(awardIndex: awardIndex),
-      child: ChallengeAwardScreen(awardIndex: awardIndex),
+      create: (context) => ChallengeAwardProvider(award: award),
+      child: ChallengeAwardScreen(award: award),
     );
   }
 }
@@ -35,6 +40,10 @@ class ChallengeAwardScreenState extends State<ChallengeAwardScreen> {
           backgroundColor: Colors.transparent,
           body: Consumer<ChallengeAwardProvider>(
             builder: (context, provider, _) {
+              if (provider.isLoading) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              
               final award = provider.challengeAwardModelObj;
               return Stack(
                 children: [
@@ -49,25 +58,31 @@ class ChallengeAwardScreenState extends State<ChallengeAwardScreen> {
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           SizedBox(height: 120.h),
-                          Image.asset(
-                            award.imagePath,
-                            height: 280.h,
-                            width: 206.h,
-                            fit: BoxFit.contain,
+                          Center(
+                            child: Container(
+                              width: double.infinity,
+                              alignment: Alignment.center,
+                              child: Image.asset(
+                                award.imagePath,
+                                height: 240.h,
+                                width: 180.h,
+                                fit: BoxFit.contain,
+                              ),
+                            ),
                           ),
                           SizedBox(height: 40.h),
                           Text(
                             award.title,
                             textAlign: TextAlign.center,
-                            style: theme.textTheme.headlineLarge?.copyWith(
+                            style: theme.textTheme.titleLarge?.copyWith(
                               color: Colors.white,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
                           SizedBox(height: 8.h),
                           Text(
-                            "Earned on ${award.earnedDate}",
-                            style: theme.textTheme.bodyLarge?.copyWith(
+                            "Earned on ${award.formattedEarnedDate}",
+                            style: theme.textTheme.bodyMedium?.copyWith(
                               color: Colors.white.withOpacity(0.7),
                             ),
                           ),
@@ -75,7 +90,7 @@ class ChallengeAwardScreenState extends State<ChallengeAwardScreen> {
                           Text(
                             award.description,
                             textAlign: TextAlign.center,
-                            style: theme.textTheme.titleLarge?.copyWith(
+                            style: theme.textTheme.bodyLarge?.copyWith(
                               color: Colors.white,
                             ),
                           ),
