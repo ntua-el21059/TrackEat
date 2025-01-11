@@ -156,11 +156,11 @@ class HomeScreenState extends State<HomeScreen> {
           userProvider
               .setDailyCalories(userData['dailyCalories'] as int? ?? 2000);
           userProvider.setMacronutrientGoals(
-            carbsGoal:
+            carbsgoal:
                 double.tryParse(userData['carbsgoal']?.toString() ?? '0'),
-            proteinGoal:
+            proteingoal:
                 double.tryParse(userData['proteingoal']?.toString() ?? '0'),
-            fatGoal: double.tryParse(userData['fatgoal']?.toString() ?? '0'),
+            fatgoal: double.tryParse(userData['fatgoal']?.toString() ?? '0'),
           );
         }
       } catch (e) {

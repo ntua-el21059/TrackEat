@@ -132,6 +132,11 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
                 provider.updateNumericValue('Goal Weight',
                     double.parse(userData['weightgoal'].toString()));
                   }
+                  // Weekly goal updates
+                  if (userData['weeklygoal'] != null) {
+                provider.updateNumericValue('Weekly Goal',
+                    double.parse(userData['weeklygoal'].toString()));
+                  }
                   // Macros updates
                   if (userData['carbsgoal'] != null) {
                 provider.updateNumericValue(
@@ -153,12 +158,12 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
                     username: userData['username'] as String? ?? '',
                     email: currentUser.email,
                     dailyCalories: userData['dailyCalories'] as int? ?? 0,
-                carbsGoal:
-                    double.tryParse(userData['carbsgoal']?.toString() ?? '0'),
-                proteinGoal:
-                    double.tryParse(userData['proteingoal']?.toString() ?? '0'),
-                fatGoal:
-                    double.tryParse(userData['fatgoal']?.toString() ?? '0'),
+                    carbsgoal:
+                        double.tryParse(userData['carbsgoal']?.toString() ?? '0'),
+                    proteingoal:
+                        double.tryParse(userData['proteingoal']?.toString() ?? '0'),
+                    fatgoal:
+                        double.tryParse(userData['fatgoal']?.toString() ?? '0'),
                     activity: userData['activity'] as String?,
                     diet: userData['diet'] as String?,
                     goal: userData['goal'] as String?,

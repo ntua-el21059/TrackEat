@@ -65,21 +65,21 @@ class UserProvider extends ChangeNotifier {
   }
 
   void setMacronutrientGoals({
-    double? carbsGoal,
-    double? proteinGoal,
-    double? fatGoal,
+    double? carbsgoal,
+    double? proteingoal,
+    double? fatgoal,
   }) {
     bool changed = false;
-    if (carbsGoal != null && _user.carbsGoal != carbsGoal) {
-      _user.carbsGoal = carbsGoal;
+    if (carbsgoal != null && _user.carbsgoal != carbsgoal) {
+      _user.carbsgoal = carbsgoal;
       changed = true;
     }
-    if (proteinGoal != null && _user.proteinGoal != proteinGoal) {
-      _user.proteinGoal = proteinGoal;
+    if (proteingoal != null && _user.proteingoal != proteingoal) {
+      _user.proteingoal = proteingoal;
       changed = true;
     }
-    if (fatGoal != null && _user.fatGoal != fatGoal) {
-      _user.fatGoal = fatGoal;
+    if (fatgoal != null && _user.fatgoal != fatgoal) {
+      _user.fatgoal = fatgoal;
       changed = true;
     }
     if (changed) {

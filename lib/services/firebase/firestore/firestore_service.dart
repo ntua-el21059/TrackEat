@@ -71,9 +71,9 @@ class FirestoreService {
           height: data['height']?.toDouble(),
           weight: data['weight']?.toDouble(),
           dailyCalories: data['dailyCalories'],
-          carbsGoal: data['carbsgoal']?.toDouble(),
-          proteinGoal: data['proteingoal']?.toDouble(),
-          fatGoal: data['fatgoal']?.toDouble(),
+          carbsgoal: data['carbsgoal']?.toDouble(),
+          proteingoal: data['proteingoal']?.toDouble(),
+          fatgoal: data['fatgoal']?.toDouble(),
         );
       }
       return null;

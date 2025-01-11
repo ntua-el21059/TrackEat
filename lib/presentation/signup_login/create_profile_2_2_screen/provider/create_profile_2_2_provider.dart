@@ -45,10 +45,12 @@ class CreateProfile22Provider extends ChangeNotifier {
     _goalType = type;
     inputthreeController.text = type;
     
-    // Reset weekly goal when changing goal type
+    // Reset weekly goal and set goal weight when changing goal type
     if (type == 'Maintain Weight') {
       weeklyGoalController.text = '0.0';
       _selectedValue = 0.0;
+      // Set goal weight to current weight
+      goalWeightController.text = inputsevenController.text;
     }
     
     notifyListeners();

@@ -154,13 +154,16 @@ class CreateProfile22ScreenState extends State<CreateProfile22Screen> {
     final provider = Provider.of<CreateProfile22Provider>(context, listen: false);
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     
+    final currentWeight = double.tryParse(provider.inputsevenController.text) ?? 0;
+    final isMaintainWeight = provider.goalType == 'Maintain Weight';
+    
     userProvider.setProfile2Info(
       activity: provider.activityLevel,
       diet: provider.dietType,
       goal: provider.goalType,
-      weight: double.tryParse(provider.inputsevenController.text) ?? 0,
-      weeklygoal: double.tryParse(provider.weeklyGoalController.text) ?? 0,
-      weightgoal: double.tryParse(provider.goalWeightController.text) ?? 0,
+      weight: currentWeight,
+      weeklygoal: isMaintainWeight ? 0 : (double.tryParse(provider.weeklyGoalController.text) ?? 0),
+      weightgoal: isMaintainWeight ? currentWeight : (double.tryParse(provider.goalWeightController.text) ?? 0),
     );
   }
 

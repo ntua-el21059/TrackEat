@@ -131,47 +131,47 @@ class ProfileProvider extends ChangeNotifier {
     _profileModelObj.profileItemList = [
       ProfileItemModel(
         title: "Activity Level",
-        value: "Moderate",
+        value: "",
         icon: ImageConstant.imgWeeklyGoal,
       ),
       ProfileItemModel(
         title: "Weekly Goal",
-        value: "-0.5 kg",
+        value: "0.0 kg",
         icon: ImageConstant.imgGoalWeight,
       ),
       ProfileItemModel(
         title: "Goal Weight",
-        value: "70 kg",
+        value: "0.0 kg",
         icon: ImageConstant.imgCaloriesGoal,
       ),
       ProfileItemModel(
         title: "Calories Goal",
-        value: "3000 kcal",
+        value: "0 kcal",
         icon: ImageConstant.imgCurrentWeight,
       ),
       ProfileItemModel(
         title: "Cur. Weight",
-        value: "100 g",
+        value: "0.0 kg",
         icon: ImageConstant.imgDiet,
       ),
       ProfileItemModel(
         title: "Diet",
-        value: "Balanced",
+        value: "",
         icon: ImageConstant.imgCarbsGoal,
       ),
       ProfileItemModel(
         title: "Carbs Goal",
-        value: "350 g",
+        value: "0 g",
         icon: ImageConstant.imgProteinGoal,
       ),
       ProfileItemModel(
         title: "Protein Goal",
-        value: "140 g",
+        value: "0 g",
         icon: ImageConstant.imgFatGoal,
       ),
       ProfileItemModel(
         title: "Fat Goal",
-        value: "93 g",
+        value: "0 g",
         icon: ImageConstant.imgFatGoal,
       ),
     ];

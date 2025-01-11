@@ -24,9 +24,9 @@ class UserModel {
   int? dailyCalories;
   
   // Macronutrient goals
-  double? carbsGoal;
-  double? proteinGoal;
-  double? fatGoal;
+  double? carbsgoal;
+  double? proteingoal;
+  double? fatgoal;
 
   // Calculate age from birthdate
   int? get age {
@@ -71,9 +71,9 @@ class UserModel {
     this.weeklygoal,
     this.weightgoal,
     this.dailyCalories,
-    this.carbsGoal,
-    this.proteinGoal,
-    this.fatGoal,
+    this.carbsgoal,
+    this.proteingoal,
+    this.fatgoal,
   });
 
   Map<String, dynamic> toJson() {
@@ -94,9 +94,9 @@ class UserModel {
       'weeklygoal': weeklygoal,
       'weightgoal': weightgoal,
       'dailyCalories': dailyCalories,
-      'carbsGoal': carbsGoal,
-      'proteinGoal': proteinGoal,
-      'fatGoal': fatGoal,
+      'carbsgoal': carbsgoal,
+      'proteingoal': proteingoal,
+      'fatgoal': fatgoal,
     };
   }
 
@@ -118,9 +118,9 @@ class UserModel {
       weeklygoal: json['weeklygoal']?.toDouble(),
       weightgoal: json['weightgoal']?.toDouble(),
       dailyCalories: json['dailyCalories'],
-      carbsGoal: json['carbsGoal']?.toDouble(),
-      proteinGoal: json['proteinGoal']?.toDouble(),
-      fatGoal: json['fatGoal']?.toDouble(),
+      carbsgoal: json['carbsgoal']?.toDouble(),
+      proteingoal: json['proteingoal']?.toDouble(),
+      fatgoal: json['fatgoal']?.toDouble(),
     );
   }
 
@@ -142,9 +142,9 @@ class UserModel {
     double? weeklygoal,
     double? weightgoal,
     int? dailyCalories,
-    double? carbsGoal,
-    double? proteinGoal,
-    double? fatGoal,
+    double? carbsgoal,
+    double? proteingoal,
+    double? fatgoal,
   }) {
     return UserModel(
       username: username ?? this.username,
@@ -164,9 +164,9 @@ class UserModel {
       weeklygoal: weeklygoal ?? this.weeklygoal,
       weightgoal: weightgoal ?? this.weightgoal,
       dailyCalories: dailyCalories ?? this.dailyCalories,
-      carbsGoal: carbsGoal ?? this.carbsGoal,
-      proteinGoal: proteinGoal ?? this.proteinGoal,
-      fatGoal: fatGoal ?? this.fatGoal,
+      carbsgoal: carbsgoal ?? this.carbsgoal,
+      proteingoal: proteingoal ?? this.proteingoal,
+      fatgoal: fatgoal ?? this.fatgoal,
     );
   }
 } 
