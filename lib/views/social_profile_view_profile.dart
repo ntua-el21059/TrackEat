@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
 import '../models/award_model.dart';
-import '../services/awards_service.dart';
+import '../models/user_model.dart';
+import '../providers/social_profile_provider.dart';
+import '../providers/social_awards_provider.dart';
 import '../core/utils/size_utils.dart';
 import '../presentation/challenge_award_screen/challenge_award_screen.dart';
 
@@ -17,8 +20,9 @@ class SocialProfileViewProfile extends StatefulWidget {
 
 class _SocialProfileViewProfileState extends State<SocialProfileViewProfile> {
   bool _isProcessing = false;
-  final AwardsService _awardsService = AwardsService();
-  late Stream<List<Award>> _awardsStream;
+  late SocialProfileProvider _profileProvider;
+  late SocialAwardsProvider _awardsProvider;
+  bool _isInitialLoadComplete = false;
 
   Stream<bool> checkFriendStatus() {
     return FirebaseFirestore.instance
@@ -72,15 +76,77 @@ class _SocialProfileViewProfileState extends State<SocialProfileViewProfile> {
     }
   }
 
+  Future<void> _loadInitialData() async {
+    await Future.wait([
+      _profileProvider.prefetchProfile(widget.email),
+      _awardsProvider.prefetchAwards(widget.email),
+    ]);
+    if (mounted) {
+      setState(() {
+        _isInitialLoadComplete = true;
+      });
+    }
+  }
+
   @override
   void initState() {
     super.initState();
-    _awardsStream = _awardsService.getUserAwardsStream(widget.email);
+    _profileProvider = Provider.of<SocialProfileProvider>(context, listen: false);
+    _awardsProvider = Provider.of<SocialAwardsProvider>(context, listen: false);
+    _loadInitialData();
+  }
+
+  Widget _buildProfileInfo() {
+    if (!_isInitialLoadComplete) {
+      final profile = _profileProvider.getProfile(widget.email);
+      if (profile != null) {
+        return _buildProfileContent(profile);
+      }
+      return const SizedBox(height: 80);
+    }
+
+    return StreamBuilder<UserModel?>(
+      stream: _profileProvider.watchProfile(widget.email),
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Center(child: Text('Error loading profile'));
+        }
+
+        final profile = snapshot.data ?? _profileProvider.getProfile(widget.email);
+        if (profile == null) {
+          return const SizedBox(height: 80);
+        }
+
+        return _buildProfileContent(profile);
+      },
+    );
+  }
+
+  Widget _buildProfileContent(UserModel profile) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('${profile.firstName} ${profile.lastName}',
+            style: Theme.of(context).textTheme.titleLarge),
+        if (profile.username != null)
+          Text('@${profile.username}',
+              style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: 16),
+      ],
+    );
   }
 
   Widget _buildAwardsGrid(BuildContext context) {
+    if (!_isInitialLoadComplete) {
+      final awards = _awardsProvider.getAwards(widget.email);
+      if (awards != null) {
+        return _buildAwardsContent(awards);
+      }
+      return const SizedBox(height: 100);
+    }
+
     return StreamBuilder<List<Award>>(
-      stream: _awardsStream,
+      stream: _awardsProvider.watchAwards(widget.email),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return Center(
@@ -91,38 +157,37 @@ class _SocialProfileViewProfileState extends State<SocialProfileViewProfile> {
           );
         }
 
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        final awards = snapshot.data ?? [];
-
-        if (awards.isEmpty) {
-          return const Center(
-            child: Text(
-              'No awards yet',
-              style: TextStyle(color: Colors.black54),
-            ),
-          );
-        }
-
-        return Padding(
-          padding: EdgeInsets.symmetric(horizontal: 18.h),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final itemWidth = (constraints.maxWidth - 36.h) / 3;
-              return Wrap(
-                spacing: 18.h,
-                runSpacing: 18.h,
-                children: awards.map((award) => SizedBox(
-                  width: itemWidth,
-                  child: _buildAwardItem(award),
-                )).toList(),
-              );
-            },
-          ),
-        );
+        final awards = snapshot.data ?? _awardsProvider.getAwards(widget.email) ?? [];
+        return _buildAwardsContent(awards);
       },
+    );
+  }
+
+  Widget _buildAwardsContent(List<Award> awards) {
+    if (awards.isEmpty) {
+      return const Center(
+        child: Text(
+          'No awards yet',
+          style: TextStyle(color: Colors.black54),
+        ),
+      );
+    }
+
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 18.h),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final itemWidth = (constraints.maxWidth - 36.h) / 3;
+          return Wrap(
+            spacing: 18.h,
+            runSpacing: 18.h,
+            children: awards.map((award) => SizedBox(
+              width: itemWidth,
+              child: _buildAwardItem(award),
+            )).toList(),
+          );
+        },
+      ),
     );
   }
 
@@ -191,6 +256,7 @@ class _SocialProfileViewProfileState extends State<SocialProfileViewProfile> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            _buildProfileInfo(),
             StreamBuilder<bool>(
               stream: checkFriendStatus(),
               builder: (context, snapshot) {

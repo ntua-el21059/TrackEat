@@ -62,10 +62,23 @@ class ChallengeCard extends StatelessWidget {
           children: [
             Image.asset(
               challenge.imageUrl,
-              width: challenge.title.toLowerCase() == 'beatles\nchallenge' ? 55 : (challenge.title.toLowerCase() == 'banana\nchallenge' ? 42 : 48),
-              height: challenge.title.toLowerCase() == 'beatles\nchallenge' ? 55 : (challenge.title.toLowerCase() == 'banana\nchallenge' ? 42 : 48),
+              width: challenge.title.toLowerCase() == 'banana\nchallenge' || 
+                     challenge.title.toLowerCase() == 'broccoli\nchallenge' ? 42 : 
+                     (challenge.title.toLowerCase() == 'avocado\nchallenge' ? 52 :
+                     (challenge.title.toLowerCase() == 'beatles\nchallenge' ? 52 :
+                     (challenge.title.toLowerCase() == 'wrap\nchallenge' ? 52 :
+                     (challenge.title.toLowerCase() == 'carnivore\nchallenge' ? 45 : 48)))),
+              height: challenge.title.toLowerCase() == 'banana\nchallenge' || 
+                      challenge.title.toLowerCase() == 'broccoli\nchallenge' ? 42 : 
+                      (challenge.title.toLowerCase() == 'avocado\nchallenge' ? 52 :
+                      (challenge.title.toLowerCase() == 'beatles\nchallenge' ? 52 :
+                      (challenge.title.toLowerCase() == 'wrap\nchallenge' ? 52 :
+                      (challenge.title.toLowerCase() == 'carnivore\nchallenge' ? 45 : 48)))),
             ),
-            SizedBox(height: challenge.title.toLowerCase() == 'beatles\nchallenge' ? 1 : 8),
+            SizedBox(height: challenge.title.toLowerCase() == 'avocado\nchallenge' ? 0 : 
+                            (challenge.title.toLowerCase() == 'beatles\nchallenge' ? 0 :
+                            (challenge.title.toLowerCase() == 'wrap\nchallenge' ? 2 :
+                            (challenge.title.toLowerCase() == 'carnivore\nchallenge' ? 5 : 8)))),
             Container(
               height: 32,
               child: Text(

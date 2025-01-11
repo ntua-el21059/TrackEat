@@ -1,5 +1,6 @@
 import 'package:responsive_grid_list/responsive_grid_list.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:convert';
 import 'dart:async';
 import 'package:flutter/foundation.dart';
@@ -46,38 +47,34 @@ class SocialProfileViewScreen extends StatefulWidget {
 class SocialProfileViewScreenState extends State<SocialProfileViewScreen> {
   final AwardsService _awardsService = AwardsService();
   Stream<List<Award>>? _awardsStream;
-  Stream<DocumentSnapshot>? _userStream;
-  String? _userEmail;
   bool _isInitialized = false;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final provider = Provider.of<SocialProfileViewProvider>(context, listen: false);
-      provider.setupRealtimeUpdates(widget.username);
-      provider.getUserData(widget.username).then((_) {
-        _initializeData();
-      });
-    });
+    _initializeAwardsStream();
   }
 
-  Future<void> _initializeData() async {
-    // First get the user's email from their username
-    final userQuery = await FirebaseFirestore.instance
-        .collection('users')
-        .where('username', isEqualTo: widget.username)
-        .get();
-
-    if (userQuery.docs.isNotEmpty) {
-      _userEmail = userQuery.docs.first.id;
+  Future<void> _initializeAwardsStream() async {
+    try {
+      final provider = Provider.of<SocialProfileViewProvider>(context, listen: false);
+      final userData = await provider.getUserData(widget.username);
+      
+      if (userData != null) {
+        final data = userData.data() as Map<String, dynamic>?;
+        final email = data?['email'] as String?;
+        
+        if (email != null && mounted) {
+          setState(() {
+            _awardsStream = _awardsService.getUserAwardsStream(email);
+            _isInitialized = true;
+          });
+        }
+      }
+    } catch (e) {
+      print('Error initializing awards stream: $e');
       if (mounted) {
         setState(() {
-          _awardsStream = _awardsService.getUserAwardsStream(_userEmail!);
-          _userStream = FirebaseFirestore.instance
-              .collection('users')
-              .doc(_userEmail)
-              .snapshots();
           _isInitialized = true;
         });
       }
@@ -85,9 +82,18 @@ class SocialProfileViewScreenState extends State<SocialProfileViewScreen> {
   }
 
   Widget _buildGridvectorone(BuildContext context) {
-    if (!_isInitialized || _awardsStream == null) {
+    if (!_isInitialized) {
       return const Center(
         child: CircularProgressIndicator(),
+      );
+    }
+
+    if (_awardsStream == null) {
+      return const Center(
+        child: Text(
+          'No awards available',
+          style: TextStyle(color: Colors.black54),
+        ),
       );
     }
 
@@ -95,10 +101,10 @@ class SocialProfileViewScreenState extends State<SocialProfileViewScreen> {
       stream: _awardsStream,
       builder: (context, snapshot) {
         if (snapshot.hasError) {
-          return Center(
+          return const Center(
             child: Text(
-              'Something went wrong',
-              style: Theme.of(context).textTheme.bodyMedium,
+              'No awards yet',
+              style: TextStyle(color: Colors.black54),
             ),
           );
         }
@@ -126,10 +132,12 @@ class SocialProfileViewScreenState extends State<SocialProfileViewScreen> {
               return Wrap(
                 spacing: 18.h,
                 runSpacing: 18.h,
-                children: awards.map((award) => SizedBox(
-                  width: itemWidth,
-                  child: _buildAwardItem(award),
-                )).toList(),
+                children: awards.map((award) {
+                  return SizedBox(
+                    width: itemWidth,
+                    child: _buildAwardItem(award),
+                  );
+                }).toList(),
               );
             },
           ),
@@ -259,7 +267,6 @@ class SocialProfileViewScreenState extends State<SocialProfileViewScreen> {
   }
 
   PreferredSizeWidget _buildAppBar(BuildContext context) {
-    print('_buildAppBar called with backButtonText: ${widget.backButtonText}');
     return CustomAppBar(
       leadingWidth: 23.h,
       leading: AppbarLeadingImage(
@@ -575,11 +582,15 @@ class SocialProfileViewScreenState extends State<SocialProfileViewScreen> {
     }
 
     final listveganItemList = [
-      ListveganItemModel(title: getDietWithEmoji(diet), count: ""),
+      ListveganItemModel(
+        title: getDietWithEmoji(diet),
+        isStatic: true,
+      ),
       ListveganItemModel(
         title: "$firstName has been thriving \nwith us for $timeDifference!",
         count: "⭐️",
         username: username,
+        isStatic: false,
       ),
     ];
 
@@ -607,11 +618,8 @@ class SocialProfileViewScreenState extends State<SocialProfileViewScreen> {
   }
 }
 
-class FriendButton extends StatefulWidget {
+class FriendButton extends StatelessWidget {
   final String userId;
-  
-  // Static cache for friend status
-  static final Map<String, bool> _friendStatusCache = {};
 
   const FriendButton({
     Key? key,
@@ -619,106 +627,39 @@ class FriendButton extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _FriendButtonState createState() => _FriendButtonState();
-}
-
-class _FriendButtonState extends State<FriendButton> {
-  final FriendService _friendService = FriendService();
-  bool _isFriend = false;
-  bool _isProcessing = false;
-
-  @override
-  void initState() {
-    super.initState();
-    // Use cached value if available
-    _isFriend = FriendButton._friendStatusCache[widget.userId] ?? false;
-    // Update cache in background
-    _updateFriendStatus();
-  }
-
-  Future<void> _updateFriendStatus() async {
-    try {
-      final isFollowing = await _friendService.isFollowing(widget.userId);
-      if (mounted && isFollowing != _isFriend) {
-        setState(() {
-          _isFriend = isFollowing;
-        });
-        // Update cache
-        FriendButton._friendStatusCache[widget.userId] = isFollowing;
-      }
-    } catch (e) {
-      print('Error checking friend status: $e');
-    }
-  }
-
-  Future<void> _toggleFriendStatus() async {
-    if (_isProcessing) return;
-    
-    final wasAFriend = _isFriend;
-    
-    // Immediately update UI
-    setState(() {
-      _isProcessing = true;
-      _isFriend = !_isFriend;
-    });
-    
-    try {
-      if (wasAFriend) {
-        await _friendService.removeFriend(widget.userId);
-      } else {
-        await _friendService.addFriend(widget.userId);
-      }
-      // Update cache after successful operation
-      FriendButton._friendStatusCache[widget.userId] = _isFriend;
-    } catch (e) {
-      print('Error toggling friend status: $e');
-      // Only revert UI if adding friend failed
-      if (!wasAFriend) {
-        if (mounted) {
-          setState(() {
-            _isFriend = false;
-          });
-          // Update cache to match current state
-          FriendButton._friendStatusCache[widget.userId] = false;
-        }
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isProcessing = false;
-        });
-      }
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return CustomElevatedButton(
-      text: _isFriend ? "Friends" : "Add Friend",
-      height: 48.h,
-      rightIcon: Container(
-        margin: EdgeInsets.only(left: 6.h),
-        child: SizedBox(
-          height: 16.h,
-          width: 16.h,
-          child: CustomImageView(
-            imagePath: _isFriend ? ImageConstant.imgFriendsIcon : ImageConstant.imgAddFriend,
-            fit: BoxFit.contain,
-            color: Colors.white,
+    return Consumer<SocialProfileViewProvider>(
+      builder: (context, provider, _) {
+        final isFriend = provider.getFriendStatus(userId) ?? false;
+
+        return CustomElevatedButton(
+          text: isFriend ? "Friends" : "Add Friend",
+          height: 48.h,
+          rightIcon: Container(
+            margin: EdgeInsets.only(left: 6.h),
+            child: SizedBox(
+              height: 16.h,
+              width: 16.h,
+              child: CustomImageView(
+                imagePath: isFriend ? ImageConstant.imgFriendsIcon : ImageConstant.imgAddFriend,
+                fit: BoxFit.contain,
+                color: Colors.white,
+              ),
+            ),
           ),
-        ),
-      ),
-      buttonStyle: ButtonStyle(
-        backgroundColor: MaterialStateProperty.all(theme.colorScheme.primary),
-        shape: MaterialStateProperty.all(
-          RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16.h),
+          buttonStyle: ButtonStyle(
+            backgroundColor: MaterialStateProperty.all(theme.colorScheme.primary),
+            shape: MaterialStateProperty.all(
+              RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16.h),
+              ),
+            ),
+            elevation: MaterialStateProperty.all(0),
           ),
-        ),
-        elevation: MaterialStateProperty.all(0),
-      ),
-      buttonTextStyle: CustomTextStyles.titleSmallSemiBold.copyWith(color: Colors.white),
-      onPressed: _toggleFriendStatus,
+          buttonTextStyle: CustomTextStyles.titleSmallSemiBold.copyWith(color: Colors.white),
+          onPressed: () => provider.toggleFriendStatus(userId),
+        );
+      },
     );
   }
 } 

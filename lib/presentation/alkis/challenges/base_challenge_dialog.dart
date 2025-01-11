@@ -37,11 +37,14 @@ abstract class BaseChallengeDialogState<T extends BaseChallengeDialog>
               children: [
                 // Challenge icon
                 Positioned(
-                  top: 24.h,
+                  top: iconPath.contains('avocado') ? 12.h : (iconPath.contains('banana') ? 12.h : 
+                      (iconPath.contains('beatles') ? 12.h : 24.h)),
                   child: Image.asset(
                     iconPath,
-                    width: 64.h,
-                    height: 64.h,
+                    width: iconPath.contains('avocado') ? 84.h : 
+                           (iconPath.contains('beatles') ? 84.h : 64.h),
+                    height: iconPath.contains('avocado') ? 84.h : 
+                            (iconPath.contains('beatles') ? 84.h : 64.h),
                   ),
                 ),
                 Column(
@@ -86,6 +89,7 @@ abstract class BaseChallengeDialogState<T extends BaseChallengeDialog>
                     // Time left
                     Text(
                       "Time left: $timeLeft",
+                      textAlign: TextAlign.center,
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 16.h,

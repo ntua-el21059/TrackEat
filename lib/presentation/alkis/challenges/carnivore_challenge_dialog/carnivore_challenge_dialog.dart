@@ -31,8 +31,7 @@ class CarnivoreChallengeDialogState
   String get title => "Carnivore\nchallenge";
 
   @override
-  String get description => "Eat beef once a day for 5 days— \n"
-      "fuel your body, embrace the challenge! 🥩🔥";
+  String get description => "Eat beef once a day for 5 days—fuel your body, embrace the challenge! 🥩🔥";
 
   @override
   String get timeLeft => "20 days";

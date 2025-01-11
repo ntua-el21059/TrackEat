@@ -50,11 +50,6 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
         });
       }
     });
-
-    // Fetch users when screen initializes
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<LeaderboardProvider>().fetchUsers();
-    });
   }
 
   @override
@@ -148,7 +143,6 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
         body: Consumer2<LeaderboardProvider, ProfilePictureCacheService>(
           builder: (context, provider, cacheService, _) => Column(
             children: [
-              // Leaderboard list
               Expanded(
                 flex: 6,
                 child: Container(
@@ -165,8 +159,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                       top: 32.h,
                       bottom: 16.h,
                     ),
-                    separatorBuilder: (context, index) =>
-                        SizedBox(height: 8.h),
+                    separatorBuilder: (context, index) => SizedBox(height: 8.h),
                     itemBuilder: (context, index) {
                       final user = provider.users[index];
                       final bool isEmpty = user.username.isEmpty;
@@ -281,9 +274,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                               Text(
                                 '@${user.username}',
                                 style: TextStyle(
-                                  color: user.isCurrentUser
-                                      ? Colors.white
-                                      : Colors.black,
+                                  color: user.isCurrentUser ? Colors.white : Colors.black,
                                   fontSize: 16.h,
                                   fontWeight: FontWeight.w500,
                                 ),
@@ -292,9 +283,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                               Text(
                                 '${user.points} pts',
                                 style: TextStyle(
-                                  color: user.isCurrentUser
-                                      ? Colors.white
-                                      : Colors.black,
+                                  color: user.isCurrentUser ? Colors.white : Colors.black,
                                   fontSize: 16.h,
                                   fontWeight: FontWeight.w500,
                                 ),
@@ -342,8 +331,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                     ),
                     style: ElevatedButton.styleFrom(
                       minimumSize: Size(120.h, 28.h),
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 12.h, vertical: 6.h),
+                      padding: EdgeInsets.symmetric(horizontal: 12.h, vertical: 6.h),
                       backgroundColor: const Color(0xFF007AFF),
                     ),
                   ),
@@ -379,8 +367,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                                     itemCount: provider.challengePages.length,
                                     itemBuilder: (context, pageIndex) {
                                       return Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceEvenly,
+                                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                         children: provider.challengePages[pageIndex]
                                             .map((challenge) {
                                           return ChallengeCard(challenge: challenge);

@@ -3,6 +3,8 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'core/app_export.dart';
 import 'providers/user_provider.dart';
+import 'providers/social_profile_provider.dart';
+import 'providers/social_awards_provider.dart';
 import 'services/firebase/auth/auth_provider.dart' as app_auth;
 import 'services/firebase/firebase_options.dart';
 import 'presentation/profile_screen/provider/profile_provider.dart';
@@ -69,6 +71,12 @@ void main() async {
         ),
         ChangeNotifierProvider(
           create: (_) => NotificationsProvider(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => SocialProfileProvider(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => SocialAwardsProvider(),
         ),
       ],
       child: const MyApp(),

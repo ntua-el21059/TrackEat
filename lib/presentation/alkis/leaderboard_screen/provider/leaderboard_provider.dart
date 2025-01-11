@@ -16,8 +16,7 @@ class LeaderboardProvider extends ChangeNotifier {
   List<StreamSubscription> _subscriptions = [];
   Map<String, LeaderboardUserModel> _userCache = {};
   SharedPreferences? _prefs;
-
-  List<LeaderboardUserModel> get users => _users;
+  bool _isInitialized = false;
 
   final List<List<ChallengeItemModel>> challengePages = [
     [
@@ -56,13 +55,44 @@ class LeaderboardProvider extends ChangeNotifier {
     ],
   ];
 
+  List<LeaderboardUserModel> get users => _users;
+  bool get isInitialized => _isInitialized;
+
   LeaderboardProvider() {
     _initAndFetchUsers();
   }
 
   Future<void> _initAndFetchUsers() async {
     _prefs = await SharedPreferences.getInstance();
-    fetchUsers();
+    
+    // Restore cached data first
+    final cachedData = _prefs?.getString('leaderboard_users');
+    if (cachedData != null) {
+      try {
+        final List<dynamic> decoded = jsonDecode(cachedData);
+        _users = decoded.map((item) => LeaderboardUserModel(
+          username: item['username'],
+          fullName: item['fullName'],
+          points: item['points'],
+          email: item['email'],
+          isCurrentUser: item['isCurrentUser'],
+          profileImage: item['profileImage'],
+        )).toList();
+        _users.forEach((user) {
+          _userCache[user.email] = user;
+          // Pre-cache profile pictures
+          if (user.profileImage != null && user.profileImage!.isNotEmpty) {
+            _profilePictureCache.getOrUpdateCache(user.email, user.profileImage);
+          }
+        });
+        notifyListeners();
+      } catch (e) {
+        print('Error restoring cached leaderboard data: $e');
+      }
+    }
+
+    // Then fetch fresh data
+    await fetchUsers();
   }
 
   Future<void> fetchUsers() async {
@@ -70,9 +100,7 @@ class LeaderboardProvider extends ChangeNotifier {
       final currentUser = _auth.currentUser;
       if (currentUser == null) return;
 
-      // Clear existing data and subscriptions
-      _users = [];
-      _userCache.clear();
+      // Clear existing subscriptions
       for (var subscription in _subscriptions) {
         subscription.cancel();
       }
@@ -87,7 +115,10 @@ class LeaderboardProvider extends ChangeNotifier {
         if (snapshot.exists) {
           final data = snapshot.data()!;
           if (data['username'] != null && data['username'].toString().isNotEmpty) {
-            String? profilePicture = await _profilePictureCache.getOrUpdateCache(currentUser.email!, null);
+            String? profilePicture = await _profilePictureCache.getOrUpdateCache(
+              currentUser.email!,
+              data['profilePicture'] as String?,
+            );
             
             final user = LeaderboardUserModel(
               username: data['username'] ?? '',
@@ -124,7 +155,10 @@ class LeaderboardProvider extends ChangeNotifier {
           if (userSnapshot.exists) {
             final data = userSnapshot.data()!;
             if (data['username'] != null && data['username'].toString().isNotEmpty) {
-              String? profilePicture = await _profilePictureCache.getOrUpdateCache(friendEmail, null);
+              String? profilePicture = await _profilePictureCache.getOrUpdateCache(
+                friendEmail,
+                data['profilePicture'] as String?,
+              );
               
               final user = LeaderboardUserModel(
                 username: data['username'] ?? '',
@@ -184,6 +218,9 @@ class LeaderboardProvider extends ChangeNotifier {
         _updateUsersList();
       });
       _subscriptions.add(friendsSubscription);
+
+      _isInitialized = true;
+      notifyListeners();
 
     } catch (e) {
       print('Error setting up real-time listeners: $e');

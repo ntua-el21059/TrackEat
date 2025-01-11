@@ -1,15 +1,40 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ProfilePictureCacheService extends ChangeNotifier {
   static final ProfilePictureCacheService _instance = ProfilePictureCacheService._internal();
   factory ProfilePictureCacheService() => _instance;
-  ProfilePictureCacheService._internal();
+  ProfilePictureCacheService._internal() {
+    _loadCachedData();
+  }
 
   final Map<String, String> _cache = {};
   final Map<String, StreamSubscription<DocumentSnapshot>> _subscriptions = {};
   final Map<String, String> _lastKnownProfilePictures = {};
+  SharedPreferences? _prefs;
+
+  Future<void> _loadCachedData() async {
+    _prefs = await SharedPreferences.getInstance();
+    final cachedData = _prefs?.getString('profile_pictures_cache');
+    if (cachedData != null) {
+      try {
+        final Map<String, dynamic> decoded = jsonDecode(cachedData);
+        _cache.addAll(Map<String, String>.from(decoded));
+        _lastKnownProfilePictures.addAll(Map<String, String>.from(decoded));
+      } catch (e) {
+        print('Error loading cached profile pictures: $e');
+      }
+    }
+  }
+
+  Future<void> _saveCacheToPrefs() async {
+    if (_prefs != null && _cache.isNotEmpty) {
+      await _prefs?.setString('profile_pictures_cache', jsonEncode(_cache));
+    }
+  }
 
   String? getCachedProfilePicture(String email) {
     if (!_subscriptions.containsKey(email)) {
@@ -39,12 +64,14 @@ class ProfilePictureCacheService extends ChangeNotifier {
         
         if (newProfilePicture == null || newProfilePicture.isEmpty) {
           _cache.remove(email);
+          _saveCacheToPrefs();
           notifyListeners();
           return;
         }
 
         if (_cache[email] != newProfilePicture) {
           _cache[email] = newProfilePicture;
+          _saveCacheToPrefs();
           notifyListeners();
         }
       }
@@ -61,6 +88,7 @@ class ProfilePictureCacheService extends ChangeNotifier {
     if (_cache[email] != newProfilePicture) {
       _cache[email] = newProfilePicture;
       _lastKnownProfilePictures[email] = newProfilePicture;
+      await _saveCacheToPrefs();
       if (!_subscriptions.containsKey(email)) {
         _setupListener(email);
       }
@@ -76,6 +104,7 @@ class ProfilePictureCacheService extends ChangeNotifier {
       subscription.cancel();
     }
     _subscriptions.clear();
+    _prefs?.remove('profile_pictures_cache');
     notifyListeners();
   }
 
@@ -84,6 +113,7 @@ class ProfilePictureCacheService extends ChangeNotifier {
     _lastKnownProfilePictures.remove(email);
     _subscriptions[email]?.cancel();
     _subscriptions.remove(email);
+    _saveCacheToPrefs();
     notifyListeners();
   }
 
