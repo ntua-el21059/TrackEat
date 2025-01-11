@@ -542,73 +542,56 @@ class FriendButton extends StatefulWidget {
 class _FriendButtonState extends State<FriendButton> {
   final FriendService _friendService = FriendService();
   bool _isFriend = false;
-  StreamSubscription? _friendStatusSubscription;
+  bool _isProcessing = false;
 
   @override
   void initState() {
     super.initState();
-    // First check the cache
-    if (FriendButton._friendStatusCache.containsKey(widget.userId)) {
-      _isFriend = FriendButton._friendStatusCache[widget.userId]!;
-    } else {
-      // If not in cache, do initial fetch
-      _checkFriendStatus();
-    }
-    // Setup stream listener for changes
-    _setupFriendStatusListener();
+    _checkInitialStatus();
   }
 
-  @override
-  void dispose() {
-    _friendStatusSubscription?.cancel();
-    super.dispose();
-  }
-
-  void _setupFriendStatusListener() {
-    _friendStatusSubscription = _friendService.getFriendStatusStream(widget.userId).listen((isFollowing) {
-      if (mounted && FriendButton._friendStatusCache[widget.userId] != isFollowing) {
-        setState(() {
-          _isFriend = isFollowing;
-        });
-        FriendButton._friendStatusCache[widget.userId] = isFollowing;
-      }
-    });
-  }
-
-  Future<void> _checkFriendStatus() async {
-    if (!FriendButton._friendStatusCache.containsKey(widget.userId)) {
-      final isFollowing = await _friendService.isFollowing(widget.userId);
-      if (mounted) {
-        setState(() {
-          _isFriend = isFollowing;
-        });
-        FriendButton._friendStatusCache[widget.userId] = isFollowing;
-      }
+  Future<void> _checkInitialStatus() async {
+    final isFollowing = await _friendService.isFollowing(widget.userId);
+    if (mounted) {
+      setState(() {
+        _isFriend = isFollowing;
+      });
     }
   }
 
   Future<void> _toggleFriendStatus() async {
-    // Update UI immediately for better UX
+    if (_isProcessing) return;
+    
+    final wasAFriend = _isFriend;
+    
+    // Immediately update UI
     setState(() {
+      _isProcessing = true;
       _isFriend = !_isFriend;
     });
-    FriendButton._friendStatusCache[widget.userId] = _isFriend;
     
     try {
-      if (_isFriend) {
-        await _friendService.addFriend(widget.userId);
-      } else {
+      if (wasAFriend) {
         await _friendService.removeFriend(widget.userId);
+      } else {
+        await _friendService.addFriend(widget.userId);
       }
     } catch (e) {
       print('Error toggling friend status: $e');
-      // Revert UI on error
+      // Only revert UI if adding friend failed
+      if (!wasAFriend) {
+        if (mounted) {
+          setState(() {
+            _isFriend = false;
+          });
+        }
+      }
+    } finally {
       if (mounted) {
         setState(() {
-          _isFriend = !_isFriend;
+          _isProcessing = false;
         });
       }
-      FriendButton._friendStatusCache[widget.userId] = !_isFriend;
     }
   }
 

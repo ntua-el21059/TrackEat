@@ -157,11 +157,10 @@ class FriendService {
     if (currentUser == null) return Stream.value(false);
 
     return _firestore
-        .collection('users')
-        .doc(currentUser.email)
         .collection('friends')
-        .doc(userId)
+        .where('followerId', isEqualTo: currentUser.email)
+        .where('followingId', isEqualTo: userId)
         .snapshots()
-        .map((doc) => doc.exists);
+        .map((snapshot) => snapshot.docs.isNotEmpty);
   }
 }
