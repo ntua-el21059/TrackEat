@@ -12,10 +12,12 @@ class FindFriendsProvider extends ChangeNotifier {
   FocusNode searchFocusNode = FocusNode();
   List<FindFriendsItemModel> _allUsers = [];
   List<FindFriendsItemModel> _filteredUsers = [];
+  Set<String> _friendEmails = {};
   Map<String, Image> _imageCache = {};
 
   FindFriendsModel get findFriendsModelObj => _findFriendsModelObj;
   List<FindFriendsItemModel> get filteredUsers => _filteredUsers;
+  bool get isSearching => searchController.text.isNotEmpty;
 
   @override
   void dispose() {
@@ -42,18 +44,50 @@ class FindFriendsProvider extends ChangeNotifier {
   Future<void> fetchUsers() async {
     try {
       final currentUser = FirebaseAuth.instance.currentUser;
-      if (currentUser == null) return;
+      if (currentUser == null) {
+        print('No current user found');
+        return;
+      }
+      print('Current user email: ${currentUser.email}');
 
+      // Get all users except current user
       final usersSnapshot = await FirebaseFirestore.instance
           .collection('users')
           .where('email', isNotEqualTo: currentUser.email)
           .get();
+      print('Found ${usersSnapshot.docs.length} total users');
 
+      // Get current user's friends
+      final friendsSnapshot = await FirebaseFirestore.instance
+          .collection('friends')
+          .where('followerId', isEqualTo: currentUser.email)
+          .get();
+      print('Found ${friendsSnapshot.docs.length} friends');
+
+      // Store friend emails for filtering
+      _friendEmails = friendsSnapshot.docs
+          .map((doc) => doc.data()['followingId'] as String)
+          .toSet();
+      print('Friend emails: $_friendEmails');
+
+      // Get all users with valid usernames
       _allUsers = usersSnapshot.docs
-          .map((doc) => UserModel.fromJson(doc.data()))
-          .where((user) => user.username != null && user.username!.isNotEmpty)
-          .map((user) => FindFriendsItemModel.fromUserModel(user))
+          .map((doc) {
+            try {
+              return UserModel.fromJson(doc.data());
+            } catch (e) {
+              print('Error parsing user data: $e');
+              print('User data: ${doc.data()}');
+              return null;
+            }
+          })
+          .where((user) => 
+              user != null &&
+              user.username != null && 
+              user.username!.isNotEmpty)
+          .map((user) => FindFriendsItemModel.fromUserModel(user!))
           .toList();
+      print('Found ${_allUsers.length} total users to display');
 
       // Pre-cache all profile images
       for (var user in _allUsers) {
@@ -62,18 +96,40 @@ class FindFriendsProvider extends ChangeNotifier {
         }
       }
 
-      _filteredUsers = List.from(_allUsers);
-      _findFriendsModelObj.findFriendsItemList = _allUsers;
-      notifyListeners();
+      updateFilteredUsers();
     } catch (e) {
       print('Error fetching users: $e');
+      print(e.toString());
     }
+  }
+
+  void updateFilteredUsers() {
+    if (searchController.text.isEmpty) {
+      // For "People you may know", exclude friends
+      _filteredUsers = _allUsers
+          .where((user) => !_friendEmails.contains(user.email))
+          .toList();
+    } else {
+      // For search results, include all users
+      final lowercaseQuery = searchController.text.toLowerCase();
+      _filteredUsers = _allUsers
+          .where((user) =>
+              user.username?.toLowerCase().contains(lowercaseQuery) == true ||
+              user.fullName?.toLowerCase().contains(lowercaseQuery) == true)
+          .toList();
+    }
+    _findFriendsModelObj.findFriendsItemList = _filteredUsers;
+    notifyListeners();
   }
 
   void searchUsers(String query) {
     if (query.isEmpty) {
-      _filteredUsers = List.from(_allUsers);
+      // Show non-friends in "People you may know"
+      _filteredUsers = _allUsers
+          .where((user) => !_friendEmails.contains(user.email))
+          .toList();
     } else {
+      // Show all matching users in search results
       final lowercaseQuery = query.toLowerCase();
       _filteredUsers = _allUsers
           .where((user) =>
@@ -88,8 +144,11 @@ class FindFriendsProvider extends ChangeNotifier {
   void cancelSearch() {
     searchController.clear();
     searchFocusNode.unfocus();
-    _filteredUsers = List.from(_allUsers);
-    _findFriendsModelObj.findFriendsItemList = _allUsers;
+    // Show non-friends in "People you may know"
+    _filteredUsers = _allUsers
+        .where((user) => !_friendEmails.contains(user.email))
+        .toList();
+    _findFriendsModelObj.findFriendsItemList = _filteredUsers;
     notifyListeners();
   }
 }

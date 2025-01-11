@@ -16,6 +16,8 @@ import '../social_profile_myself_screen/widgets/listvegan_item_widget.dart';
 import '../social_profile_myself_screen/models/gridvector_one_item_model.dart';
 import '../social_profile_myself_screen/models/listvegan_item_model.dart';
 import '../../services/friend_service.dart';
+import 'package:provider/provider.dart';
+import 'provider/social_profile_view_provider.dart';
 
 class SocialProfileViewScreen extends StatefulWidget {
   final String username;
@@ -32,34 +34,26 @@ class SocialProfileViewScreen extends StatefulWidget {
 
   static Widget builder(BuildContext context, {required String username, String backButtonText = "Profile"}) {
     print('SocialProfileViewScreen.builder called with username: $username, backButtonText: $backButtonText');
-    return SocialProfileViewScreen(
-      username: username,
-      backButtonText: backButtonText,
+    return ChangeNotifierProvider(
+      create: (context) => SocialProfileViewProvider(),
+      child: SocialProfileViewScreen(
+        username: username,
+        backButtonText: backButtonText,
+      ),
     );
   }
 }
 
 class SocialProfileViewScreenState extends State<SocialProfileViewScreen> {
-  late Stream<DocumentSnapshot> _userStream;
-
   @override
   void initState() {
     super.initState();
-    _setupUserStream();
-  }
-
-  void _setupUserStream() {
-    _userStream = FirebaseFirestore.instance
-        .collection('users')
-        .where('username', isEqualTo: widget.username)
-        .limit(1)
-        .snapshots()
-        .map((snapshot) {
-          if (snapshot.docs.isEmpty) {
-            throw Exception('User not found');
-          }
-          return snapshot.docs.first;
-        });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final provider = Provider.of<SocialProfileViewProvider>(context, listen: false);
+      provider.setupRealtimeUpdates(widget.username);
+      // Initial data fetch
+      provider.getUserData(widget.username);
+    });
   }
 
   @override
@@ -67,16 +61,11 @@ class SocialProfileViewScreenState extends State<SocialProfileViewScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: _buildAppBar(context),
-      body: StreamBuilder<DocumentSnapshot>(
-        stream: _userStream,
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            return Center(
-              child: Text('Error: ${snapshot.error}'),
-            );
-          }
-
-          if (!snapshot.hasData) {
+      body: Consumer<SocialProfileViewProvider>(
+        builder: (context, provider, _) {
+          final userData = provider.getCachedUser(widget.username);
+          
+          if (userData == null) {
             return const Center(
               child: CircularProgressIndicator(),
             );
@@ -108,11 +97,11 @@ class SocialProfileViewScreenState extends State<SocialProfileViewScreen> {
                   child: Column(
                     mainAxisSize: MainAxisSize.max,
                     children: [
-                      _buildRowvectorone(context, snapshot.data!),
+                      _buildRowvectorone(context, userData),
                       SizedBox(height: 6.h),
-                      _buildWeightgoal(context, snapshot.data!),
+                      _buildWeightgoal(context, userData),
                       SizedBox(height: 12.h),
-                      _buildListvegan(context, snapshot.data!),
+                      _buildListvegan(context, userData),
                       SizedBox(height: 8.h),
                       Align(
                         alignment: Alignment.centerLeft,
@@ -125,7 +114,7 @@ class SocialProfileViewScreenState extends State<SocialProfileViewScreen> {
                         ),
                       ),
                       SizedBox(height: 6.h),
-                      _buildGridvectorone(context, snapshot.data!)
+                      _buildGridvectorone(context, userData)
                     ],
                   ),
                 ),
@@ -547,15 +536,24 @@ class _FriendButtonState extends State<FriendButton> {
   @override
   void initState() {
     super.initState();
-    _checkInitialStatus();
+    // Use cached value if available
+    _isFriend = FriendButton._friendStatusCache[widget.userId] ?? false;
+    // Update cache in background
+    _updateFriendStatus();
   }
 
-  Future<void> _checkInitialStatus() async {
-    final isFollowing = await _friendService.isFollowing(widget.userId);
-    if (mounted) {
-      setState(() {
-        _isFriend = isFollowing;
-      });
+  Future<void> _updateFriendStatus() async {
+    try {
+      final isFollowing = await _friendService.isFollowing(widget.userId);
+      if (mounted && isFollowing != _isFriend) {
+        setState(() {
+          _isFriend = isFollowing;
+        });
+        // Update cache
+        FriendButton._friendStatusCache[widget.userId] = isFollowing;
+      }
+    } catch (e) {
+      print('Error checking friend status: $e');
     }
   }
 
@@ -576,6 +574,8 @@ class _FriendButtonState extends State<FriendButton> {
       } else {
         await _friendService.addFriend(widget.userId);
       }
+      // Update cache after successful operation
+      FriendButton._friendStatusCache[widget.userId] = _isFriend;
     } catch (e) {
       print('Error toggling friend status: $e');
       // Only revert UI if adding friend failed
@@ -584,6 +584,8 @@ class _FriendButtonState extends State<FriendButton> {
           setState(() {
             _isFriend = false;
           });
+          // Update cache to match current state
+          FriendButton._friendStatusCache[widget.userId] = false;
         }
       }
     } finally {

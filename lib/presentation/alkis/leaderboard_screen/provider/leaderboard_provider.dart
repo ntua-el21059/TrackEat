@@ -9,32 +9,7 @@ import '../models/challenge_item_model.dart';
 import '../../../../services/profile_picture_cache_service.dart';
 
 class LeaderboardProvider extends ChangeNotifier {
-  List<LeaderboardUserModel> _users = [
-    LeaderboardUserModel(
-      username: '',
-      fullName: '',
-      points: 0,
-      email: '',
-      isCurrentUser: false,
-      profileImage: null,
-    ),
-    LeaderboardUserModel(
-      username: '',
-      fullName: '',
-      points: 0,
-      email: '',
-      isCurrentUser: false,
-      profileImage: null,
-    ),
-    LeaderboardUserModel(
-      username: '',
-      fullName: '',
-      points: 0,
-      email: '',
-      isCurrentUser: false,
-      profileImage: null,
-    ),
-  ];
+  List<LeaderboardUserModel> _users = [];
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final ProfilePictureCacheService _profilePictureCache = ProfilePictureCacheService();
@@ -82,50 +57,12 @@ class LeaderboardProvider extends ChangeNotifier {
   ];
 
   LeaderboardProvider() {
-    _initCache();
+    _initAndFetchUsers();
   }
 
-  Future<void> _initCache() async {
+  Future<void> _initAndFetchUsers() async {
     _prefs = await SharedPreferences.getInstance();
-    final cachedData = _prefs?.getString('leaderboard_users');
-    if (cachedData != null) {
-      try {
-        final List<dynamic> decoded = jsonDecode(cachedData);
-        if (decoded.isNotEmpty) {
-          _users = decoded.map((item) => LeaderboardUserModel(
-            username: item['username'] ?? '',
-            fullName: item['fullName'] ?? '',
-            points: item['points'] ?? 0,
-            email: item['email'] ?? '',
-            isCurrentUser: item['isCurrentUser'] ?? false,
-            profileImage: item['profileImage'],
-          )).toList();
-          
-          // Initialize cache map
-          for (var user in _users) {
-            _userCache[user.email] = user;
-          }
-          notifyListeners();
-        }
-      } catch (e) {
-        print('Error loading cached data: $e');
-      }
-    }
     fetchUsers();
-  }
-
-  Future<void> _saveToCache() async {
-    if (_users.isNotEmpty && _users.first.username.isNotEmpty) {
-      final data = _users.map((user) => {
-        'username': user.username,
-        'fullName': user.fullName,
-        'points': user.points,
-        'email': user.email,
-        'isCurrentUser': user.isCurrentUser,
-        'profileImage': user.profileImage,
-      }).toList();
-      await _prefs?.setString('leaderboard_users', jsonEncode(data));
-    }
   }
 
   Future<void> fetchUsers() async {
@@ -133,55 +70,41 @@ class LeaderboardProvider extends ChangeNotifier {
       final currentUser = _auth.currentUser;
       if (currentUser == null) return;
 
-      // First try to load from cache
-      final cachedData = _prefs?.getString('leaderboard_users');
-      if (cachedData != null) {
-        final List<dynamic> decoded = jsonDecode(cachedData);
-        if (decoded.isNotEmpty) {
-          _users = decoded.map((item) => LeaderboardUserModel(
-            username: item['username'] ?? '',
-            fullName: item['fullName'] ?? '',
-            points: item['points'] ?? 0,
-            email: item['email'] ?? '',
-            isCurrentUser: item['isCurrentUser'] ?? false,
-            profileImage: item['profileImage'],
-          )).toList();
-          
-          // Initialize cache map
-          for (var user in _users) {
-            _userCache[user.email] = user;
-          }
-          notifyListeners();
-          // If we have cache, set up listeners but don't update UI immediately
-          _setupFirebaseListeners(currentUser);
-          return;
-        }
+      // Clear existing data and subscriptions
+      _users = [];
+      _userCache.clear();
+      for (var subscription in _subscriptions) {
+        subscription.cancel();
       }
-
-      // If no cache, fetch fresh data
-      final List<LeaderboardUserModel> initialUsers = [];
+      _subscriptions.clear();
 
       // First, add the current user
-      final currentUserDoc = await _firestore.collection('users').doc(currentUser.email).get();
-      if (currentUserDoc.exists) {
-        final data = currentUserDoc.data()!;
-        if (data['username'] != null && data['username'].toString().isNotEmpty) {
-          String? profilePicture = await _profilePictureCache.getOrUpdateCache(currentUser.email!, null);
-          
-          final user = LeaderboardUserModel(
-            username: data['username'] ?? '',
-            fullName: "${data['firstName'] ?? ''} ${data['lastName'] ?? ''}".trim(),
-            points: (data['points'] as num?)?.toInt() ?? 0,
-            email: currentUser.email!,
-            isCurrentUser: true,
-            profileImage: profilePicture,
-          );
-          initialUsers.add(user);
-          _userCache[currentUser.email!] = user;
+      final currentUserSubscription = _firestore
+          .collection('users')
+          .doc(currentUser.email)
+          .snapshots()
+          .listen((snapshot) async {
+        if (snapshot.exists) {
+          final data = snapshot.data()!;
+          if (data['username'] != null && data['username'].toString().isNotEmpty) {
+            String? profilePicture = await _profilePictureCache.getOrUpdateCache(currentUser.email!, null);
+            
+            final user = LeaderboardUserModel(
+              username: data['username'] ?? '',
+              fullName: "${data['firstName'] ?? ''} ${data['lastName'] ?? ''}".trim(),
+              points: (data['points'] as num?)?.toInt() ?? 0,
+              email: currentUser.email!,
+              isCurrentUser: true,
+              profileImage: profilePicture,
+            );
+            _userCache[currentUser.email!] = user;
+            _updateUsersList();
+          }
         }
-      }
+      });
+      _subscriptions.add(currentUserSubscription);
 
-      // Then fetch friends
+      // Get current user's friends
       final friendsSnapshot = await _firestore
           .collection('friends')
           .where('followerId', isEqualTo: currentUser.email)
@@ -191,71 +114,101 @@ class LeaderboardProvider extends ChangeNotifier {
           .map((doc) => doc.data()['followingId'] as String)
           .toList();
 
-      // Fetch friend details
-      for (String email in friendEmails) {
-        final userDoc = await _firestore.collection('users').doc(email).get();
-        if (userDoc.exists) {
-          final data = userDoc.data()!;
-          if (data['username'] != null && data['username'].toString().isNotEmpty) {
-            String? profilePicture = await _profilePictureCache.getOrUpdateCache(email, null);
-            
-            final user = LeaderboardUserModel(
-              username: data['username'] ?? '',
-              fullName: "${data['firstName'] ?? ''} ${data['lastName'] ?? ''}".trim(),
-              points: (data['points'] as num?)?.toInt() ?? 0,
-              email: email,
-              isCurrentUser: false,
-              profileImage: profilePicture,
-            );
-            initialUsers.add(user);
-            _userCache[email] = user;
+      // Set up real-time listener for friends
+      for (String friendEmail in friendEmails) {
+        final friendSubscription = _firestore
+            .collection('users')
+            .doc(friendEmail)
+            .snapshots()
+            .listen((userSnapshot) async {
+          if (userSnapshot.exists) {
+            final data = userSnapshot.data()!;
+            if (data['username'] != null && data['username'].toString().isNotEmpty) {
+              String? profilePicture = await _profilePictureCache.getOrUpdateCache(friendEmail, null);
+              
+              final user = LeaderboardUserModel(
+                username: data['username'] ?? '',
+                fullName: "${data['firstName'] ?? ''} ${data['lastName'] ?? ''}".trim(),
+                points: (data['points'] as num?)?.toInt() ?? 0,
+                email: friendEmail,
+                isCurrentUser: false,
+                profileImage: profilePicture,
+              );
+              _userCache[friendEmail] = user;
+              _updateUsersList();
+            }
+          } else {
+            _userCache.remove(friendEmail);
+            _updateUsersList();
           }
-        }
+        });
+        _subscriptions.add(friendSubscription);
       }
 
-      if (initialUsers.isNotEmpty) {
-        initialUsers.sort((a, b) => b.points.compareTo(a.points));
-        _users = initialUsers;
-        notifyListeners();
-        _saveToCache(); // Save initial data to cache
-      }
-
-      // Set up listeners for future updates
-      _setupFirebaseListeners(currentUser);
-    } catch (e) {
-      print('Error fetching users: $e');
-    }
-  }
-
-  void _setupFirebaseListeners(User currentUser) {
-    for (String email in _userCache.keys) {
-      final subscription = _firestore
-          .collection('users')
-          .doc(email)
+      // Set up listener for friends collection changes
+      final friendsSubscription = _firestore
+          .collection('friends')
+          .where('followerId', isEqualTo: currentUser.email)
           .snapshots()
           .listen((snapshot) async {
-        if (snapshot.exists) {
-          final data = snapshot.data()!;
-          if (data['username'] != null && data['username'].toString().isNotEmpty) {
-            final updatedUser = LeaderboardUserModel(
-              username: data['username'] ?? '',
-              fullName: "${data['firstName'] ?? ''} ${data['lastName'] ?? ''}".trim(),
-              points: (data['points'] as num?)?.toInt() ?? 0,
-              email: email,
-              isCurrentUser: email == currentUser.email,
-              profileImage: _userCache[email]?.profileImage, // Keep existing profile picture
-            );
+        final newFriendEmails = snapshot.docs
+            .map((doc) => doc.data()['followingId'] as String)
+            .toList();
 
-            if (_userCache[email]?.points != updatedUser.points) {
-              _userCache[email] = updatedUser;
-              _users = _userCache.values.toList()..sort((a, b) => b.points.compareTo(a.points));
-              notifyListeners();
-              _saveToCache();
+        // Remove users that are no longer friends
+        _userCache.removeWhere((email, user) =>
+            !newFriendEmails.contains(email) && email != currentUser.email);
+
+        // Add new friends
+        for (String email in newFriendEmails) {
+          if (!_userCache.containsKey(email)) {
+            final userDoc = await _firestore.collection('users').doc(email).get();
+            if (userDoc.exists) {
+              final data = userDoc.data()!;
+              if (data['username'] != null && data['username'].toString().isNotEmpty) {
+                String? profilePicture = await _profilePictureCache.getOrUpdateCache(email, null);
+                
+                final user = LeaderboardUserModel(
+                  username: data['username'] ?? '',
+                  fullName: "${data['firstName'] ?? ''} ${data['lastName'] ?? ''}".trim(),
+                  points: (data['points'] as num?)?.toInt() ?? 0,
+                  email: email,
+                  isCurrentUser: false,
+                  profileImage: profilePicture,
+                );
+                _userCache[email] = user;
+              }
             }
           }
         }
+        _updateUsersList();
       });
-      _subscriptions.add(subscription);
+      _subscriptions.add(friendsSubscription);
+
+    } catch (e) {
+      print('Error setting up real-time listeners: $e');
+    }
+  }
+
+  void _updateUsersList() {
+    // Make sure to include both current user and friends
+    _users = _userCache.values.toList()
+      ..sort((a, b) => b.points.compareTo(a.points));
+    notifyListeners();
+    _saveToCache();
+  }
+
+  Future<void> _saveToCache() async {
+    if (_users.isNotEmpty) {
+      final data = _users.map((user) => {
+        'username': user.username,
+        'fullName': user.fullName,
+        'points': user.points,
+        'email': user.email,
+        'isCurrentUser': user.isCurrentUser,
+        'profileImage': user.profileImage,
+      }).toList();
+      await _prefs?.setString('leaderboard_users', jsonEncode(data));
     }
   }
 
