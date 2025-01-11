@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import '../../../../core/app_export.dart';
 import '../../../../theme/custom_button_style.dart';
 import '../../../../widgets/app_bar/appbar_leading_image.dart';
@@ -58,124 +59,94 @@ class CreateAccountScreenState extends State<CreateAccountScreen> {
       backgroundColor: theme.colorScheme.onErrorContainer,
       appBar: _buildAppbar(context),
       body: SafeArea(
-        top: false,
-        child: SizedBox(
-          width: double.maxFinite,
-          child: SingleChildScrollView(
-            child: Container(
-              width: double.maxFinite,
-              padding: EdgeInsets.only(
-                left: 22.h,
-                top: 0.h,
-                right: 22.h,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Transform.translate(
-                    offset: Offset(0, -10),
-                    child: Align(
-                      alignment: Alignment.center,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            "TrackEat",
-                            style: CustomTextStyles.headlineLargeBlack900,
-                          )
-                        ],
-                      ),
-                    ),
+        child: SingleChildScrollView(
+          child: Container(
+            width: double.maxFinite,
+            padding: EdgeInsets.symmetric(horizontal: 22.h),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                SizedBox(height: 20.h),
+                Text(
+                  "TrackEat",
+                  style: CustomTextStyles.headlineLargeBlack900,
+                ),
+                SizedBox(height: 10.h),
+                CustomImageView(
+                  imagePath: ImageConstant.imgLogo,
+                  height: 142.h,
+                  width: double.maxFinite,
+                  margin: EdgeInsets.symmetric(horizontal: 72.h),
+                ),
+                SizedBox(height: 10.h),
+                Text(
+                  "We are tremendously happy to \nsee you joining our community",
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: CustomTextStyles.bodyLargeBlack900.copyWith(
+                    height: 1.29,
                   ),
-                  Transform.translate(
-                    offset: Offset(0, -20),
-                    child: CustomImageView(
-                      imagePath: ImageConstant.imgLogo,
-                      height: 162.h,
-                      width: double.maxFinite,
-                      margin: EdgeInsets.symmetric(horizontal: 72.h),
-                    ),
-                  ),
-                  Transform.translate(
-                    offset: Offset(0, -20),
-                    child: Align(
-                      alignment: Alignment.center,
-                      child: Text(
-                        "We are tremendously happy to \nsee you joining our community",
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.center,
-                        style: CustomTextStyles.bodyLargeBlack900.copyWith(
-                          height: 1.29,
-                        ),
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 6.h),
-                  Padding(
+                ),
+                SizedBox(height: 24.h),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Padding(
                     padding: EdgeInsets.only(left: 2.h),
                     child: Text(
                       "Username",
                       style: CustomTextStyles.bodyMediumBlack,
                     ),
                   ),
-                  SizedBox(height: 10.h),
-                  _buildUserName(context),
-                  SizedBox(height: 8.h),
-                  Padding(
+                ),
+                SizedBox(height: 8.h),
+                _buildUserName(context),
+                SizedBox(height: 12.h),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Padding(
                     padding: EdgeInsets.only(left: 2.h),
                     child: Text(
                       "Email",
                       style: CustomTextStyles.bodyMediumBlack,
                     ),
                   ),
-                  SizedBox(height: 10.h),
-                  _buildEmailtwo(context),
-                  SizedBox(height: 8.h),
-                  Padding(
+                ),
+                SizedBox(height: 8.h),
+                _buildEmailtwo(context),
+                SizedBox(height: 12.h),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Padding(
                     padding: EdgeInsets.only(left: 2.h),
                     child: Text(
                       "Password",
                       style: CustomTextStyles.bodyMediumBlack,
                     ),
                   ),
-                  SizedBox(height: 10.h),
-                  _buildPasswordtwo(context),
-                  SizedBox(height: 10.h),
-                  Padding(
+                ),
+                SizedBox(height: 8.h),
+                _buildPasswordtwo(context),
+                SizedBox(height: 12.h),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Padding(
                     padding: EdgeInsets.only(left: 2.h),
                     child: Text(
                       "Re-enter your password",
                       style: CustomTextStyles.bodyMediumBlack,
                     ),
                   ),
-                  SizedBox(height: 8.h),
-                  _buildPasswordthree(context),
-                  SizedBox(height: 38.h),
-                  _buildNext(context),
-                ],
-              ),
+                ),
+                SizedBox(height: 8.h),
+                _buildPasswordthree(context),
+                SizedBox(height: 24.h),
+                _buildNext(context),
+                SizedBox(height: 24.h),
+              ],
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  /// AppBar Widget
-  PreferredSizeWidget _buildAppbar(BuildContext context) {
-    return CustomAppBar(
-      height: 28.h,
-      leadingWidth: 31.h,
-      leading: AppbarLeadingImage(
-        imagePath: ImageConstant.imgArrowLeftPrimary,
-        height: 20.h,
-        width: 20.h,
-        margin: EdgeInsets.only(left: 7.h),
-        onTap: () {
-          NavigatorService.goBack();
-        },
       ),
     );
   }
@@ -429,6 +400,23 @@ class CreateAccountScreenState extends State<CreateAccountScreen> {
           } : null,
         );
       },
+    );
+  }
+
+  /// AppBar Widget
+  PreferredSizeWidget _buildAppbar(BuildContext context) {
+    return CustomAppBar(
+      height: 28.h,
+      leadingWidth: 31.h,
+      leading: AppbarLeadingImage(
+        imagePath: ImageConstant.imgArrowLeftPrimary,
+        height: 20.h,
+        width: 20.h,
+        margin: EdgeInsets.only(left: 7.h),
+        onTap: () {
+          Navigator.pop(context);
+        },
+      ),
     );
   }
 }

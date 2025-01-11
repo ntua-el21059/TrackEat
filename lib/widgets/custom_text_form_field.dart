@@ -15,6 +15,7 @@ class CustomTextFormField extends StatelessWidget {
     this.textStyle,
     this.obscureText = false,
     this.readOnly = false,
+    this.enabled = true,
     this.onTap,
     this.onChanged,
     this.textInputAction = TextInputAction.next,
@@ -32,6 +33,7 @@ class CustomTextFormField extends StatelessWidget {
     this.filled = false,
     this.validator,
     this.inputFormatters,
+    this.showCursor = true,
   }) : super(key: key);
 
   final Alignment? alignment;
@@ -44,6 +46,7 @@ class CustomTextFormField extends StatelessWidget {
   final TextStyle? textStyle;
   final bool? obscureText;
   final bool? readOnly;
+  final bool? enabled;
   final VoidCallback? onTap;
   final ValueChanged<String>? onChanged;
   final TextInputAction? textInputAction;
@@ -61,6 +64,7 @@ class CustomTextFormField extends StatelessWidget {
   final bool? filled;
   final FormFieldValidator<String>? validator;
   final List<TextInputFormatter>? inputFormatters;
+  final bool showCursor;
 
   @override
   Widget build(BuildContext context) {
@@ -91,19 +95,22 @@ class CustomTextFormField extends StatelessWidget {
           onTap: () {
             onTap?.call();
             // Request focus when tapped to show keyboard
-            FocusScope.of(context).requestFocus(focusNode);
+            if (enabled!) {
+              FocusScope.of(context).requestFocus(focusNode);
+            }
           },
           autofocus: autofocus!,
           style: textStyle ?? CustomTextStyles.bodyLargeGray900,
           obscureText: obscureText!,
           readOnly: readOnly!,
+          enabled: enabled!,
           textInputAction: textInputAction,
           keyboardType: textInputType,
           maxLines: maxLines ?? 1,
           decoration: decoration,
           validator: validator,
           enableInteractiveSelection: false,
-          showCursor: true,
+          showCursor: showCursor,
           contextMenuBuilder: null,
           selectionControls: null,
           toolbarOptions: const ToolbarOptions(

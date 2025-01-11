@@ -26,11 +26,13 @@ class UserProvider extends ChangeNotifier {
     required String lastName,
     required String birthdate,
     required String gender,
+    required double height,
   }) {
     _user.firstName = firstName;
     _user.lastName = lastName;
     _user.birthdate = birthdate;
     _user.gender = gender;
+    _user.height = height;
     notifyListeners();
   }
 
@@ -39,14 +41,16 @@ class UserProvider extends ChangeNotifier {
     required String activity,
     String? diet,
     required String goal,
-    required double height,
     required double weight,
+    required double weeklygoal,
+    required double weightgoal,
   }) {
     _user.activity = activity;
     _user.diet = diet;
     _user.goal = goal;
-    _user.height = height;
     _user.weight = weight;
+    _user.weeklygoal = weeklygoal;
+    _user.weightgoal = weightgoal;
     notifyListeners();
   }
 

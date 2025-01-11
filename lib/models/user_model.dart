@@ -1,5 +1,4 @@
 class UserModel {
-  String? id;
   String? username;
   String? email;
   String? password;
@@ -11,16 +10,17 @@ class UserModel {
   String? lastName;
   String? birthdate;
   String? gender;
+  double? height;
   
   // Profile 2/3
   String? activity;
   String? diet;
   String? goal;
   double? weight;
-  double? height;
+  double? weeklygoal;
+  double? weightgoal;
   
   // Profile 3/3
-  int? age;
   int? dailyCalories;
   
   // Macronutrient goals
@@ -28,8 +28,32 @@ class UserModel {
   double? proteinGoal;
   double? fatGoal;
 
+  // Calculate age from birthdate
+  int? get age {
+    if (birthdate == null) return null;
+    try {
+      final parts = birthdate!.split('/');
+      if (parts.length != 3) return null;
+      final birthDay = int.parse(parts[0]);
+      final birthMonth = int.parse(parts[1]);
+      final birthYear = int.parse(parts[2]);
+      
+      final today = DateTime.now();
+      final birth = DateTime(birthYear, birthMonth, birthDay);
+      int age = today.year - birth.year;
+      
+      // Adjust age if birthday hasn't occurred this year
+      if (today.month < birth.month || 
+          (today.month == birth.month && today.day < birth.day)) {
+        age--;
+      }
+      return age;
+    } catch (e) {
+      return null;
+    }
+  }
+
   UserModel({
-    this.id,
     this.username,
     this.email,
     this.password,
@@ -39,34 +63,20 @@ class UserModel {
     this.lastName,
     this.birthdate,
     this.gender,
+    this.height,
     this.activity,
     this.diet,
     this.goal,
     this.weight,
-    this.height,
-    this.age,
+    this.weeklygoal,
+    this.weightgoal,
     this.dailyCalories,
-    double? carbsGoal,
-    double? proteinGoal,
-    double? fatGoal,
-  }) {
-    // Calculate default macronutrient goals based on daily calorie goal if not provided
-    final calories = dailyCalories ?? 2000;
-    
-    // Calculate macros: 30% protein, 45% carbs, 25% fat
-    this.carbsGoal = carbsGoal ?? ((0.45 * calories) / 4).round().toDouble();  // 45% of calories
-    this.proteinGoal = proteinGoal ?? ((0.30 * calories) / 4).round().toDouble(); // 30% of calories
-    this.fatGoal = fatGoal ?? ((0.25 * calories) / 9).round().toDouble();     // 25% of calories
-  }
+    this.carbsGoal,
+    this.proteinGoal,
+    this.fatGoal,
+  });
 
   Map<String, dynamic> toJson() {
-    final dailyCalories = this.dailyCalories ?? 2000;
-    
-    // Calculate macros if they're null
-    final carbsGoal = this.carbsGoal ?? ((0.45 * dailyCalories) / 4).round().toDouble();
-    final proteinGoal = this.proteinGoal ?? ((0.30 * dailyCalories) / 4).round().toDouble();
-    final fatGoal = this.fatGoal ?? ((0.25 * dailyCalories) / 9).round().toDouble();
-    
     return {
       'username': username,
       'email': email,
@@ -76,15 +86,17 @@ class UserModel {
       'lastName': lastName,
       'birthdate': birthdate,
       'gender': gender,
+      'height': height,
       'activity': activity,
       'diet': diet,
       'goal': goal,
       'weight': weight,
-      'height': height,
+      'weeklygoal': weeklygoal,
+      'weightgoal': weightgoal,
       'dailyCalories': dailyCalories,
-      'carbsgoal': carbsGoal,
-      'proteingoal': proteinGoal,
-      'fatgoal': fatGoal,
+      'carbsGoal': carbsGoal,
+      'proteinGoal': proteinGoal,
+      'fatGoal': fatGoal,
     };
   }
 
@@ -98,20 +110,21 @@ class UserModel {
       lastName: json['lastName'],
       birthdate: json['birthdate'],
       gender: json['gender'],
+      height: json['height']?.toDouble(),
       activity: json['activity'],
       diet: json['diet'],
       goal: json['goal'],
       weight: json['weight']?.toDouble(),
-      height: json['height']?.toDouble(),
+      weeklygoal: json['weeklygoal']?.toDouble(),
+      weightgoal: json['weightgoal']?.toDouble(),
       dailyCalories: json['dailyCalories'],
-      carbsGoal: json['carbsgoal']?.toDouble(),
-      proteinGoal: json['proteingoal']?.toDouble(),
-      fatGoal: json['fatgoal']?.toDouble(),
+      carbsGoal: json['carbsGoal']?.toDouble(),
+      proteinGoal: json['proteinGoal']?.toDouble(),
+      fatGoal: json['fatGoal']?.toDouble(),
     );
   }
 
   UserModel copyWith({
-    String? id,
     String? username,
     String? email,
     String? password,
@@ -121,19 +134,19 @@ class UserModel {
     String? lastName,
     String? birthdate,
     String? gender,
+    double? height,
     String? activity,
     String? diet,
     String? goal,
     double? weight,
-    double? height,
-    int? age,
+    double? weeklygoal,
+    double? weightgoal,
     int? dailyCalories,
     double? carbsGoal,
     double? proteinGoal,
     double? fatGoal,
   }) {
     return UserModel(
-      id: id ?? this.id,
       username: username ?? this.username,
       email: email ?? this.email,
       password: password ?? this.password,
@@ -143,12 +156,13 @@ class UserModel {
       lastName: lastName ?? this.lastName,
       birthdate: birthdate ?? this.birthdate,
       gender: gender ?? this.gender,
+      height: height ?? this.height,
       activity: activity ?? this.activity,
       diet: diet ?? this.diet,
       goal: goal ?? this.goal,
       weight: weight ?? this.weight,
-      height: height ?? this.height,
-      age: age ?? this.age,
+      weeklygoal: weeklygoal ?? this.weeklygoal,
+      weightgoal: weightgoal ?? this.weightgoal,
       dailyCalories: dailyCalories ?? this.dailyCalories,
       carbsGoal: carbsGoal ?? this.carbsGoal,
       proteinGoal: proteinGoal ?? this.proteinGoal,

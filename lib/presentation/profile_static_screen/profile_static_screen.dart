@@ -892,12 +892,21 @@ class ProfileStaticScreenState extends State<ProfileStaticScreen> with TickerPro
           selectedGender = userData['gender']?.toString() ?? 'Male';
           
           if (Platform.isIOS) {
-            showCupertinoModalPopup(
+            showModalBottomSheet(
               context: context,
+              isScrollControlled: true,
+              backgroundColor: CupertinoColors.white,
+              enableDrag: true,
+              isDismissible: true,
+              useRootNavigator: true,
+              barrierColor: Colors.black.withOpacity(0.5),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
+              ),
               builder: (BuildContext context) {
                 return Container(
-                  height: 220,
-                  color: CupertinoColors.white,
+                  height: 320,
+                  padding: EdgeInsets.only(top: 16),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [

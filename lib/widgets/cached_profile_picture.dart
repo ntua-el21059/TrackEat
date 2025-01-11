@@ -17,47 +17,31 @@ class CachedProfilePicture extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ClipOval(
-      child: Container(
-        height: size,
-        width: size,
-        padding: showBorder ? EdgeInsets.all(size * 0.05) : null,
-        decoration: showBorder ? BoxDecoration(
-          color: Colors.white,
-          shape: BoxShape.circle,
-        ) : null,
-        child: ListenableBuilder(
-          listenable: ProfilePictureCacheService(),
-          builder: (context, _) {
-            final cachedPicture = ProfilePictureCacheService().getCachedProfilePicture(email);
-            
-            if (cachedPicture != null) {
-              return Image.memory(
-                base64Decode(cachedPicture),
-                height: size,
-                width: size,
-                fit: BoxFit.cover,
-                gaplessPlayback: true,
-              );
-            }
-            
-            return Container(
+    return ListenableBuilder(
+      listenable: ProfilePictureCacheService(),
+      builder: (context, _) {
+        final cachedPicture = ProfilePictureCacheService().getCachedProfilePicture(email);
+        
+        if (cachedPicture != null) {
+          return ClipRRect(
+            borderRadius: BorderRadius.circular(size / 2),
+            child: Image.memory(
+              base64Decode(cachedPicture),
               height: size,
               width: size,
-              decoration: BoxDecoration(
-                color: Colors.grey[200],
-                shape: BoxShape.circle,
-              ),
-              child: SvgPicture.asset(
-                'assets/images/person.crop.circle.fill.svg',
-                height: size,
-                width: size,
-                fit: BoxFit.cover,
-              ),
-            );
-          },
-        ),
-      ),
+              fit: BoxFit.cover,
+              gaplessPlayback: true,
+            ),
+          );
+        }
+        
+        return SvgPicture.asset(
+          'assets/images/person.crop.circle.fill.svg',
+          height: size,
+          width: size,
+          fit: BoxFit.contain,
+        );
+      },
     );
   }
 } 
