@@ -529,91 +529,93 @@ class SocialProfileViewScreenState extends State<SocialProfileViewScreen> {
   }
 
   Widget _buildListvegan(BuildContext context, DocumentSnapshot userData) {
-    final data = userData.data() as Map<String, dynamic>?;
-    final firstName = data?['firstName']?.toString() ?? '';
-    final diet = data?['diet']?.toString() ?? 'Balanced';
-    final createdDate = data?['create']?.toString();
-    final username = data?['username']?.toString() ?? '';
+    return Consumer<SocialProfileViewProvider>(
+      builder: (context, provider, _) {
+        final data = userData.data() as Map<String, dynamic>?;
+        final firstName = data?['firstName']?.toString() ?? '';
+        final username = data?['username']?.toString() ?? '';
+        final diet = data?['diet']?.toString() ?? '';
+        final create = data?['create']?.toString() ?? '';
 
-    String getDietWithEmoji(String diet) {
-      return switch (diet.trim()) {
-        'Vegan' => 'Vegan🌱',
-        'Carnivore' => 'Carnivore🥩',
-        'Vegetarian' => 'Vegetarian🥗',
-        'Pescatarian' => 'Pescatarian🐟',
-        'Keto' => 'Keto🥑',
-        'Fruitarian' => 'Fruitarian🍎',
-        _ => 'Balanced🥗'
-      };
-    }
-
-    String _calculateTimeDifference(String createdDate) {
-      try {
-        final parts = createdDate.split('/');
-        if (parts.length != 3) return "some time";
-
-        final createdDateTime = DateTime(
-          int.parse(parts[2]), // year
-          int.parse(parts[1]), // month
-          int.parse(parts[0]), // day
-        );
-        
-        final now = DateTime.now();
-        final difference = now.difference(createdDateTime);
-        final days = difference.inDays;
-        
-        if (days >= 365) {
-          final years = days ~/ 365;
-          return "$years year${years > 1 ? 's' : ''}";
-        } else if (days >= 30) {
-          final months = (days / 30.44).floor();
-          return "$months month${months > 1 ? 's' : ''}";
-        } else {
-          return "$days day${days > 1 ? 's' : ''}";
+        String getDietWithEmoji(String diet) {
+          return switch (diet.trim()) {
+            'Vegan' => 'Vegan🌱',
+            'Carnivore' => 'Carnivore🥩',
+            'Vegetarian' => 'Vegetarian🥗',
+            'Pescatarian' => 'Pescatarian🐟',
+            'Keto' => 'Keto🥑',
+            'Fruitarian' => 'Fruitarian🍎',
+            _ => 'Balanced🥗'
+          };
         }
-      } catch (e) {
-        return "some time";
-      }
-    }
 
-    String timeDifference = "some time";
-    if (createdDate != null && createdDate.isNotEmpty) {
-      timeDifference = _calculateTimeDifference(createdDate);
-    }
+        DateTime? createdDate;
+        if (create.isNotEmpty) {
+          final parts = create.split('/');
+          if (parts.length == 3) {
+            createdDate = DateTime(
+              int.parse(parts[2]), // year
+              int.parse(parts[1]), // month
+              int.parse(parts[0]), // day
+            );
+          }
+        }
 
-    final listveganItemList = [
-      ListveganItemModel(
-        title: getDietWithEmoji(diet),
-        isStatic: true,
-      ),
-      ListveganItemModel(
-        title: "$firstName has been thriving \nwith us for $timeDifference!",
-        count: "⭐️",
-        username: username,
-        isStatic: false,
-      ),
-    ];
+        String timeDifference = "some time";
+        if (createdDate != null) {
+          final now = DateTime.now();
+          final difference = now.difference(createdDate);
+          final days = difference.inDays;
+          
+          if (days >= 365) {
+            final years = days ~/ 365;
+            timeDifference = "$years year${years > 1 ? 's' : ''}";
+          } else if (days >= 30) {
+            final months = (days / 30.44).floor();
+            timeDifference = "$months month${months > 1 ? 's' : ''}";
+          } else {
+            timeDifference = "$days day${days > 1 ? 's' : ''}";
+          }
+        }
 
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 16.h),
-      width: double.maxFinite,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          ...List.generate(
-            listveganItemList.length,
-            (index) {
-              ListveganItemModel model = listveganItemList[index];
-              return Padding(
-                padding: EdgeInsets.only(
-                  right: index == 0 ? 16.h : 0,
-                ),
-                child: ListveganItemWidget(model),
-              );
-            },
+        final listveganItemList = [
+          ListveganItemModel(
+            title: getDietWithEmoji(diet),
+            isStatic: true,
           ),
-        ],
-      ),
+          ListveganItemModel(
+            title: "$firstName has been thriving \nwith us for $timeDifference!",
+            count: "⭐️",
+            username: username,
+            isStatic: false,
+          ),
+        ];
+
+        return Container(
+          margin: EdgeInsets.symmetric(horizontal: 16.h),
+          width: double.maxFinite,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              ...List.generate(
+                listveganItemList.length,
+                (index) {
+                  ListveganItemModel model = listveganItemList[index];
+                  return Padding(
+                    padding: EdgeInsets.only(
+                      right: index == 0 ? 16.h : 0,
+                    ),
+                    child: ListveganItemWidget(
+                      key: ValueKey('${model.username}_${model.isStatic}_${model.title}'),
+                      model,
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

@@ -1,43 +1,10 @@
 import '../../../core/app_export.dart';
 import '../models/listvegan_item_model.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ListveganItemWidget extends StatelessWidget {
   final ListveganItemModel model;
 
   const ListveganItemWidget(this.model, {Key? key}) : super(key: key);
-
-  String _calculateTimeDifference(String createdDate) {
-    try {
-      final parts = createdDate.split('/');
-      
-      if (parts.length != 3) {
-        return "some time";
-      }
-
-      final createdDateTime = DateTime(
-        int.parse(parts[2]), // year
-        int.parse(parts[1]), // month
-        int.parse(parts[0]), // day
-      );
-      
-      final now = DateTime.now();
-      final difference = now.difference(createdDateTime);
-      final days = difference.inDays;
-      
-      if (days >= 365) {
-        final years = days ~/ 365;
-        return "$years year${years > 1 ? 's' : ''}";
-      } else if (days >= 30) {
-        final adjustedMonths = (days / 30.44).floor();
-        return "$adjustedMonths month${adjustedMonths > 1 ? 's' : ''}";
-      } else {
-        return "$days day${days > 1 ? 's' : ''}";
-      }
-    } catch (e) {
-      return "some time";
-    }
-  }
 
   Widget _buildContainer(BuildContext context, String text, Color color) {
     bool hasDietEmoji = text.contains('🌱') || text.contains('🥩') || 
@@ -124,42 +91,6 @@ class ListveganItemWidget extends StatelessWidget {
 
     if (dietText?.contains("been thriving") == true || dietText?.contains("'s been thriving") == true || dietText?.contains("thriving") == true) {
       boxColor = const Color(0xFFFFD700); // Yellow for thriving message
-      return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-        stream: FirebaseFirestore.instance
-            .collection('users')
-            .where(model.username?.contains('@') == true ? 'email' : 'username', isEqualTo: model.username)
-            .limit(1)
-            .snapshots(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return _buildContainer(context, "Loading...", const Color(0xFFFFD700));
-          }
-
-          if (snapshot.hasError) {
-            return _buildContainer(context, "Error loading data", const Color(0xFFFFD700));
-          }
-
-          if (snapshot.hasData && snapshot.data!.docs.isNotEmpty) {
-            final userData = snapshot.data!.docs.first.data();
-            final firstName = userData['firstName']?.toString() ?? '';
-            final createdDate = userData['create']?.toString();
-            
-            if (createdDate != null && createdDate.isNotEmpty) {
-              final timeDifference = _calculateTimeDifference(createdDate);
-              if (!dietText!.contains(firstName)) {
-                dietText = "$firstName has been thriving with us for $timeDifference! ⭐️";
-              }
-            } else {
-              if (!dietText!.contains(firstName)) {
-                dietText = "$firstName has been thriving with us! ⭐️";
-              }
-            }
-          } else {
-            dietText = "Loading...";
-          }
-          return _buildContainer(context, dietText ?? "", const Color(0xFFFFD700));
-        },
-      );
     } else {
       switch (dietText) {
         case 'Vegan🌱':
@@ -183,7 +114,7 @@ class ListveganItemWidget extends StatelessWidget {
         default:
           boxColor = const Color(0xFFFFD700); // Yellow for default/unknown diet
       }
-      return _buildContainer(context, dietText ?? "", boxColor);
     }
+    return _buildContainer(context, dietText ?? "", boxColor);
   }
 }
