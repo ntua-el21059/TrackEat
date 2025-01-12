@@ -39,25 +39,30 @@ class NotificationsProvider extends ChangeNotifier {
   void _setupNotificationsListener() {
     // Cancel any existing subscription first
     _notificationsSubscription?.cancel();
-    _notifications.clear();  // Use clear() instead of reassignment
+    _notifications.clear();
 
     final currentUser = _auth.currentUser;
     if (currentUser?.email == null) {
       print('Error: No current user or email');
-      _cleanupAndReset();  // Clean up if no user
+      _cleanupAndReset();
       return;
     }
 
     print('Setting up notifications listener for: ${currentUser!.email}');
     
-    _notificationsSubscription = _firestore
+    final notificationsRef = _firestore
         .collection('users')
         .doc(currentUser.email)
-        .collection('notifications')
+        .collection('notifications');
+    
+    print('Listening to path: ${notificationsRef.path}');
+    
+    _notificationsSubscription = notificationsRef
         .orderBy('timestamp', descending: true)
         .snapshots()
         .listen((snapshot) {
-      print('Received notification snapshot with ${snapshot.docs.length} documents for ${currentUser.email}');
+      print('Received notification snapshot with ${snapshot.docs.length} documents');
+      print('Documents data: ${snapshot.docs.map((doc) => doc.data())}');
       
       // Verify the user hasn't changed before processing
       if (_auth.currentUser?.email != currentUser.email) {
@@ -67,16 +72,18 @@ class NotificationsProvider extends ChangeNotifier {
 
       _notifications = snapshot.docs.map((doc) {
         final data = doc.data();
-        print('Processing notification for ${currentUser.email}: ${data}');
+        print('Processing notification: ${doc.id} - ${data}');
         return NotificationItem(
-          message: data['message'] as String,
+          message: data['message'] as String? ?? 'No message',
           id: doc.id,
-          isRead: data['isRead'] as bool,
+          isRead: data['isRead'] as bool? ?? false,
           senderId: data['senderId'] as String?,
         );
       }).toList();
 
-      print('Total notifications after processing for ${currentUser.email}: ${_notifications.length}');
+      print('Total notifications after processing: ${_notifications.length}');
+      print('Unread notifications: ${unreadNotifications.length}');
+      print('Read notifications: ${readNotifications.length}');
       notifyListeners();
     }, onError: (error) {
       print('Error listening to notifications: $error');

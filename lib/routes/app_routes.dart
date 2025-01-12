@@ -25,6 +25,8 @@ import '../presentation/alkis/find friends/find_friends_screen.dart';
 import '../presentation/alkis/notifications/notifications_screen.dart';
 import '../presentation/social_profile_view_screen/social_profile_view_screen.dart';
 import '../models/award_model.dart';
+import 'package:provider/provider.dart';
+import '../presentation/alkis/notifications/provider/notifications_provider.dart';
 
 class AppRoutes {
   static const String createAccountScreen = '/create_account_screen';
@@ -144,7 +146,10 @@ class AppRoutes {
         SocialProfileMessageFromProfileScreen.builder(context),
     leaderboardScreen: (context) => LeaderboardScreen.builder(context),
     findFriendsScreen: (context) => FindFriendsScreen.builder(context),
-    notificationsScreen: (context) => const NotificationsScreen(),
+    notificationsScreen: (context) => ChangeNotifierProvider(
+      create: (_) => NotificationsProvider(),
+      child: const NotificationsScreen(),
+    ),
     socialProfileViewScreen: (context) {
       final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>?;
       if (args == null || args['username'] == null) {
