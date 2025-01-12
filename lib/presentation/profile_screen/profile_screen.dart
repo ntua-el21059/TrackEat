@@ -31,8 +31,6 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
     'Vegetarian',
     'Carnivore',
     'Fruitarian',
-    'Pescatarian',
-    'Mediterranean',
   ];
 
   String? selectedDiet;
@@ -606,7 +604,7 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
       showModalBottomSheet(
         context: context,
         isScrollControlled: true,
-        backgroundColor: Colors.white.withOpacity(0.7),
+        backgroundColor: Colors.white,
         enableDrag: true,
         isDismissible: true,
         useRootNavigator: true,
@@ -618,9 +616,9 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
           return Padding(
             padding: EdgeInsets.only(
               bottom: MediaQuery.of(context).viewInsets.bottom,
-              left: 16.h,
-              right: 16.h,
-              top: 16.h,
+              left: 16,
+              right: 16,
+              top: 16,
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -632,7 +630,7 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                SizedBox(height: 16.h),
+                SizedBox(height: 16),
                 TextField(
                   controller: controller,
                   autofocus: true,
@@ -641,7 +639,7 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
                     hintText: 'Enter daily calories goal',
                     suffixText: ' kcal',
                     filled: true,
-                    fillColor: Colors.white.withOpacity(0.1),
+                    fillColor: Colors.grey[100],
                     border: OutlineInputBorder(
                       borderSide: BorderSide.none,
                       borderRadius: BorderRadius.circular(8),
@@ -806,7 +804,7 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
       showModalBottomSheet(
         context: context,
         isScrollControlled: true,
-        backgroundColor: Colors.white.withOpacity(0.7),
+        backgroundColor: Colors.white,
         enableDrag: true,
         isDismissible: true,
         useRootNavigator: true,
@@ -818,9 +816,9 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
           return Padding(
             padding: EdgeInsets.only(
               bottom: MediaQuery.of(context).viewInsets.bottom,
-              left: 16.h,
-              right: 16.h,
-              top: 16.h,
+              left: 16,
+              right: 16,
+              top: 16,
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -832,7 +830,7 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                SizedBox(height: 16.h),
+                SizedBox(height: 16),
                 TextField(
                   controller: controller,
                   autofocus: true,
@@ -841,7 +839,7 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
                     hintText: 'Enter current weight',
                     suffixText: ' kg',
                     filled: true,
-                    fillColor: Colors.white.withOpacity(0.1),
+                    fillColor: Colors.grey[100],
                     border: OutlineInputBorder(
                       borderSide: BorderSide.none,
                       borderRadius: BorderRadius.circular(8),
@@ -899,7 +897,7 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
     _showSmoothBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Platform.isIOS ? CupertinoColors.white : Colors.white.withOpacity(0.7),
+      backgroundColor: Platform.isIOS ? CupertinoColors.white : Colors.white,
       child: Platform.isIOS ? Padding(
         padding: EdgeInsets.only(
           bottom: MediaQuery.of(context).viewInsets.bottom,
@@ -1000,9 +998,9 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
       ) : Padding(
         padding: EdgeInsets.only(
           bottom: MediaQuery.of(context).viewInsets.bottom,
-          left: 16.h,
-          right: 16.h,
-          top: 16.h,
+          left: 16,
+          right: 16,
+          top: 16,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -1014,7 +1012,7 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(height: 16.h),
+            SizedBox(height: 16),
             TextField(
               controller: controller,
               autofocus: true,
@@ -1023,7 +1021,7 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
                 hintText: 'Enter ${title.toLowerCase()}',
                 suffixText: ' g',
                 filled: true,
-                fillColor: Colors.white.withOpacity(0.1),
+                fillColor: Colors.grey[100],
                 border: OutlineInputBorder(
                   borderSide: BorderSide.none,
                   borderRadius: BorderRadius.circular(8),
@@ -1085,8 +1083,6 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
       'Vegetarian',
       'Carnivore',
       'Fruitarian',
-      'Pescatarian',
-      'Mediterranean',
     ];
 
     // Get current diet from provider
@@ -1098,12 +1094,25 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
     final initialIndex = menuChoices.indexOf(currentDiet);
 
     if (Platform.isIOS) {
-      showCupertinoModalPopup(
+      showModalBottomSheet(
         context: context,
+        isScrollControlled: true,
+        backgroundColor: CupertinoColors.white,
+        enableDrag: true,
+        isDismissible: true,
+        useRootNavigator: true,
+        barrierColor: Colors.black.withOpacity(0.5),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
+        ),
         builder: (BuildContext context) {
-          return Container(
-            height: 250,
-            color: CupertinoColors.white,
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+              left: 16,
+              right: 16,
+              top: 16,
+            ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -1153,7 +1162,9 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
                     ],
                   ),
                 ),
-                Expanded(
+                SizedBox(height: 16),
+                Container(
+                  height: 180,
                   child: CupertinoPicker(
                     scrollController: FixedExtentScrollController(initialItem: initialIndex),
                     itemExtent: 44,
@@ -1173,6 +1184,7 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
                     ).toList(),
                   ),
                 ),
+                SizedBox(height: 16),
               ],
             ),
           );
@@ -1259,12 +1271,25 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
     final initialIndex = activityLevels.indexOf(currentActivity);
 
     if (Platform.isIOS) {
-      showCupertinoModalPopup(
+      showModalBottomSheet(
         context: context,
+        isScrollControlled: true,
+        backgroundColor: CupertinoColors.white,
+        enableDrag: true,
+        isDismissible: true,
+        useRootNavigator: true,
+        barrierColor: Colors.black.withOpacity(0.5),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
+        ),
         builder: (BuildContext context) {
-          return Container(
-            height: 250,
-            color: CupertinoColors.white,
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+              left: 16,
+              right: 16,
+              top: 16,
+            ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -1314,7 +1339,9 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
                     ],
                   ),
                 ),
-                Expanded(
+                SizedBox(height: 16),
+                Container(
+                  height: 180,
                   child: CupertinoPicker(
                     scrollController: FixedExtentScrollController(initialItem: initialIndex),
                     itemExtent: 44,
@@ -1334,6 +1361,7 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
                     ).toList(),
                   ),
                 ),
+                SizedBox(height: 16),
               ],
             ),
           );
@@ -1347,8 +1375,13 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
           borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
         ),
         builder: (BuildContext context) {
-          return Container(
-            padding: EdgeInsets.symmetric(vertical: 20.h),
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+              left: 16,
+              right: 16,
+              top: 16,
+            ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -1556,7 +1589,7 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
         showModalBottomSheet(
           context: context,
           isScrollControlled: true,
-          backgroundColor: Colors.white.withOpacity(0.7),
+          backgroundColor: Colors.white,
           enableDrag: true,
           isDismissible: true,
           useRootNavigator: true,
@@ -1568,9 +1601,9 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
             return Padding(
               padding: EdgeInsets.only(
                 bottom: MediaQuery.of(context).viewInsets.bottom,
-                left: 16.h,
-                right: 16.h,
-                top: 16.h,
+                left: 16,
+                right: 16,
+                top: 16,
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -1582,7 +1615,7 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  SizedBox(height: 16.h),
+                  SizedBox(height: 16),
                   TextField(
                     controller: controller,
                     autofocus: true,
@@ -1591,7 +1624,7 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
                       hintText: 'Enter ${title.toLowerCase()}',
                       suffixText: ' g',
                       filled: true,
-                      fillColor: Colors.white.withOpacity(0.1),
+                      fillColor: Colors.grey[100],
                       border: OutlineInputBorder(
                         borderSide: BorderSide.none,
                         borderRadius: BorderRadius.circular(8),
@@ -1658,7 +1691,7 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
           .then((doc) {
         if (doc.exists) {
           final userData = doc.data()!;
-          final goalWeight = userData['weightgoal']?.toString() ?? '';
+          final goalWeight = userData['weightgoal']?.toString() ?? '0.0';
           
           final TextEditingController controller = TextEditingController(
             text: goalWeight.replaceAll(" kg", "")  // Remove "kg" from the initial value
@@ -1767,7 +1800,7 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
             showModalBottomSheet(
               context: context,
               isScrollControlled: true,
-              backgroundColor: Colors.white.withOpacity(0.7),
+              backgroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
               ),
@@ -1775,9 +1808,9 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
                 return Padding(
                   padding: EdgeInsets.only(
                     bottom: MediaQuery.of(context).viewInsets.bottom,
-                    left: 16.h,
-                    right: 16.h,
-                    top: 16.h,
+                    left: 16,
+                    right: 16,
+                    top: 16,
                   ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -1789,7 +1822,7 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      SizedBox(height: 16.h),
+                      SizedBox(height: 16),
                       TextField(
                         controller: controller,
                         autofocus: true,
@@ -1798,7 +1831,7 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
                           hintText: 'Enter goal weight',
                           suffixText: ' kg',
                           filled: true,
-                          fillColor: Colors.white.withOpacity(0.1),
+                          fillColor: Colors.grey[100],
                           border: OutlineInputBorder(
                             borderSide: BorderSide.none,
                             borderRadius: BorderRadius.circular(8),
@@ -1877,12 +1910,25 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
           }
 
           if (Platform.isIOS) {
-            showCupertinoModalPopup(
+            showModalBottomSheet(
               context: context,
+              isScrollControlled: true,
+              backgroundColor: CupertinoColors.white,
+              enableDrag: true,
+              isDismissible: true,
+              useRootNavigator: true,
+              barrierColor: Colors.black.withOpacity(0.5),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
+              ),
               builder: (BuildContext context) {
-                return Container(
-                  height: 250,
-                  color: CupertinoColors.white,
+                return Padding(
+                  padding: EdgeInsets.only(
+                    bottom: MediaQuery.of(context).viewInsets.bottom,
+                    left: 16,
+                    right: 16,
+                    top: 16,
+                  ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -1928,7 +1974,9 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
                           ],
                         ),
                       ),
-                      Expanded(
+                      SizedBox(height: 16),
+                      Container(
+                        height: 180,
                         child: Row(
                           children: [
                             // Sign picker
@@ -1948,7 +1996,7 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
                                     child: Text(
                                       '+',
                                       style: TextStyle(
-                                        fontSize: 16,
+                                        fontSize: 20,
                                         color: CupertinoColors.black,
                                       ),
                                     ),
@@ -1957,7 +2005,7 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
                                     child: Text(
                                       '-',
                                       style: TextStyle(
-                                        fontSize: 16,
+                                        fontSize: 20,
                                         color: CupertinoColors.black,
                                       ),
                                     ),
@@ -1994,6 +2042,7 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
                           ],
                         ),
                       ),
+                      SizedBox(height: 16),
                     ],
                   ),
                 );
@@ -2003,7 +2052,7 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
             showModalBottomSheet(
               context: context,
               isScrollControlled: true,
-              backgroundColor: Colors.white.withOpacity(0.7),
+              backgroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
               ),
@@ -2014,9 +2063,9 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
                 return Padding(
                   padding: EdgeInsets.only(
                     bottom: MediaQuery.of(context).viewInsets.bottom,
-                    left: 16.h,
-                    right: 16.h,
-                    top: 16.h,
+                    left: 16,
+                    right: 16,
+                    top: 16,
                   ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -2028,7 +2077,7 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      SizedBox(height: 16.h),
+                      SizedBox(height: 16),
                       TextField(
                         controller: controller,
                         autofocus: true,
@@ -2037,7 +2086,7 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
                           hintText: 'Enter weekly goal in kg',
                           suffixText: ' kg',
                           filled: true,
-                          fillColor: Colors.white.withOpacity(0.1),
+                          fillColor: Colors.grey[100],
                           border: OutlineInputBorder(
                             borderSide: BorderSide.none,
                             borderRadius: BorderRadius.circular(8),
@@ -2196,7 +2245,7 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
       showModalBottomSheet(
         context: context,
         isScrollControlled: true,
-        backgroundColor: Colors.white.withOpacity(0.7),
+        backgroundColor: Colors.white,
         enableDrag: true,
         isDismissible: true,
         useRootNavigator: true,
@@ -2230,7 +2279,7 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
                   decoration: InputDecoration(
                     hintText: 'Enter name',
                     filled: true,
-                    fillColor: Colors.white.withOpacity(0.1),
+                    fillColor: Colors.grey[100],
                     border: OutlineInputBorder(
                       borderSide: BorderSide.none,
                       borderRadius: BorderRadius.circular(8),
@@ -2357,62 +2406,7 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
                   decoration: InputDecoration(
                     hintText: 'Enter surname',
                     filled: true,
-                    fillColor: Colors.white.withOpacity(0.1),
-                    border: OutlineInputBorder(
-                      borderSide: BorderSide.none,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Theme.of(context).primaryColor),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                ),
-                SizedBox(height: 16),
-              ],
-            ),
-          );
-        },
-      );
-    } else {
-      showModalBottomSheet(
-        context: context,
-        isScrollControlled: true,
-        backgroundColor: Colors.white.withOpacity(0.7),
-        enableDrag: true,
-        isDismissible: true,
-        useRootNavigator: true,
-        barrierColor: Colors.black.withOpacity(0.5),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
-        ),
-        builder: (BuildContext context) {
-          return Padding(
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewInsets.bottom,
-              left: 16.h,
-              right: 16.h,
-              top: 16.h,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  "Surname",
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    color: Colors.black,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                SizedBox(height: 16.h),
-                TextField(
-                  controller: controller,
-                  autofocus: true,
-                  keyboardType: TextInputType.name,
-                  decoration: InputDecoration(
-                    hintText: 'Enter surname',
-                    filled: true,
-                    fillColor: Colors.white.withOpacity(0.1),
+                    fillColor: Colors.grey[100],
                     border: OutlineInputBorder(
                       borderSide: BorderSide.none,
                       borderRadius: BorderRadius.circular(8),
@@ -2426,35 +2420,7 @@ class ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMi
                     FilteringTextInputFormatter.digitsOnly,
                   ],
                 ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: Text('Cancel'),
-                    ),
-                    TextButton(
-                      onPressed: () async {
-                        if (controller.text.isNotEmpty) {
-                          final currentUser = FirebaseAuth.instance.currentUser;
-                          if (currentUser != null && currentUser.email != null) {
-                            try {
-                              // Update Firebase
-                              await FirebaseFirestore.instance
-                                  .collection('users')
-                                  .doc(currentUser.email)
-                                  .update({'lastName': controller.text});
-                            } catch (e) {
-                              print("Error updating surname: $e");
-                            }
-                          }
-                        }
-                        Navigator.pop(context);
-                      },
-                      child: Text('Save'),
-                    ),
-                  ],
-                ),
+                SizedBox(height: 16),
               ],
             ),
           );
