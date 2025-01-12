@@ -23,14 +23,30 @@ class _SocialProfileViewProfileState extends State<SocialProfileViewProfile> {
   late SocialProfileProvider _profileProvider;
   late SocialAwardsProvider _awardsProvider;
   bool _isInitialLoadComplete = false;
+  String? _lastWatchedEmail;
+
+  void _setupFriendStatusWatch() {
+    final currentUserEmail = FirebaseAuth.instance.currentUser?.email;
+    if (currentUserEmail != null && _lastWatchedEmail != widget.email) {
+      _lastWatchedEmail = widget.email;
+      _profileProvider.watchFriendStatus(currentUserEmail, widget.email);
+    }
+  }
 
   Stream<bool> checkFriendStatus() {
+    final currentUserEmail = FirebaseAuth.instance.currentUser?.email;
+    if (currentUserEmail == null) return Stream.value(false);
+    
     return FirebaseFirestore.instance
         .collection('friends')
-        .where('followerId', isEqualTo: FirebaseAuth.instance.currentUser!.email)
+        .where('followerId', isEqualTo: currentUserEmail)
         .where('followingId', isEqualTo: widget.email)
         .snapshots()
-        .map((snapshot) => snapshot.docs.isNotEmpty);
+        .map((snapshot) => snapshot.docs.isNotEmpty)
+        .handleError((error) {
+          debugPrint('Error checking friend status: $error');
+          return false;
+        });
   }
 
   Future<void> handleButtonPress(bool isFriend) async {
@@ -41,29 +57,36 @@ class _SocialProfileViewProfileState extends State<SocialProfileViewProfile> {
     });
 
     try {
+      final currentUserEmail = FirebaseAuth.instance.currentUser?.email;
+      if (currentUserEmail == null) throw Exception('User not logged in');
+
       if (!isFriend) {
+        // Add friend
         await FirebaseFirestore.instance.collection('friends').add({
-          'followerId': FirebaseAuth.instance.currentUser!.email,
+          'followerId': currentUserEmail,
           'followingId': widget.email,
           'timestamp': FieldValue.serverTimestamp(),
         });
       } else {
+        // Remove friend
         final friendsRef = FirebaseFirestore.instance.collection('friends');
         final querySnapshot = await friendsRef
-            .where('followerId', isEqualTo: FirebaseAuth.instance.currentUser!.email)
+            .where('followerId', isEqualTo: currentUserEmail)
             .where('followingId', isEqualTo: widget.email)
             .get();
 
+        final batch = FirebaseFirestore.instance.batch();
         for (var doc in querySnapshot.docs) {
-          await doc.reference.delete();
+          batch.delete(doc.reference);
         }
+        await batch.commit();
       }
     } catch (e) {
-      if (!e.toString().contains('permission-denied') && mounted) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: $e'),
-            duration: const Duration(seconds: 2),
+            content: Text('Error: ${e.toString()}'),
+            backgroundColor: Colors.red,
           ),
         );
       }
@@ -94,6 +117,27 @@ class _SocialProfileViewProfileState extends State<SocialProfileViewProfile> {
     _profileProvider = Provider.of<SocialProfileProvider>(context, listen: false);
     _awardsProvider = Provider.of<SocialAwardsProvider>(context, listen: false);
     _loadInitialData();
+    _setupFriendStatusWatch();
+  }
+
+  @override
+  void didUpdateWidget(SocialProfileViewProfile oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.email != widget.email) {
+      _setupFriendStatusWatch();
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _setupFriendStatusWatch();
+  }
+
+  @override
+  void dispose() {
+    _lastWatchedEmail = null;
+    super.dispose();
   }
 
   Widget _buildProfileInfo() {
@@ -257,16 +301,69 @@ class _SocialProfileViewProfileState extends State<SocialProfileViewProfile> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildProfileInfo(),
-            StreamBuilder<bool>(
-              stream: checkFriendStatus(),
-              builder: (context, snapshot) {
-                final isFriend = snapshot.data ?? false;
+            Consumer<SocialProfileProvider>(
+              builder: (context, provider, child) {
+                final currentUserEmail = FirebaseAuth.instance.currentUser?.email;
+                if (currentUserEmail == null) {
+                  return const SizedBox.shrink();
+                }
+
+                final isFriend = provider.getFriendStatus(currentUserEmail, widget.email);
+
+                if (isFriend == null) {
+                  return ElevatedButton(
+                    onPressed: null,
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                      ),
+                    ),
+                  );
+                }
                 
                 return ElevatedButton(
-                  onPressed: _isProcessing ? null : () => handleButtonPress(isFriend),
-                  child: Text(isFriend ? "Added" : "Add"),
+                  onPressed: _isProcessing 
+                    ? null 
+                    : () async {
+                        setState(() {
+                          _isProcessing = true;
+                        });
+                        
+                        try {
+                          await provider.toggleFriendStatus(currentUserEmail, widget.email);
+                        } catch (e) {
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Error: ${e.toString()}'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        } finally {
+                          if (mounted) {
+                            setState(() {
+                              _isProcessing = false;
+                            });
+                          }
+                        }
+                      },
+                  child: _isProcessing
+                      ? SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : Text(isFriend ? "Remove Friend" : "Add Friend"),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: isFriend ? Colors.grey : Colors.blue,
+                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                   ),
                 );
               },
