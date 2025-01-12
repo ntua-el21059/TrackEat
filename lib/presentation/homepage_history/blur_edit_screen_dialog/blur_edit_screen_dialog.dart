@@ -125,17 +125,19 @@ class _BlurEditScreenDialogState extends State<BlurEditScreenDialog> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const SizedBox(width: 24),
-                Text(
-                  widget.meal.name,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black,
+                Expanded(
+                  child: Text(
+                    widget.meal.name.split(' ').map((word) => word.substring(0, 1).toUpperCase() + word.substring(1)).join(' '),
+                    style: TextStyle(
+                      fontSize: 16.h,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
                   ),
                 ),
                 GestureDetector(
-                  onTap: () => Navigator.pop(context, false),
+                  onTap: () => Navigator.pop(context),
                   child: Container(
                     padding: EdgeInsets.all(4.h),
                     decoration: BoxDecoration(
@@ -321,3 +323,4 @@ class _BlurEditScreenDialogState extends State<BlurEditScreenDialog> {
     );
   }
 }
+
