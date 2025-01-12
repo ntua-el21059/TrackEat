@@ -100,11 +100,12 @@ class AiChatMainProvider extends ChangeNotifier {
     _userProvidedNutrition = null;
     _previousFood = null;
     isLoading = false;
+    selectedImage = null;
   }
 
   // Helper method to reset and initialize model
   Future<void> _resetModel(String methodName) async {
-    _currentModelIndex = 0;
+    // Don't reset the model index, just reinitialize the current model
     _model = GenerativeModel(
       model: modelNames[_currentModelIndex],
       apiKey: apiKey,
@@ -130,11 +131,11 @@ class AiChatMainProvider extends ChangeNotifier {
   }
 
   // Helper method to add message and notify
-  void _addMessageAndNotify(String content, {String role = 'assistant'}) {
-    messages.add({
-      'role': role,
-      'content': content,
-    });
+  void _addMessageAndNotify(String message, {required String role}) {
+    messages.add({'role': role, 'content': message});
+    if (role == 'assistant') {
+      isLoading = false;
+    }
     notifyListeners();
     if (onMessageAdded != null) onMessageAdded!();
   }
@@ -142,76 +143,97 @@ class AiChatMainProvider extends ChangeNotifier {
   Future<String> _getFoodInfo(String message, {bool isDirectCommand = false, bool isEatingStatement = false, bool needsSpecification = false}) async {
     await _resetModel('getFoodInfo');
 
-    if (needsSpecification) {
-      final specificationPrompt = '''
-      Ask for more details about this food in a friendly way. Consider:
-      1. Type/variety (e.g., for sandwich: tuna, BLT, club)
-      2. Size/portion (small, regular, large)
-      3. Key ingredients that affect nutrition
-      4. Any toppings or extras
-      
-      Make it clear that if they don't know the details, you'll make your best estimate.
-      Keep it friendly and conversational.
-      
-      Example good response:
-      "Could you tell me more about the sandwich? Like what type it is (tuna, BLT, etc.), the size, or any main ingredients? Don't worry if you're not sure - I can make my best guess!"
-      
-      Food: "${message}"
-      ''';
+    for (int i = 0; i < modelNames.length; i++) {
+      try {
+        if (needsSpecification) {
+          final specificationPrompt = '''
+          Ask for more details about this food in a friendly way. Consider:
+          1. Type/variety (e.g., for sandwich: tuna, BLT, club)
+          2. Size/portion (small, regular, large)
+          3. Key ingredients that affect nutrition
+          4. Any toppings or extras
+          
+          Make it clear that if they don't know the details, you'll make your best estimate.
+          Keep it friendly and conversational.
+          
+          Example good response:
+          "Could you tell me more about the sandwich? Like what type it is (tuna, BLT, etc.), the size, or any main ingredients? Don't worry if you're not sure - I can make my best guess!"
+          
+          Food: "${message}"
+          ''';
 
-      final response = await _model.generateContent([Content.text(specificationPrompt)]);
-      return response.text?.trim() ?? "Could you tell me more about this food? Don't worry if you're not sure - I can make my best guess!";
+          final response = await _model.generateContent([Content.text(specificationPrompt)]);
+          if (response.text != null) {
+            return response.text!.trim();
+          }
+        } else if (isDirectCommand || isEatingStatement) {
+          final askForNutritionPrompt = '''
+          Ask for nutritional information in a friendly way. Include these points:
+          - Serving size
+          - Calories
+          - Protein (g)
+          - Carbs (g)
+          - Fat (g)
+          
+          Important:
+          1. Make it clear that providing the information is optional
+          2. Mention that you'll make your best estimate if they don't know
+          3. Keep the tone friendly and conversational
+          4. Ask directly without any meta-commentary or self-talk
+          5. DO NOT mention how you'll phrase the question or your thought process
+          
+          Example good response:
+          "Can you tell me any nutritional information about this? Like serving size, calories, protein, carbs, or fat? Don't worry if you're not sure - I can estimate!"
+          ''';
+
+          final response = await _model.generateContent([Content.text(askForNutritionPrompt)]);
+          if (response.text != null) {
+            return response.text!.trim();
+          }
+        } else {
+          // For simple food mentions, provide witty info and ask if they want to log it
+          final infoPrompt = '''
+          Share 2-3 interesting, fun, or witty facts about this specific food. Be creative and engaging!
+          Then ask if they'd like to log it. Use variations like:
+          - "Want me to add this to your food log?"
+          - "Should I track this for you?"
+          - "Would you like me to log this in your diary?"
+          - "Shall we add this to today's meals?"
+          
+          Example response for Big Mac:
+          "🍔 Did you know the Big Mac was created in 1967 by Jim Delligatti? And here's a mind-bender: the average person eats 17 Big Macs per year in the US! 
+          
+          Want me to add this to your food log?"
+          
+          Food: "${message}"
+          ''';
+
+          final response = await _model.generateContent([Content.text(infoPrompt)]);
+          if (response.text != null) {
+            return response.text!.trim();
+          }
+        }
+
+        // If response is null, try next model
+        if (i < modelNames.length - 1) {
+          await _switchToNextModel();
+          continue;
+        }
+      } catch (e) {
+        print('Error getting food info: $e');
+        if (i < modelNames.length - 1) {
+          await _switchToNextModel();
+          continue;
+        }
+      }
     }
 
-    if (isDirectCommand || isEatingStatement) {
-      // For direct commands and eating statements, skip food facts and go straight to nutrition questions
-      final askForNutritionPrompt = '''
-      Ask for nutritional information in a friendly way. Include these points:
-      - Serving size
-      - Calories
-      - Protein (g)
-      - Carbs (g)
-      - Fat (g)
-      
-      Important:
-      1. Make it clear that providing the information is optional
-      2. Mention that you'll make your best estimate if they don't know
-      3. Keep the tone friendly and conversational
-      4. Ask directly without any meta-commentary or self-talk
-      5. DO NOT mention how you'll phrase the question or your thought process
-      
-      Example good response:
-      "Can you tell me any nutritional information about this? Like serving size, calories, protein, carbs, or fat? Don't worry if you're not sure - I can estimate!"
-      ''';
-
-      final response = await _model.generateContent([Content.text(askForNutritionPrompt)]);
-      return response.text?.trim() ?? "Can you tell me any nutritional information about this? Don't worry if you're not sure - I can estimate!";
-    }
-
-    // For simple food mentions, provide witty info and ask if they want to log it
-    final infoPrompt = '''
-    You are TrackEat AI. Share 2-3 interesting, fun, or witty facts about this food. Be creative and engaging!
-    Then ask if they'd like to log it. Use variations like:
-    - "Want me to add this to your food log?"
-    - "Should I track this for you?"
-    - "Would you like me to log this in your diary?"
-    - "Shall we add this to today's meals?"
-    
-    Example response:
-    "🍔 Did you know the Big Mac was created in 1967 by Jim Delligatti? And here's a mind-bender: the average person eats 17 Big Macs per year in the US! 
-    
-    Want me to add this to your food log?"
-    
-    Food: "${message}"
-    ''';
-
-    try {
-      final response = await _model.generateContent([Content.text(infoPrompt)]);
-      return response.text?.trim() ?? "Would you like me to log this for you?";
-    } catch (e) {
-      print('Error getting food info: $e');
-      return "Would you like me to log this for you?";
-    }
+    // If all models fail, return a default message
+    return needsSpecification 
+      ? "Could you tell me more about this food? Don't worry if you're not sure - I can make my best guess!"
+      : (isDirectCommand || isEatingStatement)
+        ? "Can you tell me any nutritional information about this? Don't worry if you're not sure - I can estimate!"
+        : "Would you like me to log this for you?";
   }
 
   Future<Map<String, dynamic>> _getNutritionFromText(String message) async {
@@ -222,11 +244,12 @@ class AiChatMainProvider extends ChangeNotifier {
     ALL nutritional values should be integers (round to nearest whole number).
     
     Important rules for serving size:
-    1. Use specific units when possible (e.g., "1 slice", "1 cup", "100g")
-    2. For standard items, use natural units (e.g., "1 apple", "1 sandwich", "1 burger")
-    3. Never use "null" or undefined values
-    4. Default to "1 serving" only if no better unit can be determined
-    5. Keep descriptions concise but clear
+    1. ALWAYS use grams (g) for weight-based measurements, never ounces
+    2. Use specific units when possible (e.g., "1 slice", "1 cup", "100g")
+    3. For standard items, use natural units (e.g., "1 apple", "1 sandwich", "1 burger")
+    4. Never use "null" or undefined values
+    5. Default to "100g" if no better unit can be determined
+    6. Keep descriptions concise but clear
     
     Respond with ONLY a valid JSON object in this format:
     {
@@ -243,6 +266,7 @@ class AiChatMainProvider extends ChangeNotifier {
     - "1 medium apple"
     - "1 cup cooked"
     - "100g"
+    - "50g"
     - "1 sandwich"
     - "1 burger"
     
@@ -408,42 +432,114 @@ class AiChatMainProvider extends ChangeNotifier {
                     nutritionData['fat'] = ((nutritionData['fat'] as num) * quantity * multiplier).round();
                   }
                   
-                  // Improved serving size formatting
+                  // Format serving size based on type
                   String servingSize = nutritionData['serving_size'].toString();
                   if (servingSize.toLowerCase().contains('null')) {
                     servingSize = '1 serving';
                   }
                   
-                  // Format serving size based on type
-                  if (servingSize.toLowerCase().contains('slice')) {
-                    nutritionData['serving_size'] = quantity == 1.0 ? "1 slice" : "${quantity.toInt()} slices";
-                  } else {
-                    // Check if it's a whole item or specific unit
-                    bool isWholeItem = servingSize.toLowerCase().contains('whole') || 
-                                     servingSize.toLowerCase().contains('piece') ||
-                                     servingSize.toLowerCase().contains('cup');
+                  // Check if user's note contains weight information
+                  final weightMatch = RegExp(r'(\d+)\s*(gr|gram|g|oz|ounce)').firstMatch(userText.toLowerCase());
+                  bool hasWeightSpecification = weightMatch != null;
+                  
+                  if (hasWeightSpecification) {
+                    double newWeight = double.parse(weightMatch.group(1)!);
+                    String unit = weightMatch.group(2)!;
                     
-                    if (!isWholeItem) {  // Only apply quantity formatting if not a whole item
-                      if (quantity != 1.0) {
-                        servingSize = "${quantity.toInt()}x $servingSize";
-                      }
-                      // Only apply size modifier for single portions
-                      if (quantity == 1.0 && sizeModifier != null && sizeModifier != 'null') {
-                        servingSize = "$sizeModifier $servingSize";
-                      }
-                    } else if (quantity != 1.0) {
-                      // For whole items with quantity > 1, just show the number
-                      servingSize = "${quantity.toInt()} $servingSize";
+                    // Convert ounces to grams if needed
+                    if (unit.contains('oz') || unit.contains('ounce')) {
+                      newWeight *= 28.35; // Convert oz to grams
                     }
-                    nutritionData['serving_size'] = servingSize;
+                    
+                    // Update serving size and adjust nutrition values
+                    nutritionData['serving_size'] = '${newWeight.round()}g';
+                    double originalWeight = 100.0; // Default base weight
+                    double multiplier = newWeight / originalWeight;
+                    
+                    nutritionData['calories'] = ((nutritionData['calories'] as num) * multiplier).round();
+                    nutritionData['protein'] = ((nutritionData['protein'] as num) * multiplier).round();
+                    nutritionData['carbs'] = ((nutritionData['carbs'] as num) * multiplier).round();
+                    nutritionData['fat'] = ((nutritionData['fat'] as num) * multiplier).round();
+                    
+                    imageAnalysis['needs_specification'] = false;
+                  } else {
+                    // Check if user's note contains size information
+                    bool hasSizeInfo = userText.toLowerCase().contains('small') || 
+                                     userText.toLowerCase().contains('medium') || 
+                                     userText.toLowerCase().contains('large') || 
+                                     userText.toLowerCase().contains('big');
+
+                    // Update size modifier based on user's note
+                    if (hasSizeInfo) {
+                      if (userText.toLowerCase().contains('small')) {
+                        imageAnalysis['size_modifier'] = 'small';
+                        imageAnalysis['needs_specification'] = false;
+                      } else if (userText.toLowerCase().contains('medium')) {
+                        imageAnalysis['size_modifier'] = 'medium';
+                        imageAnalysis['needs_specification'] = false;
+                      } else if (userText.toLowerCase().contains('large') || userText.toLowerCase().contains('big')) {
+                        imageAnalysis['size_modifier'] = 'large';
+                        imageAnalysis['needs_specification'] = false;
+                      }
+                    }
+                    
+                    // Only format serving size if no weight was specified
+                    if (servingSize.toLowerCase().contains('slice')) {
+                      nutritionData['serving_size'] = quantity == 1.0 ? "1 slice" : "${quantity.toInt()} slices";
+                    } else {
+                      // Check if it's a whole item or specific unit
+                      bool isWholeItem = servingSize.toLowerCase().contains('whole') || 
+                                       servingSize.toLowerCase().contains('piece') ||
+                                       servingSize.toLowerCase().contains('cup');
+                      
+                      if (!isWholeItem) {  // Only apply quantity formatting if not a whole item
+                        if (quantity != 1.0) {
+                          servingSize = "${quantity.toInt()}x $servingSize";
+                        }
+                        // Only apply size modifier for single portions
+                        if (quantity == 1.0 && sizeModifier != null && sizeModifier != 'null') {
+                          servingSize = "$sizeModifier $servingSize";
+                        }
+                      } else if (quantity != 1.0) {
+                        // For whole items with quantity > 1, just show the number
+                        servingSize = "${quantity.toInt()} $servingSize";
+                      }
+                      nutritionData['serving_size'] = servingSize;
+                    }
                   }
                   
-                  lastNutritionData = nutritionData;
+                  // Store a fresh copy of the final nutrition data after all modifications
+                  lastNutritionData = Map<String, dynamic>.from(nutritionData);
                   
                   String formattedResponse = _formatNutritionResponse(nutritionData);
                   _addMessageAndNotify(formattedResponse, role: 'assistant');
                   
-                  showTrackDialog = true;
+                  if (!imageAnalysis['needs_specification']) {
+                    showTrackDialog = true;
+                  } else if (imageAnalysis['confidence'] != 'high') {
+                    // Only ask for specification if confidence is not high
+                    final specificationPrompt = '''
+                    Ask for serving size information in a friendly way. Consider:
+                    1. Common serving units for this food
+                    2. Natural portions (handful, cup, piece)
+                    3. Size variations (small, medium, large)
+                    
+                    Keep it brief and friendly. Don't mention anything about tracking yet.
+                    
+                    Example good response:
+                    "How much would you say this is? A handful, a cup, or something else?"
+                    
+                    Food: "${imageAnalysis['food_name']}"
+                    ''';
+                    
+                    final specResponse = await _model.generateContent([Content.text(specificationPrompt)]);
+                    if (specResponse.text != null) {
+                      _addMessageAndNotify(specResponse.text!.trim(), role: 'assistant');
+                    }
+                  } else {
+                    // If confidence is high, show track dialog even if needs_specification is true
+                    showTrackDialog = true;
+                  }
                   break; // Success, exit the retry loop
                 }
               }
@@ -460,7 +556,7 @@ class AiChatMainProvider extends ChangeNotifier {
                 continue;
               }
               // All models have been tried and failed
-              _addMessageAndNotify("I'm having trouble analyzing the image right now. Please try again in a bit.", role: 'assistant');
+              _addMessageAndNotify("Our tracking service is unavailable. Try again in a bit!", role: 'assistant');
             } else {
               _addMessageAndNotify("I had trouble analyzing this image. Could you tell me what food it shows?", role: 'assistant');
             }
@@ -501,6 +597,8 @@ class AiChatMainProvider extends ChangeNotifier {
       // If it's just a food mention without tracking intent, provide info and ask if they want to log it
       if (analysis['is_food_mention'] == true && !analysis['is_tracking_intent']) {
         _previousFood = analysis['food_name']; // Store the food name for later
+        
+        // For all food mentions without tracking intent, show food info first
         final foodInfo = await _getFoodInfo(analysis['food_name'], isDirectCommand: false, isEatingStatement: false);
         _addMessageAndNotify(foodInfo, role: 'assistant');
         notifyListeners();
@@ -512,71 +610,43 @@ class AiChatMainProvider extends ChangeNotifier {
 
       // If not a food-related message, proceed with normal conversation
       if (!analysis['is_food_mention'] && !analysis['is_tracking_intent']) {
-        _chat = _model.startChat(history: [
-          Content.text(_systemPrompt),
-          ...messages.map((msg) => Content.text(msg['content']!)),
-        ]);
-
-        try {
-          final response = await _chat.sendMessage(Content.text(message));
-          if (response.text != null) {
-            _addMessageAndNotify(response.text!.trim(), role: 'assistant');
-            isLoading = false;
-            notifyListeners();
-            return;  // Return after successful message
-          }
-        } catch (e, stackTrace) {
-          print('Error sending message: $e');
-          print('Stacktrace: $stackTrace');
-          
-          // Try all available models
-          bool success = false;
-          for (int i = 0; i < modelNames.length; i++) {
-            try {
-              print('🤖 Attempting with model ${i + 1}/${modelNames.length}: ${modelNames[_currentModelIndex]}');
-              
+        bool success = false;
+        for (int i = 0; i < modelNames.length; i++) {
+          try {
+            _chat = _model.startChat(history: [
+              Content.text(_systemPrompt),
+              ...messages.map((msg) => Content.text(msg['content']!)),
+            ]);
+            
+            final response = await _chat.sendMessage(Content.text(message));
+            if (response.text != null) {
+              _addMessageAndNotify(response.text!.trim(), role: 'assistant');
+              success = true;
+              isLoading = false;
+              notifyListeners();
+              break;
+            }
+            
+            // If response is null, try next model
+            if (i < modelNames.length - 1) {
               await _switchToNextModel();
-              _chat = _model.startChat(history: [
-                Content.text(_systemPrompt),
-                ...messages.map((msg) => Content.text(msg['content']!)),
-              ]);
-              
-              final response = await _chat.sendMessage(Content.text(message));
-              if (response.text != null) {
-                _addMessageAndNotify(response.text!.trim(), role: 'assistant');
-                success = true;
-                print('🤖 Success with model: ${modelNames[_currentModelIndex]}');
-                isLoading = false;
-                notifyListeners();
-                // Reset the model to use this successful one for future operations
-                await _resetModel('continueWithSuccessfulModel');
-                return;  // Return immediately after successful model switch
-              }
-            } catch (retryError) {
-              print('🤖 Error with model attempt ${i + 1}: $retryError');
-              if (i < modelNames.length - 1) {
-                print('🤖 Trying next model...');
-                continue;
-              }
+              continue;
+            }
+          } catch (e) {
+            print('Error with model attempt ${i + 1}: $e');
+            if (i < modelNames.length - 1) {
+              await _switchToNextModel();
+              continue;
             }
           }
-          
-          if (!success) {
-            print('🤖 All models failed. Sending error message to user.');
-            if (e.toString().contains('Resource has been exhausted') || 
-                e.toString().contains('503')) {
-              _addMessageAndNotify('Server is overloaded. Try again in a bit!', role: 'assistant');
-            } else {
-              _addMessageAndNotify('Sorry, I encountered an error. Please try again.', role: 'assistant');
-            }
-          }
-          
-          notifyListeners();
-          if (onMessageAdded != null) onMessageAdded!();
+        }
+
+        if (!success) {
+          _addMessageAndNotify('Sorry, I encountered an error. Please try again.', role: 'assistant');
           isLoading = false;
           notifyListeners();
-          return;  // Return after error handling
         }
+        return;
       }
 
       // If tracking dialog is visible and we have a don't know/estimate response, use default estimation
@@ -593,134 +663,180 @@ class AiChatMainProvider extends ChangeNotifier {
       if (analysis['is_tracking_intent'] == true) {
         _previousFood = analysis['food_name']; // Store the food name
         
-        if (analysis['is_common_food'] == true && analysis['needs_specification'] == false) {
-          // Get nutrition data directly and show track dialog for well-known foods
-          final nutritionData = await _getNutritionFromText(analysis['food_name']);
+        // Get nutrition data directly and show track dialog
+        final nutritionData = await _getNutritionFromText(analysis['food_name']);
+        
+        // Apply quantity and size modifiers
+        if (nutritionData.isNotEmpty) {
+          final quantity = analysis['quantity'] ?? 1;
+          final sizeModifier = analysis['size_modifier'];
           
-          // Apply quantity and size modifiers
-          if (nutritionData.isNotEmpty) {
-            final quantity = analysis['quantity'] ?? 1;
-            final sizeModifier = analysis['size_modifier'];
-            
-            double multiplier = 1.0;
-            if (sizeModifier == 'small') multiplier = 0.7;
-            if (sizeModifier == 'large') multiplier = 1.3;
-            
-            nutritionData['calories'] = (nutritionData['calories'] as num) * quantity * multiplier;
-            nutritionData['protein'] = (nutritionData['protein'] as num) * quantity * multiplier;
-            nutritionData['carbs'] = (nutritionData['carbs'] as num) * quantity * multiplier;
-            nutritionData['fat'] = (nutritionData['fat'] as num) * quantity * multiplier;
-            
-            String sizePrefix = sizeModifier != null && sizeModifier != 'null' ? "$sizeModifier " : "";
-            if (nutritionData['serving_size'].toString().toLowerCase().contains('slice')) {
-              nutritionData['serving_size'] = quantity == 1 ? "1 slice" : "${quantity.toInt()} slices";
-            } else {
-              nutritionData['serving_size'] = quantity == 1 ? "${sizePrefix}${nutritionData['serving_size']}" : "${quantity.toInt()}x ${sizePrefix}${nutritionData['serving_size']}";
-            }
-            
-            lastNutritionData = nutritionData;
-
-            String formattedResponse = _formatNutritionResponse(nutritionData);
-
-            _addMessageAndNotify(formattedResponse, role: 'assistant');
-            notifyListeners();
-            if (onMessageAdded != null) onMessageAdded!();
-
-            showTrackDialog = true;
-            _userProvidedNutrition = null;
-            isLoading = false;  // Reset loading state
-            notifyListeners();
-            return;
+          double multiplier = 1.0;
+          if (sizeModifier == 'small') multiplier = 0.7;
+          if (sizeModifier == 'large') multiplier = 1.3;
+          
+          nutritionData['calories'] = (nutritionData['calories'] as num) * quantity * multiplier;
+          nutritionData['protein'] = (nutritionData['protein'] as num) * quantity * multiplier;
+          nutritionData['carbs'] = (nutritionData['carbs'] as num) * quantity * multiplier;
+          nutritionData['fat'] = (nutritionData['fat'] as num) * quantity * multiplier;
+          
+          String sizePrefix = sizeModifier != null && sizeModifier != 'null' ? "$sizeModifier " : "";
+          if (nutritionData['serving_size'].toString().toLowerCase().contains('slice')) {
+            nutritionData['serving_size'] = quantity == 1 ? "1 slice" : "${quantity.toInt()} slices";
+          } else {
+            nutritionData['serving_size'] = quantity == 1 ? "${sizePrefix}${nutritionData['serving_size']}" : "${quantity.toInt()}x ${sizePrefix}${nutritionData['serving_size']}";
           }
-        } else {
-          // For abstract or non-common foods, ask for more details
-          final foodInfo = await _getFoodInfo(analysis['food_name'], 
-            isDirectCommand: analysis['is_direct_command'] == true,
-            isEatingStatement: analysis['is_eating_statement'] == true,
-            needsSpecification: analysis['needs_specification'] == true);
-          _addMessageAndNotify(foodInfo, role: 'assistant');
+          
+          lastNutritionData = nutritionData;
+
+          String formattedResponse = _formatNutritionResponse(nutritionData);
+
+          _addMessageAndNotify(formattedResponse, role: 'assistant');
           notifyListeners();
           if (onMessageAdded != null) onMessageAdded!();
-          
+
+          showTrackDialog = true;
           _userProvidedNutrition = null;
           isLoading = false;  // Reset loading state
           notifyListeners();
           return;
         }
-        return;
       }
 
       // If not specifying food or saying idk, continue with normal flow
       // Check if user wants to proceed with logging
-      if (analysis['is_affirmative'] == true) {
+      if (analysis['is_affirmative'] == true && _previousFood != null) {
         // Get nutrition data directly and show track dialog
-        final nutritionData = await _getNutritionFromText(_previousFood ?? message);
-        lastNutritionData = nutritionData;
-
-        String formattedResponse = _formatNutritionResponse(nutritionData);
-
-        _addMessageAndNotify(formattedResponse, role: 'assistant');
-        notifyListeners();
-        if (onMessageAdded != null) onMessageAdded!();
-
-        showTrackDialog = true;
-        _userProvidedNutrition = null;
-      } else {
-        // For any non-yes response, continue normal conversation
-        _chat = _model.startChat(history: [
-          Content.text(_systemPrompt),
-          ...messages.map((msg) => Content.text(msg['content']!)),
-        ]);
-
-        try {
-          final response = await _chat.sendMessage(Content.text(message));
-          if (response.text != null) {
-            _addMessageAndNotify(response.text!.trim(), role: 'assistant');
-            notifyListeners();
-            if (onMessageAdded != null) onMessageAdded!();
-          }
-        } catch (e, stackTrace) {
-          print('Error sending message: $e');
-          print('Stacktrace: $stackTrace');
-          
-          if (e.toString().contains('Resource has been exhausted') || 
-              e.toString().contains('503')) {
-            // Try all available models
-            int maxRetries = modelNames.length;
-            int currentTry = 1;  // Start at 1 since we already tried the first model
-            
-            while (currentTry < maxRetries) {
-              try {
-                await _switchToNextModel();
-                final response = await _chat.sendMessage(Content.text(message));
-                if (response.text != null) {
-                  _addMessageAndNotify(response.text!.trim(), role: 'assistant');
-                  notifyListeners();
-                  if (onMessageAdded != null) onMessageAdded!();
-                  return;
-                }
-              } catch (retryError) {
-                print('Error with model attempt ${currentTry + 1}: $retryError');
-                currentTry++;
-                if (currentTry < maxRetries) {
-                  continue;
-                }
-              }
-            }
-            
-            // If we get here, all models failed
-            _addMessageAndNotify('Server is overloaded. Try again in a bit!', role: 'assistant');
-          } else {
-            // For non-quota errors, show generic error message
-            _addMessageAndNotify('Sorry, I encountered an error. Please try again.', role: 'assistant');
-          }
-          
+        final nutritionData = await _getNutritionFromText(_previousFood!);
+        if (nutritionData.isNotEmpty) {
+          lastNutritionData = nutritionData;
+          String formattedResponse = _formatNutritionResponse(nutritionData);
+          _addMessageAndNotify(formattedResponse, role: 'assistant');
+          showTrackDialog = true;
           notifyListeners();
           if (onMessageAdded != null) onMessageAdded!();
-        } finally {
-          isLoading = false;
-          notifyListeners();
+          return;
         }
+      }
+
+      // Handle serving size specification for previous food
+      if (_previousFood != null && lastNutritionData != null && 
+          (analysis['is_weight_specification'] || 
+           message.toLowerCase().contains('handful') || 
+           message.toLowerCase().contains('serving') || 
+           message.toLowerCase().contains('cup') ||
+           message.toLowerCase().contains('piece') ||
+           message.toLowerCase().contains('small') ||
+           message.toLowerCase().contains('medium') ||
+           message.toLowerCase().contains('large') ||
+           message.toLowerCase().contains('big'))) {
+        
+        // Update nutrition data with new serving size
+        Map<String, dynamic> updatedNutrition = Map<String, dynamic>.from(lastNutritionData!);
+        double multiplier = 1.0;
+
+        // Handle weight specifications
+        if (analysis['is_weight_specification']) {
+          double originalWeight = 100.0; // Always use 100g as base for weight calculations
+          double newWeight = analysis['weight_value'].toDouble();
+          
+          // Convert ounces to grams if needed
+          if (analysis['weight_unit'] == 'oz' || analysis['weight_unit'] == 'ounce') {
+            newWeight *= 28.35; // Convert oz to grams
+          }
+          
+          multiplier = newWeight / originalWeight;
+          updatedNutrition['serving_size'] = '${newWeight.round()}g';
+        } else {
+          // Handle size modifiers
+          if (message.toLowerCase().contains('small')) multiplier = 0.7;
+          if (message.toLowerCase().contains('medium')) multiplier = 1.0;
+          if (message.toLowerCase().contains('large') || message.toLowerCase().contains('big')) multiplier = 1.3;
+
+          // Update serving size description
+          if (message.toLowerCase().contains('handful')) {
+            updatedNutrition['serving_size'] = multiplier == 1.0 ? '1 handful' : 
+              (multiplier < 1.0 ? 'small handful' : 'large handful');
+          } else if (message.toLowerCase().contains('cup')) {
+            updatedNutrition['serving_size'] = multiplier == 1.0 ? '1 cup' : 
+              (multiplier < 1.0 ? 'small cup' : 'large cup');
+          }
+        }
+
+        // Apply multiplier to base nutrition values (per 100g)
+        updatedNutrition['calories'] = ((lastNutritionData!['calories'] as num) / _parseServingSize(lastNutritionData!['serving_size']) * 100 * multiplier).round();
+        updatedNutrition['protein'] = ((lastNutritionData!['protein'] as num) / _parseServingSize(lastNutritionData!['serving_size']) * 100 * multiplier).round();
+        updatedNutrition['carbs'] = ((lastNutritionData!['carbs'] as num) / _parseServingSize(lastNutritionData!['serving_size']) * 100 * multiplier).round();
+        updatedNutrition['fat'] = ((lastNutritionData!['fat'] as num) / _parseServingSize(lastNutritionData!['serving_size']) * 100 * multiplier).round();
+
+        // Ensure the food name is preserved
+        updatedNutrition['food'] = lastNutritionData!['food'];
+
+        // Update the stored nutrition data
+        lastNutritionData = Map<String, dynamic>.from(updatedNutrition);
+        
+        String formattedResponse = _formatNutritionResponse(updatedNutrition);
+        _addMessageAndNotify(formattedResponse, role: 'assistant');
+        showTrackDialog = true;
+        notifyListeners();
+        if (onMessageAdded != null) onMessageAdded!();
+        return;
+      }
+
+      // For any non-yes response, continue normal conversation
+      _chat = _model.startChat(history: [
+        Content.text(_systemPrompt),
+        ...messages.map((msg) => Content.text(msg['content']!)),
+      ]);
+
+      try {
+        final response = await _chat.sendMessage(Content.text(message));
+        if (response.text != null) {
+          _addMessageAndNotify(response.text!.trim(), role: 'assistant');
+          notifyListeners();
+          if (onMessageAdded != null) onMessageAdded!();
+        }
+      } catch (e, stackTrace) {
+        print('Error sending message: $e');
+        print('Stacktrace: $stackTrace');
+        
+        if (e.toString().contains('Resource has been exhausted') || 
+            e.toString().contains('503')) {
+          // Try all available models
+          int maxRetries = modelNames.length;
+          int currentTry = 1;  // Start at 1 since we already tried the first model
+          
+          while (currentTry < maxRetries) {
+            try {
+              await _switchToNextModel();
+              final response = await _chat.sendMessage(Content.text(message));
+              if (response.text != null) {
+                _addMessageAndNotify(response.text!.trim(), role: 'assistant');
+                notifyListeners();
+                if (onMessageAdded != null) onMessageAdded!();
+                return;
+              }
+            } catch (retryError) {
+              print('Error with model attempt ${currentTry + 1}: $retryError');
+              currentTry++;
+              if (currentTry < maxRetries) {
+                continue;
+              }
+            }
+          }
+          
+          // If we get here, all models failed
+          _addMessageAndNotify('Server is overloaded. Try again in a bit!', role: 'assistant');
+        } else {
+          // For non-quota errors, show generic error message
+          _addMessageAndNotify('Sorry, I encountered an error. Please try again.', role: 'assistant');
+        }
+        
+        notifyListeners();
+        if (onMessageAdded != null) onMessageAdded!();
+      } finally {
+        isLoading = false;
+        notifyListeners();
       }
     } catch (e, stackTrace) {
       print('Error sending message: $e');
@@ -751,10 +867,10 @@ class AiChatMainProvider extends ChangeNotifier {
   }
 
   void setTrackDialogState(bool state) {
-    showTrackDialog = state;
     if (!state) {
       _resetAllStates();
     }
+    showTrackDialog = state;
     notifyListeners();
   }
 
@@ -813,6 +929,10 @@ class AiChatMainProvider extends ChangeNotifier {
       } catch (e) {
         print('Error updating award status: $e');
       }
+
+      // Reset model index to first model after successful log
+      _currentModelIndex = 0;
+      await _resetModel('afterLog');
 
       // Auto-dismiss after 2 seconds
       await Future.delayed(const Duration(seconds: 2));
@@ -899,51 +1019,82 @@ class AiChatMainProvider extends ChangeNotifier {
       "size_modifier": "small/medium/large/null",
       "is_specifying_food": true/false,    // Is this specifying/modifying a previous food?
       "specification_type": "name/size/attribute/null",
-      "combined_food_name": "combined name or null"
+      "combined_food_name": "combined name or null",
+      "is_weight_specification": false,     // Is this specifying a weight (e.g., "40gr", "2oz")?
+      "weight_value": null,                // The numeric weight value if specified
+      "weight_unit": null                  // The unit of weight (g, gr, gram, oz, ounce) if specified
     }
 
-    Important rules for food name combination:
-    1. When a previous food exists and the new message specifies its type:
-       - Combine them properly (e.g., previous: "salad", new: "caesar" -> "caesar salad")
-       - Set is_specifying_food to true
-       - Put the combined name in both food_name and combined_food_name
-    2. Keep proper food naming conventions:
-       - Use proper capitalization
-       - Include both the type and variety (e.g., "Caesar Salad" not just "Caesar")
-       - Maintain the base food type in combinations
+    Important rules:
+    1. For weight specifications:
+       - Check for patterns like "X grams", "X gr", "X g", "X oz", "X ounces"
+       - Set is_weight_specification to true if found
+       - Extract the numeric value to weight_value
+       - Extract the unit to weight_unit
+       - Set is_food_mention to false
+    2. For messages starting with "it was" or "it is":
+       - These are likely specifications for the previous food
+       - Don't treat as new food mentions unless a new food is clearly named
 
     Examples:
-    Message: "log a big mac"
-    {"is_tracking_intent": true, "is_direct_command": true, "is_eating_statement": false, "is_food_mention": false, "is_common_food": true, "needs_specification": false, "is_affirmative": false, "food_name": "Big Mac", "quantity": 1, "size_modifier": null, "is_specifying_food": false, "specification_type": null, "combined_food_name": null}
+    Message: "40gr"
+    {"is_tracking_intent": false, "is_direct_command": false, "is_eating_statement": false, "is_food_mention": false, "is_common_food": false, "needs_specification": false, "is_affirmative": false, "food_name": null, "quantity": 1, "size_modifier": null, "is_specifying_food": true, "specification_type": "size", "combined_food_name": null, "is_weight_specification": true, "weight_value": 40, "weight_unit": "gr"}
 
-    Message: "I ate a sandwich"
-    {"is_tracking_intent": true, "is_direct_command": false, "is_eating_statement": true, "is_food_mention": false, "is_common_food": false, "needs_specification": true, "is_affirmative": false, "food_name": "sandwich", "quantity": 1, "size_modifier": null, "is_specifying_food": false, "specification_type": null, "combined_food_name": null}
-
-    Message: "it was a BLT"
-    Previous food: "sandwich"
-    {"is_tracking_intent": false, "is_direct_command": false, "is_eating_statement": false, "is_food_mention": false, "is_common_food": true, "needs_specification": false, "is_affirmative": false, "food_name": "BLT Sandwich", "quantity": 1, "size_modifier": null, "is_specifying_food": true, "specification_type": "name", "combined_food_name": "BLT Sandwich"}
-
-    Message: "caesar"
-    Previous food: "salad"
-    {"is_tracking_intent": false, "is_direct_command": false, "is_eating_statement": false, "is_food_mention": false, "is_common_food": true, "needs_specification": false, "is_affirmative": false, "food_name": "Caesar Salad", "quantity": 1, "size_modifier": null, "is_specifying_food": true, "specification_type": "name", "combined_food_name": "Caesar Salad"}
+    Message: "it was 2 ounces"
+    {"is_tracking_intent": false, "is_direct_command": false, "is_eating_statement": false, "is_food_mention": false, "is_common_food": false, "needs_specification": false, "is_affirmative": false, "food_name": null, "quantity": 1, "size_modifier": null, "is_specifying_food": true, "specification_type": "size", "combined_food_name": null, "is_weight_specification": true, "weight_value": 2, "weight_unit": "ounce"}
 
     Message: "${message}"
     ${previousFood != null ? 'Previous food: "$previousFood"' : 'Previous food: null'}
     ''';
 
-    try {
-      final response = await _model.generateContent([Content.text(analysisPrompt)]);
-      if (response.text != null) {
-        String cleanedResponse = response.text!
-            .replaceAll('```json', '')
-            .replaceAll('```', '')
-            .trim();
-        return json.decode(cleanedResponse);
+    for (int i = 0; i < modelNames.length; i++) {
+      try {
+        final response = await _model.generateContent([Content.text(analysisPrompt)]);
+        if (response.text != null) {
+          String cleanedResponse = response.text!
+              .replaceAll('```json', '')
+              .replaceAll('```', '')
+              .trim();
+          final result = json.decode(cleanedResponse);
+          if (result is Map<String, dynamic> && result.isNotEmpty) {
+            return result;
+          }
+        }
+        
+        // If response is null or invalid, try next model
+        if (i < modelNames.length - 1) {
+          await _switchToNextModel();
+          continue;
+        }
+      } catch (e) {
+        print('Error analyzing message: $e');
+        if (i < modelNames.length - 1) {
+          await _switchToNextModel();
+          continue;
+        }
       }
-    } catch (e) {
-      print('Error analyzing message: $e');
     }
-    return {};
+    
+    // If all models fail, return a default map
+    _addMessageAndNotify("Our tracking service is unavailable. Try again in a bit!", role: 'assistant');
+    return {
+      "is_tracking_intent": false,
+      "is_direct_command": false,
+      "is_eating_statement": false,
+      "is_food_mention": true,
+      "is_common_food": true,
+      "needs_specification": false,
+      "is_affirmative": false,
+      "food_name": message,
+      "quantity": 1.0,
+      "size_modifier": null,
+      "is_specifying_food": false,
+      "specification_type": null,
+      "combined_food_name": null,
+      "is_weight_specification": false,
+      "weight_value": null,
+      "weight_unit": null
+    };
   }
 
   void setTrackingSuccess(bool value) {
