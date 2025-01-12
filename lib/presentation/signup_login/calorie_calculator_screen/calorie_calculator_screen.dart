@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:provider/provider.dart';
 import '../../../core/app_export.dart';
 import '../../../theme/custom_button_style.dart';
 import '../../../widgets/app_bar/appbar_leading_image.dart';
@@ -21,8 +22,15 @@ class CalorieCalculatorScreen extends StatefulWidget {
   CalorieCalculatorScreenState createState() => CalorieCalculatorScreenState();
 
   static Widget builder(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (context) => CalorieCalculatorProvider(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+          create: (context) => CalorieCalculatorProvider(),
+        ),
+        Provider<FirestoreService>(
+          create: (context) => FirestoreService(),
+        ),
+      ],
       child: CalorieCalculatorScreen(),
     );
   }
@@ -172,77 +180,102 @@ class CalorieCalculatorScreenState extends State<CalorieCalculatorScreen> {
                     
                     print('Successfully created Firebase Auth user');
                     
-                    // Test Firestore connection
-                    final firestoreService = Provider.of<FirestoreService>(context, listen: false);
-                    final isConnected = await firestoreService.testConnection();
-                    if (!isConnected) {
-                      if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Error: Could not connect to Firestore'),
-                            duration: Duration(seconds: 2),
-                          ),
-                        );
-                      }
-                      return;
-                    }
-                    print('Firestore connection test passed');
+                    // Wait for Firebase Auth to fully initialize
+                    await Future.delayed(Duration(seconds: 1));
                     
-                    // Try to save directly using FirestoreService instead of UserProvider
+                    // Get current date in D/M/YEAR format
+                    final now = DateTime.now();
+                    final formattedDate = "${now.day}/${now.month}/${now.year}";
+                    
+                    // Add creation date to user data
+                    userProvider.user.create = formattedDate;
+                    
+                    // Test Firestore connection and save user data
+                    final firestoreService = Provider.of<FirestoreService>(context, listen: false);
+                    
                     try {
-                      // Get current date in D/M/YEAR format
-                      final now = DateTime.now();
-                      final formattedDate = "${now.day}/${now.month}/${now.year}";
-                      
-                      // Add creation date to user data
-                      userProvider.user.create = formattedDate;
-                      
+                      // Create user document first
                       await firestoreService.createUser(userProvider.user);
                       print('Successfully saved user data to Firestore');
 
-                      // Copy existing awards from Firestore
-                      final awardsCollection = await FirebaseFirestore.instance
-                          .collection('awards')
-                          .get();
+                      // Wait for auth to propagate
+                      await Future.delayed(Duration(seconds: 1));
 
-                      // Add each award to the user's awards subcollection
-                      final awardsService = AwardsService();
-                      for (final doc in awardsCollection.docs) {
-                        final awardData = doc.data();
-                        final award = Award(
-                          id: doc.id,
-                          name: awardData['name'] ?? '',
-                          points: awardData['points'] is int 
-                              ? awardData['points'] 
-                              : int.tryParse(awardData['points']?.toString() ?? '0') ?? 0,
-                          description: awardData['description'] ?? '',
-                          picture: awardData['picture'] ?? 'assets/images/vector.png',
-                          isAwarded: false,
-                          awarded: null,
-                        );
-                        await awardsService.addOrUpdateAward(userProvider.user.email!, award);
+                      // Copy existing awards from Firestore
+                      try {
+                        final awardsCollection = await FirebaseFirestore.instance
+                            .collection('awards')
+                            .get();
+
+                        // Add each award to the user's awards subcollection
+                        final awardsService = AwardsService();
+                        for (final doc in awardsCollection.docs) {
+                          final awardData = doc.data();
+                          final award = Award(
+                            id: doc.id,
+                            name: awardData['name'] ?? '',
+                            points: awardData['points'] is int 
+                                ? awardData['points'] 
+                                : int.tryParse(awardData['points']?.toString() ?? '0') ?? 0,
+                            description: awardData['description'] ?? '',
+                            picture: awardData['picture'] ?? 'assets/images/vector.png',
+                            isAwarded: false,
+                            awarded: null,
+                          );
+                          await awardsService.addOrUpdateAward(userProvider.user.email!, award);
+                        }
+                        print('Successfully copied awards to user subcollection');
+                      } catch (awardsError) {
+                        print('Error copying awards: $awardsError');
+                        // Continue anyway since this is not critical
                       }
-                      print('Successfully copied awards to user subcollection');
                       
                       // Navigate to finalized account screen
                       Navigator.pushNamed(context, AppRoutes.finalizedAccountScreen);
                     } catch (firestoreError) {
                       print('Error saving to Firestore: $firestoreError');
+                      
+                      // If there's a permission error, try signing out and back in
+                      if (firestoreError.toString().contains('permission-denied')) {
+                        await authProvider.signOut(context);
+                        final reloginSuccess = await authProvider.signIn(
+                          context,
+                          userProvider.user.email!,
+                          userProvider.user.password!,
+                        );
+                        
+                        if (reloginSuccess) {
+                          // Retry saving to Firestore
+                          try {
+                            await firestoreService.createUser(userProvider.user);
+                            print('Successfully saved user data after reauth');
+                            Navigator.pushNamed(context, AppRoutes.finalizedAccountScreen);
+                            return;
+                          } catch (retryError) {
+                            print('Error saving after reauth: $retryError');
+                          }
+                        }
+                      }
+                      
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Error saving user data: ${firestoreError.toString()}'),
+                            duration: Duration(seconds: 5),
+                          ),
+                        );
+                      }
+                    }
+                  } catch (e) {
+                    print('Error in account creation process: $e');
+                    if (mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text('Error saving user data: ${firestoreError.toString()}'),
+                          content: Text('Error creating account: ${e.toString()}'),
                           duration: Duration(seconds: 5),
                         ),
                       );
                     }
-                  } catch (e) {
-                    print('Error in account creation process: $e');
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Error creating account: ${e.toString()}'),
-                        duration: Duration(seconds: 5),
-                      ),
-                    );
                   }
                 },
               ),

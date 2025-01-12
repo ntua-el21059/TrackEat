@@ -8,6 +8,7 @@ import '../providers/social_profile_provider.dart';
 import '../providers/social_awards_provider.dart';
 import '../core/utils/size_utils.dart';
 import '../presentation/challenge_award_screen/challenge_award_screen.dart';
+import '../core/utils/logger.dart';
 
 class SocialProfileViewProfile extends StatefulWidget {
   final String email;
@@ -33,20 +34,22 @@ class _SocialProfileViewProfileState extends State<SocialProfileViewProfile> {
     }
   }
 
-  Stream<bool> checkFriendStatus() {
-    final currentUserEmail = FirebaseAuth.instance.currentUser?.email;
-    if (currentUserEmail == null) return Stream.value(false);
-    
-    return FirebaseFirestore.instance
-        .collection('friends')
-        .where('followerId', isEqualTo: currentUserEmail)
-        .where('followingId', isEqualTo: widget.email)
-        .snapshots()
-        .map((snapshot) => snapshot.docs.isNotEmpty)
-        .handleError((error) {
-          debugPrint('Error checking friend status: $error');
-          return false;
-        });
+  Future<bool> checkFriendStatus() async {
+    try {
+      final currentUserEmail = FirebaseAuth.instance.currentUser?.email;
+      if (currentUserEmail == null) return false;
+      
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('friends')
+          .where('followerId', isEqualTo: currentUserEmail)
+          .where('followingId', isEqualTo: widget.email)
+          .get();
+
+      return querySnapshot.docs.isNotEmpty;
+    } catch (e, stackTrace) {
+      Logger.log('Failed to check friend status', stackTrace: stackTrace);
+      return false;
+    }
   }
 
   Future<void> handleButtonPress(bool isFriend) async {
@@ -146,19 +149,19 @@ class _SocialProfileViewProfileState extends State<SocialProfileViewProfile> {
       if (profile != null) {
         return _buildProfileContent(profile);
       }
-      return const SizedBox(height: 80);
+      return const SizedBox.shrink();
     }
 
     return StreamBuilder<UserModel?>(
       stream: _profileProvider.watchProfile(widget.email),
       builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          return Center(child: Text('Error loading profile'));
+        if (snapshot.hasError || !snapshot.hasData) {
+          return const SizedBox.shrink();
         }
 
         final profile = snapshot.data ?? _profileProvider.getProfile(widget.email);
         if (profile == null) {
-          return const SizedBox(height: 80);
+          return const SizedBox.shrink();
         }
 
         return _buildProfileContent(profile);
@@ -186,19 +189,14 @@ class _SocialProfileViewProfileState extends State<SocialProfileViewProfile> {
       if (awards != null) {
         return _buildAwardsContent(awards);
       }
-      return const SizedBox(height: 100);
+      return const SizedBox.shrink();
     }
 
     return StreamBuilder<List<Award>>(
       stream: _awardsProvider.watchAwards(widget.email),
       builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          return Center(
-            child: Text(
-              'Something went wrong',
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-          );
+        if (snapshot.hasError || !snapshot.hasData) {
+          return const SizedBox.shrink();
         }
 
         final awards = snapshot.data ?? _awardsProvider.getAwards(widget.email) ?? [];
@@ -209,12 +207,7 @@ class _SocialProfileViewProfileState extends State<SocialProfileViewProfile> {
 
   Widget _buildAwardsContent(List<Award> awards) {
     if (awards.isEmpty) {
-      return const Center(
-        child: Text(
-          'No awards yet',
-          style: TextStyle(color: Colors.black54),
-        ),
-      );
+      return const SizedBox.shrink();
     }
 
     return Padding(
@@ -309,18 +302,8 @@ class _SocialProfileViewProfileState extends State<SocialProfileViewProfile> {
                 }
 
                 final isFriend = provider.getFriendStatus(currentUserEmail, widget.email);
-
                 if (isFriend == null) {
-                  return ElevatedButton(
-                    onPressed: null,
-                    child: SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                      ),
-                    ),
-                  );
+                  return const SizedBox.shrink();
                 }
                 
                 return ElevatedButton(
@@ -350,16 +333,7 @@ class _SocialProfileViewProfileState extends State<SocialProfileViewProfile> {
                           }
                         }
                       },
-                  child: _isProcessing
-                      ? SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : Text(isFriend ? "Remove Friend" : "Add Friend"),
+                  child: Text(isFriend ? "Remove Friend" : "Add Friend"),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: isFriend ? Colors.grey : Colors.blue,
                     foregroundColor: Colors.white,
@@ -373,6 +347,18 @@ class _SocialProfileViewProfileState extends State<SocialProfileViewProfile> {
           ],
         ),
       ),
+    );
+  }
+
+  static Widget builder(BuildContext context, {required String email}) {
+    return ChangeNotifierProvider(
+      create: (context) {
+        final provider = SocialProfileViewProvider();
+        // Prefetch data immediately when provider is created
+        provider.prefetchAllData(email);
+        return provider;
+      },
+      child: SocialProfileViewProfile(email: email),
     );
   }
 } 

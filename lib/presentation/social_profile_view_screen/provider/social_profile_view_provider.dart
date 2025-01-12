@@ -6,133 +6,206 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:collection/collection.dart';
 import '../../../services/friend_service.dart';
+import '../../../core/utils/logger.dart';
+import '../../../models/award_model.dart';
 
 class SocialProfileViewProvider extends ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FriendService _friendService = FriendService();
   
-  Map<String, DocumentSnapshot> _userCache = {};
-  Map<String, StreamSubscription> _userSubscriptions = {};
-  Map<String, StreamSubscription> _friendSubscriptions = {};
-  Map<String, bool> _friendStatusCache = {};
+  static final Map<String, DocumentSnapshot> _globalUserCache = {};
+  static final Map<String, bool> _globalFriendStatusCache = {};
+  static final Map<String, List<Award>> _globalAwardsCache = {};
+  static final Map<String, String> _globalEmailCache = {};
 
-  DocumentSnapshot? getCachedUser(String username) => _userCache[username];
-  bool? getCachedFriendStatus(String email) => _friendStatusCache[email];
-  bool? getFriendStatus(String email) => _friendStatusCache[email];
+  DocumentSnapshot? getCachedUser(String username) => _globalUserCache[username];
+  bool? getFriendStatus(String email) => _globalFriendStatusCache[email];
+  List<Award>? getCachedAwards(String email) => _globalAwardsCache[email];
 
-  Future<DocumentSnapshot?> getUserData(String username) async {
-    // First check cache
-    if (_userCache.containsKey(username)) {
-      return _userCache[username];
-    }
-
+  // Call this when app starts to prefetch common profiles
+  static Future<void> prefetchCommonProfiles() async {
     try {
-      // If not in cache, fetch from Firestore
+      // Get most recently viewed or most common profiles with minimal fields
+      final recentProfiles = await FirebaseFirestore.instance
+          .collection('users')
+          .orderBy('lastActive', descending: true)
+          .limit(10)
+          .get();
+
+      // Process profiles in parallel
+      await Future.wait(
+        recentProfiles.docs.map((doc) async {
+          final username = doc.data()['username'] as String?;
+          final email = doc.data()['email'] as String?;
+          if (username != null && email != null) {
+            _globalUserCache[username] = doc;
+            _globalEmailCache[username] = email;
+            
+            // Fetch awards in parallel
+            await FirebaseFirestore.instance
+                .collection('users')
+                .doc(email)
+                .collection('awards')
+                .get()
+                .then((awardsSnapshot) {
+                  final awards = awardsSnapshot.docs.map((doc) {
+                    final data = doc.data();
+                    data['id'] = doc.id;
+                    return Award.fromMap(data);
+                  }).toList();
+                  _globalAwardsCache[email] = awards;
+                });
+          }
+        })
+      );
+    } catch (e) {
+      // Ignore prefetch errors
+    }
+  }
+
+  // Synchronously initialize with cached data
+  void initWithUsername(String username) {
+    if (_globalUserCache.containsKey(username)) {
+      notifyListeners();
+    }
+    // Start background fetch
+    prefetchAllData(username);
+  }
+
+  Future<void> prefetchAllData(String username) async {
+    try {
+      // First check global cache
+      if (_globalUserCache.containsKey(username)) {
+        notifyListeners();
+        _refreshInBackground(username);
+        return;
+      }
+
+      // Fetch user data with minimal fields first
       final userSnapshot = await _firestore
           .collection('users')
           .where('username', isEqualTo: username)
           .limit(1)
           .get();
 
-      if (userSnapshot.docs.isNotEmpty) {
-        _userCache[username] = userSnapshot.docs.first;
-        
-        // Set up friend status watch for this user
-        final email = userSnapshot.docs.first.get('email') as String;
-        setupFriendStatusWatch(email);
-        
-        return userSnapshot.docs.first;
-      }
-    } catch (e) {
-      print('Error fetching user data: $e');
+      if (userSnapshot.docs.isEmpty) return;
+
+      final doc = userSnapshot.docs.first;
+      _globalUserCache[username] = doc;
+      notifyListeners(); // Notify immediately with basic user data
+      
+      final data = doc.data();
+      final email = data['email'] as String?;
+      if (email == null) return;
+      
+      _globalEmailCache[username] = email;
+
+      // Fetch remaining data in parallel
+      await Future.wait([
+        // Fetch full user data
+        _firestore
+            .collection('users')
+            .doc(doc.id)
+            .get()
+            .then((fullDoc) {
+              _globalUserCache[username] = fullDoc;
+              notifyListeners();
+            }),
+
+        // Fetch friend status
+        _auth.currentUser != null 
+            ? _friendService.isFollowing(email).then((status) {
+                _globalFriendStatusCache[email] = status;
+                notifyListeners();
+              })
+            : Future.value(),
+
+        // Fetch awards
+        _firestore
+            .collection('users')
+            .doc(email)
+            .collection('awards')
+            .get()
+            .then((awardsSnapshot) {
+              final awards = awardsSnapshot.docs.map((doc) {
+                final data = doc.data();
+                data['id'] = doc.id;
+                return Award.fromMap(data);
+              }).toList();
+              _globalAwardsCache[email] = awards;
+              notifyListeners();
+            }),
+      ]);
+
+    } catch (e, stackTrace) {
+      Logger.log('Failed to prefetch data', stackTrace: stackTrace);
     }
-    return null;
   }
 
-  void setupRealtimeUpdates(String username) {
-    // Cancel existing subscription if any
-    _userSubscriptions[username]?.cancel();
+  // Refresh data in background without blocking UI
+  Future<void> _refreshInBackground(String username) async {
+    try {
+      final userSnapshot = await _firestore
+          .collection('users')
+          .where('username', isEqualTo: username)
+          .limit(1)
+          .get();
 
-    // Set up new subscription
-    final subscription = _firestore
-        .collection('users')
-        .where('username', isEqualTo: username)
-        .limit(1)
-        .snapshots()
-        .listen((snapshot) {
-      if (snapshot.docs.isNotEmpty) {
-        _userCache[username] = snapshot.docs.first;
-        
-        // Update friend status watch when user data changes
-        final email = snapshot.docs.first.get('email') as String;
-        setupFriendStatusWatch(email);
-        
+      if (userSnapshot.docs.isEmpty) return;
+
+      final doc = userSnapshot.docs.first;
+      final oldDoc = _globalUserCache[username];
+      
+      // Only update if data changed
+      if (oldDoc?.data()?.toString() != doc.data().toString()) {
+        _globalUserCache[username] = doc;
         notifyListeners();
       }
-    });
 
-    _userSubscriptions[username] = subscription;
-  }
+      final data = doc.data();
+      final email = data['email'] as String?;
+      if (email == null) return;
 
-  void setupFriendStatusWatch(String targetEmail) {
-    final currentUser = _auth.currentUser;
-    if (currentUser == null) return;
+      // Update awards in background
+      final awardsSnapshot = await _firestore
+          .collection('users')
+          .doc(email)
+          .collection('awards')
+          .get();
+          
+      final awards = awardsSnapshot.docs.map((doc) {
+        final data = doc.data();
+        data['id'] = doc.id;
+        return Award.fromMap(data);
+      }).toList();
 
-    // Cancel existing subscription if any
-    _friendSubscriptions[targetEmail]?.cancel();
-
-    // Set up new subscription
-    final subscription = _firestore
-        .collection('friends')
-        .where('followerId', isEqualTo: currentUser.email)
-        .where('followingId', isEqualTo: targetEmail)
-        .snapshots()
-        .listen((snapshot) {
-      _friendStatusCache[targetEmail] = snapshot.docs.isNotEmpty;
-      notifyListeners();
-    });
-
-    _friendSubscriptions[targetEmail] = subscription;
+      final oldAwards = _globalAwardsCache[email];
+      if (oldAwards?.toString() != awards.toString()) {
+        _globalAwardsCache[email] = awards;
+        notifyListeners();
+      }
+    } catch (e) {
+      // Ignore background refresh errors
+    }
   }
 
   Future<void> toggleFriendStatus(String targetEmail) async {
     try {
-      final isFriend = _friendStatusCache[targetEmail] ?? false;
+      final isFriend = _globalFriendStatusCache[targetEmail] ?? false;
       
       if (isFriend) {
         await _friendService.removeFriend(targetEmail);
+        _globalFriendStatusCache[targetEmail] = false;
       } else {
         await _friendService.addFriend(targetEmail);
+        _globalFriendStatusCache[targetEmail] = true;
       }
       
-      // The friend status will be updated via the snapshot listener
-    } catch (e) {
-      print('Error toggling friend status: $e');
+      notifyListeners();
+    } catch (e, stackTrace) {
+      Logger.log('Failed to toggle friend status', stackTrace: stackTrace);
       rethrow;
     }
-  }
-
-  Future<bool> checkFriendStatus(String targetEmail) async {
-    try {
-      return await _friendService.isFollowing(targetEmail);
-    } catch (e) {
-      print('Error checking friend status: $e');
-      return false;
-    }
-  }
-
-  @override
-  void dispose() {
-    // Cancel all subscriptions
-    for (var subscription in _userSubscriptions.values) {
-      subscription.cancel();
-    }
-    for (var subscription in _friendSubscriptions.values) {
-      subscription.cancel();
-    }
-    _userSubscriptions.clear();
-    _friendSubscriptions.clear();
-    super.dispose();
   }
 } 

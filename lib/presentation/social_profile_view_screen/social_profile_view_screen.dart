@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:provider/provider.dart';
 import '../../core/app_export.dart';
 import '../../widgets/app_bar/appbar_leading_image.dart';
 import '../../widgets/app_bar/appbar_subtitle.dart';
@@ -19,6 +20,8 @@ import '../../services/awards_service.dart';
 import '../../models/award_model.dart';
 import '../challenge_award_screen/challenge_award_screen.dart';
 import 'provider/social_profile_view_provider.dart';
+import 'package:flutter/material.dart';
+import '../../core/utils/logger.dart';
 
 class SocialProfileViewScreen extends StatefulWidget {
   final String username;
@@ -34,261 +37,49 @@ class SocialProfileViewScreen extends StatefulWidget {
   SocialProfileViewScreenState createState() => SocialProfileViewScreenState();
 
   static Widget builder(BuildContext context, {required String username, String backButtonText = "Profile"}) {
-    return ChangeNotifierProvider(
-      create: (context) => SocialProfileViewProvider(),
-      child: SocialProfileViewScreen(
-        username: username,
-        backButtonText: backButtonText,
+    // Create and initialize provider with cached data
+    final provider = SocialProfileViewProvider();
+    provider.initWithUsername(username);
+
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider<SocialProfileViewProvider>.value(
+          value: provider,
+        ),
+      ],
+      child: Container(
+        color: const Color(0xFFB2D7FF), // Match parent background color
+        child: SocialProfileViewScreen(
+          username: username,
+          backButtonText: backButtonText,
+        ),
       ),
     );
   }
 }
 
 class SocialProfileViewScreenState extends State<SocialProfileViewScreen> {
-  final AwardsService _awardsService = AwardsService();
-  Stream<List<Award>>? _awardsStream;
-  bool _isInitialized = false;
-
   @override
   void initState() {
     super.initState();
-    _initializeAwardsStream();
-  }
-
-  Future<void> _initializeAwardsStream() async {
-    try {
-      final provider = Provider.of<SocialProfileViewProvider>(context, listen: false);
-      final userData = await provider.getUserData(widget.username);
-      
-      if (userData != null) {
-        final data = userData.data() as Map<String, dynamic>?;
-        final email = data?['email'] as String?;
-        
-        if (email != null && mounted) {
-          setState(() {
-            _awardsStream = _awardsService.getUserAwardsStream(email);
-            _isInitialized = true;
-          });
-        }
-      }
-    } catch (e) {
-      print('Error initializing awards stream: $e');
+    // Trigger data fetch in background after first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        setState(() {
-          _isInitialized = true;
-        });
+        Provider.of<SocialProfileViewProvider>(context, listen: false)
+          .prefetchAllData(widget.username);
       }
+    });
+  }
+
+  String getPronoun(String gender) {
+    switch (gender.toLowerCase()) {
+      case 'male':
+        return 'his';
+      case 'female':
+        return 'her';
+      default:
+        return 'their';
     }
-  }
-
-  Widget _buildGridvectorone(BuildContext context) {
-    if (!_isInitialized) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
-    }
-
-    if (_awardsStream == null) {
-      return const Center(
-        child: Text(
-          'No awards available',
-          style: TextStyle(color: Colors.black54),
-        ),
-      );
-    }
-
-    return StreamBuilder<List<Award>>(
-      stream: _awardsStream,
-      builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          return const Center(
-            child: Text(
-              'No awards yet',
-              style: TextStyle(color: Colors.black54),
-            ),
-          );
-        }
-
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        final awards = snapshot.data ?? [];
-
-        if (awards.isEmpty) {
-          return const Center(
-            child: Text(
-              'No awards yet',
-              style: TextStyle(color: Colors.black54),
-            ),
-          );
-        }
-
-        return Padding(
-          padding: EdgeInsets.symmetric(horizontal: 18.h),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final itemWidth = (constraints.maxWidth - 36.h) / 3;
-              return Wrap(
-                spacing: 18.h,
-                runSpacing: 18.h,
-                children: awards.map((award) {
-                  return SizedBox(
-                    width: itemWidth,
-                    child: _buildAwardItem(award),
-                  );
-                }).toList(),
-              );
-            },
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildAwardItem(Award award) {
-    return GestureDetector(
-      onTap: award.isAwarded ? () {
-        Navigator.pushNamed(
-          context,
-          AppRoutes.challengeAwardScreen,
-          arguments: {'award': award},
-        );
-      } : null,
-      child: Container(
-        padding: EdgeInsets.all(12.h),
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(award.isAwarded ? 0.5 : 0.1),
-          borderRadius: BorderRadius.circular(12.h),
-        ),
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            AspectRatio(
-              aspectRatio: 1,
-              child: Opacity(
-                opacity: award.isAwarded ? 1.0 : 0.3,
-                child: Image.asset(
-                  award.picture,
-                  fit: BoxFit.contain,
-                  errorBuilder: (context, error, stackTrace) {
-                    return const Center(child: Icon(Icons.error));
-                  },
-                ),
-              ),
-            ),
-            if (!award.isAwarded)
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                padding: EdgeInsets.all(8.h),
-                child: Icon(
-                  Icons.lock,
-                  color: Colors.black.withOpacity(0.7),
-                  size: 28.h,
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: _buildAppBar(context),
-      body: Consumer<SocialProfileViewProvider>(
-        builder: (context, provider, _) {
-          final userData = provider.getCachedUser(widget.username);
-          
-          if (userData == null) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
-          }
-
-          return Container(
-            width: double.maxFinite,
-            height: MediaQuery.of(context).size.height,
-            decoration: BoxDecoration(
-              color: const Color(0xFFB2D7FF),
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(54.h),
-                topRight: Radius.circular(54.h),
-              ),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(54.h),
-                topRight: Radius.circular(54.h),
-              ),
-              child: SingleChildScrollView(
-                child: Padding(
-                  padding: EdgeInsets.only(
-                    left: 8.h,
-                    top: 8.h,
-                    right: 8.h,
-                    bottom: MediaQuery.of(context).padding.bottom + 18.h,
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.max,
-                    children: [
-                      _buildRowvectorone(context, userData),
-                      SizedBox(height: 6.h),
-                      _buildWeightgoal(context, userData),
-                      SizedBox(height: 12.h),
-                      _buildListvegan(context, userData),
-                      SizedBox(height: 8.h),
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Padding(
-                          padding: EdgeInsets.only(left: 16.h),
-                          child: Text(
-                            "Awards",
-                            style: CustomTextStyles.headlineSmallOnErrorContainerBold,
-                          ),
-                        ),
-                      ),
-                      SizedBox(height: 6.h),
-                      _buildGridvectorone(context)
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  PreferredSizeWidget _buildAppBar(BuildContext context) {
-    return CustomAppBar(
-      leadingWidth: 23.h,
-      leading: AppbarLeadingImage(
-        imagePath: ImageConstant.imgArrowLeftPrimary,
-        margin: EdgeInsets.only(left: 7.h),
-        onTap: () => Navigator.pop(context),
-      ),
-      title: TextButton(
-        onPressed: () => Navigator.pop(context),
-        style: TextButton.styleFrom(
-          padding: EdgeInsets.only(left: 7.h),
-          minimumSize: Size.zero,
-          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        ),
-        child: Text(
-          widget.backButtonText,
-          style: theme.textTheme.bodyLarge!.copyWith(
-            color: theme.colorScheme.primary,
-          ),
-        ),
-      ),
-    );
   }
 
   Widget _buildRowvectorone(BuildContext context, DocumentSnapshot userData) {
@@ -389,80 +180,99 @@ class SocialProfileViewScreenState extends State<SocialProfileViewScreen> {
     );
   }
 
+  Widget _buildGridvectorone(BuildContext context) {
+    return Consumer<SocialProfileViewProvider>(
+      builder: (context, provider, _) {
+        final userData = provider.getCachedUser(widget.username);
+        if (userData == null) return const SizedBox.shrink();
+        
+        final data = userData.data() as Map<String, dynamic>?;
+        final email = data?['email'] as String?;
+        if (email == null) return const SizedBox.shrink();
+        
+        final awards = provider.getCachedAwards(email);
+        if (awards == null || awards.isEmpty) return const SizedBox.shrink();
+
+        return Padding(
+          padding: EdgeInsets.symmetric(horizontal: 18.h),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final itemWidth = (constraints.maxWidth - 36.h) / 3;
+              return Wrap(
+                spacing: 18.h,
+                runSpacing: 18.h,
+                children: awards.map((award) {
+                  return SizedBox(
+                    width: itemWidth,
+                    child: _buildAwardItem(award),
+                  );
+                }).toList(),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildAwardItem(Award award) {
+    return GestureDetector(
+      onTap: award.isAwarded ? () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ChallengeAwardScreen.builder(
+              context,
+              award: award,
+            ),
+          ),
+        );
+      } : null,
+      child: Container(
+        padding: EdgeInsets.all(12.h),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(award.isAwarded ? 0.5 : 0.1),
+          borderRadius: BorderRadius.circular(12.h),
+        ),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            AspectRatio(
+              aspectRatio: 1,
+              child: Opacity(
+                opacity: award.isAwarded ? 1.0 : 0.3,
+                child: Image.asset(
+                  award.picture,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) {
+                    return const Center(child: Icon(Icons.error));
+                  },
+                ),
+              ),
+            ),
+            if (!award.isAwarded)
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                padding: EdgeInsets.all(8.h),
+                child: Icon(
+                  Icons.lock,
+                  color: Colors.black.withOpacity(0.7),
+                  size: 28.h,
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildWeightgoal(BuildContext context, DocumentSnapshot userData) {
     final data = userData.data() as Map<String, dynamic>?;
     final firstName = data?['firstName']?.toString() ?? '';
-    final gender = data?['gender']?.toString().toLowerCase() ?? '';
-    final hasWeightGoal = data?.containsKey('weightgoal') ?? false;
-    
-    String getPronoun() {
-      switch (gender) {
-        case 'male':
-          return 'his';
-        case 'female':
-          return 'her';
-        default:
-          return 'their';
-      }
-    }
-    
-    if (!hasWeightGoal) {
-      return Container(
-        width: double.maxFinite,
-        margin: EdgeInsets.symmetric(horizontal: 16.h),
-        padding: EdgeInsets.all(16.h),
-        decoration: BoxDecoration(
-          color: const Color(0xFF8FB8E0).withOpacity(0.3),
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              "😕 $firstName has not set ${getPronoun()} weight goal yet",
-              style: theme.textTheme.bodyLarge?.copyWith(
-                color: Colors.white,
-              ),
-            ),
-            SizedBox(height: 8.h),
-            Container(
-              height: 8.h,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(4.h),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    flex: 0,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.blue,
-                        borderRadius: BorderRadius.circular(4.h),
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    flex: 100,
-                    child: const SizedBox(),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
+    final gender = data?['gender']?.toString() ?? '';
     final currentWeight = double.tryParse(data?['weight']?.toString() ?? '0') ?? 0;
     final goalWeight = double.tryParse(data?['weightgoal']?.toString() ?? '0') ?? 0;
     
@@ -493,7 +303,7 @@ class SocialProfileViewScreenState extends State<SocialProfileViewScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
-            "🎉 $firstName has hit $progress% of ${getPronoun()} weight goal!",
+            "🎉 $firstName has hit $progress% of ${getPronoun(gender)} weight goal!",
             style: theme.textTheme.bodyLarge?.copyWith(
               color: Colors.white,
             ),
@@ -528,14 +338,23 @@ class SocialProfileViewScreenState extends State<SocialProfileViewScreen> {
     );
   }
 
-  Widget _buildListvegan(BuildContext context, DocumentSnapshot userData) {
+  Widget _buildListvegan(BuildContext context) {
     return Consumer<SocialProfileViewProvider>(
       builder: (context, provider, _) {
-        final data = userData.data() as Map<String, dynamic>?;
-        final firstName = data?['firstName']?.toString() ?? '';
-        final username = data?['username']?.toString() ?? '';
-        final diet = data?['diet']?.toString() ?? '';
-        final create = data?['create']?.toString() ?? '';
+        final userData = provider.getCachedUser(widget.username);
+        if (userData == null) return const SizedBox.shrink();
+
+        final Map<String, dynamic> data;
+        try {
+          data = Map<String, dynamic>.from(userData.data() as Map<String, dynamic>);
+        } catch (e) {
+          return const SizedBox.shrink();
+        }
+
+        final firstName = data['firstName']?.toString() ?? '';
+        final username = data['username']?.toString() ?? '';
+        final diet = data['diet']?.toString() ?? '';
+        final create = data['create']?.toString() ?? '';
 
         String getDietWithEmoji(String diet) {
           return switch (diet.trim()) {
@@ -616,6 +435,187 @@ class SocialProfileViewScreenState extends State<SocialProfileViewScreen> {
           ),
         );
       },
+    );
+  }
+
+  PreferredSizeWidget _buildAppBar(BuildContext context) {
+    return CustomAppBar(
+      leadingWidth: 23.h,
+      leading: AppbarLeadingImage(
+        imagePath: ImageConstant.imgArrowLeftPrimary,
+        margin: EdgeInsets.only(left: 7.h),
+        onTap: () => Navigator.pop(context),
+      ),
+      title: TextButton(
+        onPressed: () => Navigator.pop(context),
+        style: TextButton.styleFrom(
+          padding: EdgeInsets.only(left: 7.h),
+          minimumSize: Size.zero,
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        ),
+        child: Text(
+          widget.backButtonText,
+          style: theme.textTheme.bodyLarge!.copyWith(
+            color: theme.colorScheme.primary,
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: _buildAppBar(context),
+      body: Container(
+        width: double.maxFinite,
+        height: MediaQuery.of(context).size.height,
+        decoration: BoxDecoration(
+          color: const Color(0xFFB2D7FF),
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(54.h),
+            topRight: Radius.circular(54.h),
+          ),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(54.h),
+            topRight: Radius.circular(54.h),
+          ),
+          child: Consumer<SocialProfileViewProvider>(
+            builder: (context, provider, _) {
+              final userData = provider.getCachedUser(widget.username);
+              
+              // Show loading skeleton with same background color if no cached data
+              if (userData == null) {
+                return SingleChildScrollView(
+                  child: Padding(
+                    padding: EdgeInsets.all(16.h),
+                    child: Column(
+                      children: [
+                        _buildLoadingSkeleton(),
+                      ],
+                    ),
+                  ),
+                );
+              }
+
+              return SingleChildScrollView(
+                child: Padding(
+                  padding: EdgeInsets.only(
+                    left: 8.h,
+                    top: 8.h,
+                    right: 8.h,
+                    bottom: MediaQuery.of(context).padding.bottom + 18.h,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.max,
+                    children: [
+                      _buildRowvectorone(context, userData),
+                      SizedBox(height: 6.h),
+                      _buildWeightgoal(context, userData),
+                      SizedBox(height: 12.h),
+                      _buildListvegan(context),
+                      SizedBox(height: 8.h),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Padding(
+                          padding: EdgeInsets.only(left: 16.h),
+                          child: Text(
+                            "Awards",
+                            style: CustomTextStyles.headlineSmallOnErrorContainerBold,
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 6.h),
+                      _buildGridvectorone(context)
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLoadingSkeleton() {
+    return Column(
+      children: [
+        // Profile skeleton
+        Container(
+          width: double.maxFinite,
+          margin: EdgeInsets.symmetric(horizontal: 16.h),
+          padding: EdgeInsets.all(16.h),
+          child: Row(
+            children: [
+              Container(
+                height: 80.h,
+                width: 80.h,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(40.h),
+                ),
+              ),
+              SizedBox(width: 12.h),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      height: 24.h,
+                      width: 150.h,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.3),
+                        borderRadius: BorderRadius.circular(12.h),
+                      ),
+                    ),
+                    SizedBox(height: 8.h),
+                    Container(
+                      height: 16.h,
+                      width: 100.h,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.3),
+                        borderRadius: BorderRadius.circular(8.h),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(height: 16.h),
+        // Buttons skeleton
+        Container(
+          margin: EdgeInsets.symmetric(horizontal: 16.h),
+          child: Row(
+            children: [
+              Expanded(
+                child: Container(
+                  height: 48.h,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(16.h),
+                  ),
+                ),
+              ),
+              SizedBox(width: 14.h),
+              Expanded(
+                child: Container(
+                  height: 48.h,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(16.h),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
