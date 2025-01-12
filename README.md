@@ -39,7 +39,7 @@ We make food tracking effortless!
    - Follow the installation prompts
 
 ### Option 3: Run on Emulator
-#### For Windows/Linux (Android):
+#### For Mac/Linux/Windows (Android):
 1. Install Android Studio:
    - Download from [Android Studio website](https://developer.android.com/studio)
    - Follow the installation wizard for your OS
@@ -54,25 +54,16 @@ We make food tracking effortless!
    - Start the emulator
    - Drag and drop the APK file onto the emulator window
 
-#### For Mac (iOS):
-1. Install Xcode:
-   - Download Xcode from the Mac App Store
-   - Open Xcode and install additional components if prompted
-2. Set up iOS Simulator:
-   - Open Xcode
-   - Go to Xcode > Open Developer Tool > Simulator
-   - Select your preferred iPhone model
-3. Download and Run:
-   - Download IPA from [Releases page](https://github.com/ntua-el21059/TrackEat/releases)
-   - Drag and drop the IPA file onto the simulator window
-
 ### Option 4: Run from Source Code
 1. Install Prerequisites:
    - Install [Flutter](https://flutter.dev/docs/get-started/install)
    - Install [Git](https://git-scm.com/downloads)
    - For Android: Install Android Studio
    - For iOS: Install Xcode (Mac only)
-2. Clone and Run:
+2. Select iOS or Android Emulator:
+   - For Android: Pixel 9 Pro recommended
+   - For iOS: iPhone X and above
+3. Clone and Run:
    ```bash
    git clone https://github.com/ntua-el21059/TrackEat.git
    cd TrackEat

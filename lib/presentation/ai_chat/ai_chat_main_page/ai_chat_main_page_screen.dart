@@ -81,7 +81,7 @@ class AiChatMainScreenState extends State<AiChatMainScreen> with SingleTickerPro
     
     final provider = Provider.of<AiChatMainProvider>(context, listen: false);
     final message = provider.messageController.text.trim();
-    if (message.isEmpty) return;
+    if (message.isEmpty && provider.selectedImage == null) return;
 
     setState(() {
       _isSending = true;
