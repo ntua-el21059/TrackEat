@@ -1,27 +1,15 @@
-import 'package:responsive_grid_list/responsive_grid_list.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'dart:convert';
-import 'dart:async';
-import 'package:flutter/foundation.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'package:provider/provider.dart';
 import '../../core/app_export.dart';
 import '../../widgets/app_bar/appbar_leading_image.dart';
-import '../../widgets/app_bar/appbar_subtitle.dart';
 import '../../widgets/app_bar/custom_app_bar.dart';
 import '../../widgets/custom_elevated_button.dart';
 import '../../widgets/cached_profile_picture.dart';
 import '../social_profile_message_from_profile_screen/social_profile_message_from_profile_screen.dart';
 import '../social_profile_myself_screen/widgets/listvegan_item_widget.dart';
 import '../social_profile_myself_screen/models/listvegan_item_model.dart';
-import '../../services/friend_service.dart';
-import '../../services/awards_service.dart';
 import '../../models/award_model.dart';
 import '../challenge_award_screen/challenge_award_screen.dart';
 import 'provider/social_profile_view_provider.dart';
-import 'package:flutter/material.dart';
-import '../../core/utils/logger.dart';
 
 class SocialProfileViewScreen extends StatefulWidget {
   final String username;

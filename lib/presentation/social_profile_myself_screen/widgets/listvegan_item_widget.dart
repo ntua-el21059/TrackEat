@@ -89,7 +89,7 @@ class ListveganItemWidget extends StatelessWidget {
     String? dietText = model.title;
     Color boxColor;
 
-    if (dietText?.contains("been thriving") == true || dietText?.contains("'s been thriving") == true || dietText?.contains("thriving") == true) {
+    if (dietText.contains("been thriving") || dietText.contains("'s been thriving") || dietText.contains("thriving")) {
       boxColor = const Color(0xFFFFD700); // Yellow for thriving message
     } else {
       switch (dietText) {
@@ -115,6 +115,6 @@ class ListveganItemWidget extends StatelessWidget {
           boxColor = const Color(0xFFFFD700); // Yellow for default/unknown diet
       }
     }
-    return _buildContainer(context, dietText ?? "", boxColor);
+    return _buildContainer(context, dietText, boxColor);
   }
 }

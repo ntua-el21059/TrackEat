@@ -2,7 +2,6 @@ import '../../../core/app_export.dart';
 import 'gridvector_one_item_model.dart';
 import 'listvegan_item_model.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 // ignore_for_file: must_be_immutable
 class SocialProfileMyselfModel {

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../models/reward_screen_new_award_model.dart';
 
 /// A provider class for the RewardScreenNewAwardScreen.
 ///

@@ -1,5 +1,3 @@
-import 'package:flutter/material.dart';
-import 'package:responsive_grid_list/responsive_grid_list.dart';
 import 'package:flutter/cupertino.dart';
 import 'dart:io' show Platform;
 import '../../core/app_export.dart';
@@ -17,9 +15,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../widgets/cached_profile_picture.dart';
 import '../../models/award_model.dart';
-import '../challenge_award_screen/challenge_award_screen.dart';
 import '../../services/awards_service.dart';
-import '../../services/svg_cache_service.dart';
 
 class SocialProfileMyselfScreen extends StatefulWidget {
   final String? backButtonText;

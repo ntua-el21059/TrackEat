@@ -39,7 +39,6 @@ class HomeScreenState extends State<HomeScreen> {
   StreamSubscription<DocumentSnapshot>? _userSubscription;
   StreamSubscription<QuerySnapshot>? _awardsSubscription;
   final PointsService _pointsService = PointsService();
-  DateTime? _lastPointsUpdate;
   bool _isNavigatingToReward = false;
   final Set<String> _shownAwards = {};
   SharedPreferences? _prefs;

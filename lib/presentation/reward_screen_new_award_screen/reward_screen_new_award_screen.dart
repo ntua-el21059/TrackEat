@@ -50,9 +50,7 @@ class Particle {
 class RewardScreenNewAwardScreenState extends State<RewardScreenNewAwardScreen> with TickerProviderStateMixin {
   bool _isNavigating = false;
   double _alignX = 0.0;
-  double _alignY = 0.0;
   double _smoothX = 0.0;
-  double _smoothY = 0.0;
   static const double _sensitivity = 0.8;
   static const double _smoothingFactor = 0.7;
   bool _isInitialized = false;

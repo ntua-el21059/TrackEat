@@ -349,16 +349,4 @@ class _SocialProfileViewProfileState extends State<SocialProfileViewProfile> {
       ),
     );
   }
-
-  static Widget builder(BuildContext context, {required String email}) {
-    return ChangeNotifierProvider(
-      create: (context) {
-        final provider = SocialProfileViewProvider();
-        // Prefetch data immediately when provider is created
-        provider.prefetchAllData(email);
-        return provider;
-      },
-      child: SocialProfileViewProfile(email: email),
-    );
-  }
 } 
