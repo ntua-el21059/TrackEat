@@ -8,8 +8,8 @@ import '../../../../services/meal_service.dart';
 import '../../../../services/points_service.dart';
 import '../../../../services/awards_service.dart';
 import '../models/ai_chat_main_page_model.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-const String apiKey = 'AIzaSyDe5fyQXDIfgZ1paU5Ax5HNj6gNyWA0MAA';
 const List<String> modelNames = [
   'gemini-2.0-flash-exp',  // Primary model
   'gemini-1.5-flash',      // First backup
@@ -31,6 +31,8 @@ Always maintain a friendly, witty tone while guiding users back to food-related 
 ''';
 
 class AiChatMainProvider extends ChangeNotifier {
+  static final String _apiKey = dotenv.env['GEMINI_API_KEY'] ?? '';
+  
   final MealService _mealService = MealService();
   final PointsService _pointsService = PointsService();
   final AwardsService _awardsService = AwardsService();
@@ -56,7 +58,7 @@ class AiChatMainProvider extends ChangeNotifier {
 
   AiChatMainProvider() : _model = GenerativeModel(
     model: modelNames[0],
-    apiKey: apiKey,
+    apiKey: _apiKey,
   ) {
     _chat = _model.startChat(history: [Content.text(_systemPrompt)]);
   }
@@ -65,7 +67,7 @@ class AiChatMainProvider extends ChangeNotifier {
     _currentModelIndex = (_currentModelIndex + 1) % modelNames.length;
     _model = GenerativeModel(
       model: modelNames[_currentModelIndex],
-      apiKey: apiKey,
+      apiKey: _apiKey,
     );
     _chat = _model.startChat(history: [Content.text(_systemPrompt)]);
     print('🤖 [switchModel] Switched to model: ${modelNames[_currentModelIndex]}');
@@ -108,7 +110,7 @@ class AiChatMainProvider extends ChangeNotifier {
     // Don't reset the model index, just reinitialize the current model
     _model = GenerativeModel(
       model: modelNames[_currentModelIndex],
-      apiKey: apiKey,
+      apiKey: _apiKey,
     );
     _chat = _model.startChat(history: [Content.text(_systemPrompt)]);
     print('🤖 [$methodName] Using model: ${modelNames[_currentModelIndex]}');
